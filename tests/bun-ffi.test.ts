@@ -1,12 +1,35 @@
 /**
- * Basic tests for Bun.FFI implementation
+ * Universal Multi-Runtime FFI Tests
+ * Tests for the universal RKLLM implementation across all supported runtimes
  */
 
 import { describe, it, expect } from 'bun:test';
-import { RKLLM, isBunRuntime, initializeFFI, isFFIAvailable } from '../src/index.js';
+import { 
+  RKLLM, 
+  isBunRuntime, 
+  initializeFFI, 
+  isFFIAvailable,
+  detectRuntime,
+  getFFIInfo
+} from '../src/index.js';
 import { RKLLMInputType } from '../src/types.js';
 
-describe('Bun.FFI Integration', () => {
+describe('Universal Multi-Runtime FFI', () => {
+  it('should detect current runtime correctly', () => {
+    const runtime = detectRuntime();
+    expect(runtime).toBeDefined();
+    expect(['bun', 'node', 'deno', 'unknown']).toContain(runtime.name);
+    expect(typeof runtime.ffiSupported).toBe('boolean');
+  });
+
+  it('should provide FFI information', () => {
+    const info = getFFIInfo();
+    expect(info).toBeDefined();
+    expect(info.runtime).toBeDefined();
+    expect(['bun', 'node', 'deno', 'unknown']).toContain(info.runtime);
+    expect(typeof info.ffiSupported).toBe('boolean');
+    expect(typeof info.libraryExtension).toBe('string');
+  });
   it('should detect Bun runtime correctly', () => {
     const isBun = isBunRuntime();
     expect(typeof isBun).toBe('boolean');

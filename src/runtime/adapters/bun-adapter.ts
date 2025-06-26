@@ -10,21 +10,22 @@ import type { TypeMappings } from '../../ffi/symbol-definitions.js';
  * Bun FFI Adapter implementation
  */
 export class BunFFIAdapter implements RuntimeFFI {
-  private bunFFI: typeof import('bun:ffi') | null = null;
+  private bunFFI: any = null;
 
   constructor() {
-    // Dynamically import Bun FFI to avoid errors in other runtimes
-    this.initializeBunFFI();
-  }
-
-  private async initializeBunFFI() {
-    try {
-      // Only import if we're in Bun runtime
-      if (this.isBunEnvironment()) {
-        this.bunFFI = await import('bun:ffi');
+    // Initialize Bun FFI synchronously if available
+    if (this.isBunEnvironment()) {
+      try {
+        // In Bun environment, these modules are available globally
+        this.bunFFI = {
+          dlopen: globalThis.Bun.dlopen,
+          ptr: globalThis.Bun.ptr,
+          FFIType: globalThis.Bun.FFIType,
+          suffix: globalThis.Bun.dlopen.suffix || 'so'
+        };
+      } catch (error) {
+        // FFI not available
       }
-    } catch (error) {
-      // FFI not available
     }
   }
 
@@ -40,7 +41,7 @@ export class BunFFIAdapter implements RuntimeFFI {
     if (!this.bunFFI) {
       throw new Error('Bun FFI not available');
     }
-    return this.bunFFI.suffix;
+    return this.bunFFI.suffix || 'so';
   }
 
   loadLibrary(path: string, symbols: Record<string, FFISymbol>): LibraryHandle {
@@ -167,7 +168,7 @@ export class BunFFIAdapter implements RuntimeFFI {
       throw new Error('Bun FFI not available');
     }
 
-    const { FFIType } = this.bunFFI;
+    const FFIType = this.bunFFI.FFIType;
     
     return {
       pointer: FFIType.ptr,
