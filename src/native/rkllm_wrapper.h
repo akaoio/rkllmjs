@@ -1,14 +1,15 @@
 #ifndef RKLLM_WRAPPER_H
 #define RKLLM_WRAPPER_H
 
+#include <cstddef>
 #include "rkllm.h"
 
 /**
  * Wrapper structures and functions to bridge C++ and JavaScript
  */
 
-// Result structure for JavaScript conversion
-struct RKLLMResult {
+// JavaScript-facing result structure (avoid naming conflict with RKLLM native)
+struct JSResult {
     LLMCallState state;
     const char* text;
     int* tokens;
@@ -19,11 +20,11 @@ struct RKLLMResult {
     int hidden_states_count;
 };
 
-// Input structure for JavaScript conversion  
-struct RKLLMInput {
+// JavaScript-facing input structure (avoid naming conflict with RKLLM native)
+struct JSInput {
     RKLLMInputType input_type;
-    const char* input_data;
-    int input_len;
+    const char* prompt_data;
+    int data_len;
 };
 
 #endif // RKLLM_WRAPPER_H

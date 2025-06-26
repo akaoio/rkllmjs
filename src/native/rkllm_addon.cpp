@@ -1,40 +1,79 @@
 #include <napi.h>
+#include <cstring>
+#include <iostream>
 #include <string>
-#include <memory>
 #include "rkllm_wrapper.h"
 
-// Convert JavaScript RKLLMParam to native structure
+// Global callback for handling results
+static Napi::ThreadSafeFunction tsfn;
+static bool callbackInitialized = false;
+
+// Callback function for RKLLM
+int ResultCallback(RKLLMResult* result, void* userdata, LLMCallState state) {
+    if (!callbackInitialized || !tsfn) {
+        return 0;
+    }
+
+    // Create a copy of the result to pass to JavaScript thread
+    JSResult* jsResult = new JSResult();
+    jsResult->state = state;
+    jsResult->text = result->text ? strdup(result->text) : nullptr;
+    jsResult->token_count = result->token_id; // Use token_id as count
+    jsResult->tokens = nullptr; // Will copy if needed
+    
+    // Call JavaScript callback asynchronously
+    tsfn.NonBlockingCall(jsResult, [](Napi::Env env, Napi::Function jsCallback, JSResult* data) {
+        if (data) {
+            Napi::Object jsResult = Napi::Object::New(env);
+            jsResult.Set("state", Napi::Number::New(env, static_cast<int>(data->state)));
+            
+            if (data->text) {
+                jsResult.Set("text", Napi::String::New(env, data->text));
+                free(const_cast<char*>(data->text));
+            }
+            
+            jsResult.Set("tokenCount", Napi::Number::New(env, data->token_count));
+            
+            if (jsCallback) {
+                jsCallback.Call({jsResult});
+            }
+            
+            delete data;
+        }
+    });
+    
+    return 0;
+}
+
+// Convert JavaScript parameters to native RKLLMParam
 RKLLMParam* ConvertJSParamsToNative(const Napi::Object& jsParams) {
-    auto* params = new RKLLMParam();
+    RKLLMParam* params = new RKLLMParam();
     memset(params, 0, sizeof(RKLLMParam));
     
-    // Required field
+    // Model path (required)
     if (jsParams.Has("modelPath")) {
         std::string modelPath = jsParams.Get("modelPath").As<Napi::String>().Utf8Value();
         params->model_path = strdup(modelPath.c_str());
     }
     
-    // Optional fields with defaults
+    // Optional parameters with defaults
     params->max_context_len = jsParams.Has("maxContextLen") ? 
-        jsParams.Get("maxContextLen").As<Napi::Number>().Int32Value() : 1024;
+        jsParams.Get("maxContextLen").As<Napi::Number>().Int32Value() : 2048;
     
     params->max_new_tokens = jsParams.Has("maxNewTokens") ? 
         jsParams.Get("maxNewTokens").As<Napi::Number>().Int32Value() : 256;
     
-    params->top_k = jsParams.Has("topK") ? 
-        jsParams.Get("topK").As<Napi::Number>().Int32Value() : 50;
-    
-    params->n_keep = jsParams.Has("nKeep") ? 
-        jsParams.Get("nKeep").As<Napi::Number>().Int32Value() : 0;
+    params->temperature = jsParams.Has("temperature") ? 
+        jsParams.Get("temperature").As<Napi::Number>().FloatValue() : 0.7f;
     
     params->top_p = jsParams.Has("topP") ? 
         jsParams.Get("topP").As<Napi::Number>().FloatValue() : 0.9f;
     
-    params->temperature = jsParams.Has("temperature") ? 
-        jsParams.Get("temperature").As<Napi::Number>().FloatValue() : 0.7f;
+    params->top_k = jsParams.Has("topK") ? 
+        jsParams.Get("topK").As<Napi::Number>().Int32Value() : 50;
     
     params->repeat_penalty = jsParams.Has("repeatPenalty") ? 
-        jsParams.Get("repeatPenalty").As<Napi::Number>().FloatValue() : 1.1f;
+        jsParams.Get("repeatPenalty").As<Napi::Number>().FloatValue() : 1.0f;
     
     params->frequency_penalty = jsParams.Has("frequencyPenalty") ? 
         jsParams.Get("frequencyPenalty").As<Napi::Number>().FloatValue() : 0.0f;
@@ -51,35 +90,6 @@ RKLLMParam* ConvertJSParamsToNative(const Napi::Object& jsParams) {
     params->mirostat_eta = jsParams.Has("mirostatEta") ? 
         jsParams.Get("mirostatEta").As<Napi::Number>().FloatValue() : 0.1f;
     
-    params->skip_special_token = jsParams.Has("skipSpecialToken") ? 
-        jsParams.Get("skipSpecialToken").As<Napi::Boolean>().Value() : false;
-    
-    params->is_async = jsParams.Has("isAsync") ? 
-        jsParams.Get("isAsync").As<Napi::Boolean>().Value() : false;
-    
-    // Handle extended parameters
-    if (jsParams.Has("extendParam")) {
-        Napi::Object extendParam = jsParams.Get("extendParam").As<Napi::Object>();
-        
-        params->extend_param.base_domain_id = extendParam.Has("baseDomainId") ? 
-            extendParam.Get("baseDomainId").As<Napi::Number>().Int32Value() : 0;
-            
-        params->extend_param.embed_flash = extendParam.Has("embedFlash") ? 
-            (extendParam.Get("embedFlash").As<Napi::Boolean>().Value() ? 1 : 0) : 0;
-            
-        params->extend_param.enabled_cpus_num = extendParam.Has("enabledCpusNum") ? 
-            extendParam.Get("enabledCpusNum").As<Napi::Number>().Int32Value() : 0;
-            
-        params->extend_param.enabled_cpus_mask = extendParam.Has("enabledCpusMask") ? 
-            extendParam.Get("enabledCpusMask").As<Napi::Number>().Uint32Value() : 0;
-            
-        params->extend_param.n_batch = extendParam.Has("nBatch") ? 
-            extendParam.Get("nBatch").As<Napi::Number>().Uint32Value() : 1;
-            
-        params->extend_param.use_cross_attn = extendParam.Has("useCrossAttn") ? 
-            (extendParam.Get("useCrossAttn").As<Napi::Boolean>().Value() ? 1 : 0) : 0;
-    }
-    
     return params;
 }
 
@@ -87,13 +97,11 @@ RKLLMParam* ConvertJSParamsToNative(const Napi::Object& jsParams) {
 Napi::Object ConvertNativeResultToJS(Napi::Env env, const RKLLMResult& result) {
     Napi::Object jsResult = Napi::Object::New(env);
     
-    jsResult.Set("state", Napi::Number::New(env, static_cast<int>(result.state)));
-    
     if (result.text && strlen(result.text) > 0) {
         jsResult.Set("text", Napi::String::New(env, result.text));
     }
     
-    // Add other fields as needed (tokens, logits, hiddenStates)
+    jsResult.Set("tokenId", Napi::Number::New(env, result.token_id));
     
     return jsResult;
 }
@@ -112,7 +120,9 @@ Napi::Value RKLLMInit(const Napi::CallbackInfo& info) {
         RKLLMParam* params = ConvertJSParamsToNative(jsParams);
         
         LLMHandle handle = nullptr;
-        int ret = rkllm_init(&handle, params);
+        
+        // Initialize with callback
+        int ret = rkllm_init(&handle, params, ResultCallback);
         
         // Clean up params
         if (params->model_path) {
@@ -148,22 +158,26 @@ Napi::Value RKLLMRun(const Napi::CallbackInfo& info) {
         LLMHandle handle = info[0].As<Napi::External<void>>().Data();
         Napi::Object jsInput = info[1].As<Napi::Object>();
         
+        // Create RKLLM input
         RKLLMInput input;
         memset(&input, 0, sizeof(RKLLMInput));
         
-        // Convert input
+        // Set input type
         input.input_type = static_cast<RKLLMInputType>(
             jsInput.Get("inputType").As<Napi::Number>().Int32Value()
         );
         
+        // Set prompt input
         std::string inputData = jsInput.Get("inputData").As<Napi::String>().Utf8Value();
-        input.input_data = inputData.c_str();
-        input.input_len = inputData.length();
+        input.prompt_input = inputData.c_str();
         
-        RKLLMResult result;
-        memset(&result, 0, sizeof(RKLLMResult));
+        // Create inference parameters
+        RKLLMInferParam inferParams;
+        memset(&inferParams, 0, sizeof(RKLLMInferParam));
+        inferParams.mode = RKLLM_INFER_GENERATE; // Default to generate mode
         
-        int ret = rkllm_run(handle, &input, &result, nullptr);
+        // Run inference
+        int ret = rkllm_run(handle, &input, &inferParams, nullptr);
         
         if (ret != 0) {
             std::string error = "Inference failed with error code: " + std::to_string(ret);
@@ -171,7 +185,11 @@ Napi::Value RKLLMRun(const Napi::CallbackInfo& info) {
             return env.Null();
         }
         
-        return ConvertNativeResultToJS(env, result);
+        // For synchronous mode, we return a simple success indicator
+        // The actual result will come via callback
+        Napi::Object result = Napi::Object::New(env);
+        result.Set("success", Napi::Boolean::New(env, true));
+        return result;
         
     } catch (const std::exception& e) {
         Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
@@ -190,14 +208,16 @@ Napi::Value RKLLMDestroy(const Napi::CallbackInfo& info) {
     
     try {
         LLMHandle handle = info[0].As<Napi::External<void>>().Data();
+        
         int ret = rkllm_destroy(handle);
         
         if (ret != 0) {
             std::string error = "Failed to destroy RKLLM with error code: " + std::to_string(ret);
             Napi::Error::New(env, error).ThrowAsJavaScriptException();
+            return env.Null();
         }
         
-        return Napi::Number::New(env, ret);
+        return Napi::Boolean::New(env, true);
         
     } catch (const std::exception& e) {
         Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
@@ -205,12 +225,34 @@ Napi::Value RKLLMDestroy(const Napi::CallbackInfo& info) {
     }
 }
 
+// Set callback function
+Napi::Value SetCallback(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    
+    if (info.Length() < 1 || !info[0].IsFunction()) {
+        Napi::TypeError::New(env, "Expected function parameter").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+    
+    // Create thread-safe function for callbacks
+    tsfn = Napi::ThreadSafeFunction::New(
+        env,
+        info[0].As<Napi::Function>(),
+        "RKLLM Callback",
+        0,
+        1
+    );
+    
+    callbackInitialized = true;
+    return Napi::Boolean::New(env, true);
+}
+
 // Initialize the addon
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
-    exports.Set(Napi::String::New(env, "rkllmInit"), Napi::Function::New(env, RKLLMInit));
-    exports.Set(Napi::String::New(env, "rkllmRun"), Napi::Function::New(env, RKLLMRun));
-    exports.Set(Napi::String::New(env, "rkllmDestroy"), Napi::Function::New(env, RKLLMDestroy));
-    
+    exports.Set("rkllmInit", Napi::Function::New(env, RKLLMInit));
+    exports.Set("rkllmRun", Napi::Function::New(env, RKLLMRun));
+    exports.Set("rkllmDestroy", Napi::Function::New(env, RKLLMDestroy));
+    exports.Set("setCallback", Napi::Function::New(env, SetCallback));
     return exports;
 }
 

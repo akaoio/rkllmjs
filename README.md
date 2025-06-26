@@ -333,31 +333,5 @@ npm run example
 Check out the `/examples` directory for comprehensive usage examples:
 
 - `basic.js` - Simple inference
-- `streaming.js` - Real-time streaming
+- `streaming.js` - Real-time streaming  
 - `chat.js` - Multi-turn conversations
-- `benchmark.js` - Performance testing
-
-## 🤝 Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 Links
-
-- [Rockchip RKLLM SDK Documentation](https://github.com/rockchip-linux/rknn-llm)
-- [NPU Performance Guide](docs/performance.md)
-- [Model Conversion Tutorial](docs/model-conversion.md)
-- [API Reference](docs/api.md)
-
-## 🆘 Support
-
-- 📧 Email: support@yourproject.com
-- 💬 Discord: [Join our community](https://discord.gg/yourserver)
-- 🐛 Issues: [GitHub Issues](https://github.com/akaoio/rkllmjs/issues)
-
----
-
-Made with ❤️ for the Rockchip NPU community

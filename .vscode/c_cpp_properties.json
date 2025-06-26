@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/node_modules/node-addon-api",
+                "${workspaceFolder}/libs/rkllm/include",
+                "/home/x/.cache/node-gyp/18.19.0/include/node",
+                "/usr/include/c++/11",
+                "/usr/include/aarch64-linux-gnu/c++/11",
+                "/usr/include/c++/11/backward",
+                "/usr/lib/gcc/aarch64-linux-gnu/11/include",
+                "/usr/local/include",
+                "/usr/include/aarch64-linux-gnu",
+                "/usr/include"
+            ],
+            "defines": [
+                "NAPI_DISABLE_CPP_EXCEPTIONS",
+                "NODE_ADDON_API_DISABLE_DEPRECATED"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-arm64"
+        }
+    ],
+    "version": 4
+}

@@ -19,19 +19,18 @@ export class RKLLM {
     }
 
     // Validate model path before attempting to initialize
-    await requireValidModelPath(params.modelPath);
-
-    try {
-      // Load the native addon - Bun will handle this appropriately
-      // @ts-ignore - Native module loading
-      this.addon = Bun?.dlopen?.('../build/Release/rkllmjs.node', {}) || 
-                  (globalThis as any).require?.('../build/Release/rkllmjs.node');
-      
-      if (!this.addon) {
-        throw new Error('Failed to load native addon');
-      }
-      
-      this.handle = await this.addon.rkllmInit(params);
+    await requireValidModelPath(params.modelPath);        try {
+            // Load the native addon using standard require
+            // @ts-ignore - Native module loading
+            const { createRequire } = await import('module');
+            const require = createRequire(import.meta.url);
+            this.addon = require('../build/Release/rkllmjs.node');
+            
+            if (!this.addon) {
+                throw new Error('Failed to load native addon');
+            }
+            
+            this.handle = await this.addon.rkllmInit(params);
       this.isInitialized = true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
