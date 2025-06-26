@@ -1,10 +1,10 @@
 # 🚀 RKLLMJS
 
-High-performance JavaScript bindings for Rockchip LLM Runtime - run local LLMs on Rockchip NPUs (RK3588, RK356x, etc.) with blazing speed using **Bun**.
+High-performance JavaScript bindings for Rockchip LLM Runtime - run local LLMs on Rockchip NPUs (RK3588, RK356x, etc.) with blazing speed using **Bun.FFI**.
 
 > **⚡ Built for Bun** - Optimized for Bun's fast JavaScript runtime with native ES modules support
 > 
-> **🆕 NEW: Bun.FFI Support** - Direct native library access without C++ compilation required!
+> **🆕 Bun.FFI Exclusive** - Direct native library access without C++ compilation required!
 
 [![NPM Version](https://img.shields.io/npm/v/rkllmjs.svg)](https://www.npmjs.com/package/rkllmjs)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -13,10 +13,10 @@ High-performance JavaScript bindings for Rockchip LLM Runtime - run local LLMs o
 ## ✨ Features
 
 - 🏎️ **High Performance**: Direct bindings to Rockchip's optimized LLM runtime
-- ⚡ **Bun.FFI Support**: No compilation required when using Bun runtime
+- ⚡ **Bun.FFI Exclusive**: Zero compilation setup with direct native calls
 - 🔧 **Easy Integration**: Simple JavaScript/TypeScript API
 - 🌊 **Streaming Support**: Real-time token generation with callbacks
-- 🎯 **Multiple Runtimes**: Works with Bun (FFI) and Node.js (N-API)
+- 🚀 **Bun Runtime**: Optimized exclusively for Bun's FFI system
 - 🔄 **Async/Await**: Modern promise-based API
 - 📱 **Multi-modal**: Support for text and image inputs
 - 🎨 **LoRA Adapters**: Dynamic model fine-tuning support
@@ -46,30 +46,22 @@ pnpm add rkllmjs
 bun add rkllmjs
 ```
 
-## 🆕 Bun.FFI vs N-API
+## 🚀 Bun.FFI Architecture
 
-RKLLMJS now supports two backends:
+RKLLMJS is now exclusively built on Bun.FFI for maximum performance and simplicity:
 
-| Feature | **Bun.FFI** | **N-API** |
-|---------|-------------|-----------|
-| **Runtime** | Bun only | Bun, Node.js |
-| **Compilation** | ❌ None required | ✅ C++ compilation |
-| **Setup Time** | ⚡ Instant | 🐌 Slow (build step) |
-| **Advanced Features** | ✅ Full API access | 🔶 Basic features |
-| **Performance** | 🚀 Direct calls | 🔶 Bridge overhead |
+### ✨ Bun.FFI Advantages:
+- ⚡ **Zero Compilation**: No C++ build step required
+- 🚀 **Direct Native Calls**: Minimal overhead between JavaScript and native code
+- 🔧 **Instant Setup**: Install and run immediately
+- 🧠 **Full API Access**: Complete access to all RKLLM runtime features
+- 📊 **Better Debugging**: Direct access to native function calls
+- 🎯 **Modern Architecture**: Built for Bun's high-performance runtime
 
-### Use Bun.FFI When:
-- ✅ Running in Bun environment
-- ✅ Need fastest setup (no compilation)
-- ✅ Want advanced features (KV cache, chat templates)
-- ✅ Rapid prototyping and development
-
-### Use N-API When:
-- ✅ Running in Node.js
-- ✅ Need maximum compatibility
-- ✅ Production deployments with existing Node.js infrastructure
-
-The library **automatically detects** the best backend for your environment!
+### Prerequisites:
+- **Bun 1.0+** runtime (required)
+- **Rockchip NPU** (RK3588, RK356x, etc.)
+- **ARM64 or ARMhf** architecture
 
 ## 🚀 Quick Start
 
@@ -85,13 +77,13 @@ bun tools.ts pull microsoft/DialoGPT-small pytorch_model.bin
 bun tools.ts list
 ```
 
-### 2. Basic Inference (Auto-detect Backend)
+### 2. Basic Inference
 
 ```javascript
 import { RKLLM, RKLLMInputType } from 'rkllmjs';
 
 async function main() {
-  // Initialize RKLLM - automatically chooses best backend
+  // Initialize RKLLM with FFI backend
   const llm = new RKLLM();
   await llm.init({
     modelPath: './models/your-model.rkllm',
@@ -100,7 +92,7 @@ async function main() {
     temperature: 0.7,
   });
 
-  console.log(`Using ${llm.backendType} backend`); // 'ffi' or 'napi'
+  console.log(`Using ${llm.backendType} backend`); // Always 'ffi'
 
   // Run inference
   const result = await llm.run({
@@ -117,7 +109,7 @@ async function main() {
 main().catch(console.error);
 ```
 
-### 3. Explicit Bun.FFI Usage
+### 3. Advanced FFI Features
 
 ```javascript
 import { RKLLM, RKLLMInputType } from 'rkllmjs';
@@ -125,12 +117,12 @@ import { RKLLM, RKLLMInputType } from 'rkllmjs';
 async function main() {
   const llm = new RKLLM();
   
-  // Explicitly request FFI backend
+  // Initialize with FFI backend (no need to specify, it's automatic now)
   await llm.init({
     modelPath: './models/your-model.rkllm',
     maxContextLen: 2048,
     temperature: 0.7,
-  }, 'ffi'); // Force FFI backend
+  });
 
   // Use advanced FFI features
   await llm.setChatTemplate(
@@ -140,7 +132,7 @@ async function main() {
   );
 
   // Get KV cache info
-  const cacheSizes = await llm.getKVCacheSize();
+  const cacheSizes = await llm.getContextLength();
   console.log('Cache sizes:', cacheSizes);
 
   // Run inference
@@ -155,7 +147,6 @@ async function main() {
 
 main().catch(console.error);
 ```
-  });
 
   // Run inference
   const result = await llm.run({
@@ -380,10 +371,9 @@ bun tools.ts pull distilgpt2 pytorch_model.bin
 
 ### Prerequisites
 
-- Node.js 14+ or Bun 1.0+
-- Python 3.8+ (for node-gyp)
-- GCC/G++ compiler
-- Rockchip board with NPU support
+- **Bun 1.0+** (required for FFI support)
+- **Rockchip board** with NPU support (RK3588, RK356x, etc.)
+- **ARM64 or ARMhf** architecture
 
 ### Build Steps
 
@@ -392,17 +382,17 @@ bun tools.ts pull distilgpt2 pytorch_model.bin
 git clone https://github.com/akaoio/rkllmjs.git
 cd rkllmjs
 
-# Install dependencies
-npm install
+# Install dependencies (use --force to bypass platform checks if on x64)
+bun install
 
-# Build native addon and TypeScript
-npm run build
+# Build TypeScript
+bun run build
 
 # Run tests
-npm test
+bun test
 
 # Run examples
-npm run example
+bun run example
 ```
 
 ## 🧪 Examples
@@ -412,8 +402,7 @@ Check out the `/examples` directory for comprehensive usage examples:
 - `basic.js` - Simple inference
 - `streaming.js` - Real-time streaming  
 - `chat.js` - Multi-turn conversations
-- `bun-ffi-example.ts` - **NEW**: Bun.FFI demonstration
-- `backend-comparison.ts` - **NEW**: Performance comparison between backends
+- `bun-ffi-example.ts` - Complete Bun.FFI demonstration
 
 ### Running Examples
 
@@ -434,7 +423,6 @@ bun run example:comparison
 
 ### Key Documentation:
 
-- 🆕 **[Bun.FFI vs N-API](docs/bun-ffi-guide.md#features-comparison)** - Feature comparison
 - ⚡ **[Performance Benchmarks](docs/bun-ffi-guide.md#performance-monitoring)** - Speed comparisons
 - 🔧 **[Advanced Features](docs/bun-ffi-guide.md#advanced-ffi-features)** - KV cache, chat templates
 - 🐛 **[Troubleshooting](docs/bun-ffi-guide.md#troubleshooting)** - Common issues and solutions
