@@ -135,4 +135,27 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# RKLLM specific
 rknn-llm/
+models/
+*.rkllm
+*.rknn
+
+# Native build artifacts
+build/
+prebuilds/
+*.node
+
+# C++ build artifacts
+*.o
+*.so
+*.dylib
+*.dll
+
+# Test coverage
+coverage/
+
+# IDE
+.idea/
+*.swp
+*.swo

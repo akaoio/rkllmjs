@@ -1,0 +1,98 @@
+{
+  "name": "rkllmjs",
+  "version": "0.1.0",
+  "description": "High-performance JavaScript bindings for Rockchip LLM Runtime - run local LLMs on Rockchip NPUs",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "libs",
+    "src",
+    "binding.gyp",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "bun run build:native && bun run build:ts",
+    "build:native": "node-gyp rebuild",
+    "build:ts": "tsc",
+    "build:debug": "node-gyp rebuild --debug",
+    "clean": "rm -rf dist build",
+    "dev": "tsc -w",
+    "test": "bun test",
+    "models": "bun tools.ts",
+    "models:list": "bun tools.ts list",
+    "models:pull": "bun tools.ts pull",
+    "models:clean": "bun tools.ts clean",
+    "test-tools": "bun test-tools.ts",
+    "test:watch": "bun test --watch",
+    "benchmark": "bun run benchmarks/inference.js",
+    "example": "bun run examples/basic.js",
+    "example:streaming": "bun run examples/streaming.js",
+    "prepare": "bun run build",
+    "prepack": "bun run build",
+    "format": "prettier --write 'src/**/*.ts' 'examples/**/*.{ts,js}'",
+    "lint": "eslint 'src/**/*.ts'",
+    "start": "bun run build && bun run example"
+  },
+  "keywords": [
+    "rockchip",
+    "npu",
+    "llm",
+    "ai",
+    "inference",
+    "rk3588",
+    "rk356x",
+    "edge-computing",
+    "local-llm",
+    "javascript",
+    "typescript",
+    "bun",
+    "esm",
+    "node-addon"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akaoio/rkllmjs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/akaoio/rkllmjs/issues"
+  },
+  "homepage": "https://github.com/akaoio/rkllmjs#readme",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64",
+    "arm"
+  ],
+  "devDependencies": {
+    "@types/bun": "latest",
+    "bun-types": "latest",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.3.1",
+    "@typescript-eslint/parser": "^7.3.1",
+    "node-gyp": "^10.0.1",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.2"
+  },
+  "dependencies": {
+    "node-addon-api": "^7.1.0"
+  },
+  "trustedDependencies": [
+    "node-addon-api"
+  ]
+}
