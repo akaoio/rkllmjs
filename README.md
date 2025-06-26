@@ -3,6 +3,8 @@
 High-performance JavaScript bindings for Rockchip LLM Runtime - run local LLMs on Rockchip NPUs (RK3588, RK356x, etc.) with blazing speed using **Bun**.
 
 > **⚡ Built for Bun** - Optimized for Bun's fast JavaScript runtime with native ES modules support
+> 
+> **🆕 NEW: Bun.FFI Support** - Direct native library access without C++ compilation required!
 
 [![NPM Version](https://img.shields.io/npm/v/rkllmjs.svg)](https://www.npmjs.com/package/rkllmjs)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -11,13 +13,15 @@ High-performance JavaScript bindings for Rockchip LLM Runtime - run local LLMs o
 ## ✨ Features
 
 - 🏎️ **High Performance**: Direct bindings to Rockchip's optimized LLM runtime
+- ⚡ **Bun.FFI Support**: No compilation required when using Bun runtime
 - 🔧 **Easy Integration**: Simple JavaScript/TypeScript API
 - 🌊 **Streaming Support**: Real-time token generation with callbacks
-- 🎯 **Multiple Runtimes**: Works with Bun, Node.js, and Deno
+- 🎯 **Multiple Runtimes**: Works with Bun (FFI) and Node.js (N-API)
 - 🔄 **Async/Await**: Modern promise-based API
 - 📱 **Multi-modal**: Support for text and image inputs
 - 🎨 **LoRA Adapters**: Dynamic model fine-tuning support
 - 🛡️ **Type Safe**: Full TypeScript definitions included
+- 🧠 **Advanced Features**: KV cache management, chat templates, function calling
 
 ## 🎯 Supported Hardware
 
@@ -42,6 +46,31 @@ pnpm add rkllmjs
 bun add rkllmjs
 ```
 
+## 🆕 Bun.FFI vs N-API
+
+RKLLMJS now supports two backends:
+
+| Feature | **Bun.FFI** | **N-API** |
+|---------|-------------|-----------|
+| **Runtime** | Bun only | Bun, Node.js |
+| **Compilation** | ❌ None required | ✅ C++ compilation |
+| **Setup Time** | ⚡ Instant | 🐌 Slow (build step) |
+| **Advanced Features** | ✅ Full API access | 🔶 Basic features |
+| **Performance** | 🚀 Direct calls | 🔶 Bridge overhead |
+
+### Use Bun.FFI When:
+- ✅ Running in Bun environment
+- ✅ Need fastest setup (no compilation)
+- ✅ Want advanced features (KV cache, chat templates)
+- ✅ Rapid prototyping and development
+
+### Use N-API When:
+- ✅ Running in Node.js
+- ✅ Need maximum compatibility
+- ✅ Production deployments with existing Node.js infrastructure
+
+The library **automatically detects** the best backend for your environment!
+
 ## 🚀 Quick Start
 
 ### 1. Download a Model
@@ -56,28 +85,76 @@ bun tools.ts pull microsoft/DialoGPT-small pytorch_model.bin
 bun tools.ts list
 ```
 
-### 2. Basic Inference
+### 2. Basic Inference (Auto-detect Backend)
 
 ```javascript
 import { RKLLM, RKLLMInputType } from 'rkllmjs';
-import { RKLLMModelManager } from './tools.js';
 
 async function main() {
-  // Get the first available model
-  const modelManager = new RKLLMModelManager();
-  const modelPath = await modelManager.getFirstModelPath();
-  
-  if (!modelPath) {
-    console.log('No models found! Download one first with: bun tools.ts pull');
-    return;
-  }
-
-  // Initialize RKLLM
+  // Initialize RKLLM - automatically chooses best backend
   const llm = new RKLLM();
   await llm.init({
-    modelPath,
-    maxContextLen: 512,
-    maxNewTokens: 128,
+    modelPath: './models/your-model.rkllm',
+    maxContextLen: 2048,
+    maxNewTokens: 256,
+    temperature: 0.7,
+  });
+
+  console.log(`Using ${llm.backendType} backend`); // 'ffi' or 'napi'
+
+  // Run inference
+  const result = await llm.run({
+    inputType: RKLLMInputType.PROMPT,
+    inputData: "Hello, how are you?",
+  });
+
+  console.log('Response:', result.text);
+  
+  // Cleanup
+  await llm.destroy();
+}
+
+main().catch(console.error);
+```
+
+### 3. Explicit Bun.FFI Usage
+
+```javascript
+import { RKLLM, RKLLMInputType } from 'rkllmjs';
+
+async function main() {
+  const llm = new RKLLM();
+  
+  // Explicitly request FFI backend
+  await llm.init({
+    modelPath: './models/your-model.rkllm',
+    maxContextLen: 2048,
+    temperature: 0.7,
+  }, 'ffi'); // Force FFI backend
+
+  // Use advanced FFI features
+  await llm.setChatTemplate(
+    "You are a helpful assistant.",
+    "User: ",
+    "\nAssistant: "
+  );
+
+  // Get KV cache info
+  const cacheSizes = await llm.getKVCacheSize();
+  console.log('Cache sizes:', cacheSizes);
+
+  // Run inference
+  const result = await llm.run({
+    inputType: RKLLMInputType.PROMPT,
+    inputData: "What is edge computing?",
+  });
+
+  console.log('Response:', result.text);
+  await llm.destroy();
+}
+
+main().catch(console.error);
+```
   });
 
   // Run inference
@@ -335,3 +412,29 @@ Check out the `/examples` directory for comprehensive usage examples:
 - `basic.js` - Simple inference
 - `streaming.js` - Real-time streaming  
 - `chat.js` - Multi-turn conversations
+- `bun-ffi-example.ts` - **NEW**: Bun.FFI demonstration
+- `backend-comparison.ts` - **NEW**: Performance comparison between backends
+
+### Running Examples
+
+```bash
+# Basic examples (work with both backends)
+bun run examples/basic.js
+
+# FFI-specific examples
+bun run example:ffi
+bun run example:comparison
+```
+
+## 📖 Documentation
+
+- **[Bun.FFI Integration Guide](docs/bun-ffi-guide.md)** - Complete guide to using Bun.FFI
+- **[API Reference](docs/api.md)** - Detailed API documentation
+- **[Contributing](CONTRIBUTING.md)** - Development and contribution guide
+
+### Key Documentation:
+
+- 🆕 **[Bun.FFI vs N-API](docs/bun-ffi-guide.md#features-comparison)** - Feature comparison
+- ⚡ **[Performance Benchmarks](docs/bun-ffi-guide.md#performance-monitoring)** - Speed comparisons
+- 🔧 **[Advanced Features](docs/bun-ffi-guide.md#advanced-ffi-features)** - KV cache, chat templates
+- 🐛 **[Troubleshooting](docs/bun-ffi-guide.md#troubleshooting)** - Common issues and solutions
