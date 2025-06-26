@@ -1,40 +1,96 @@
 import { RKLLMParam, RKLLMInput, RKLLMResult, StreamOptions, RKLLMLoraAdapter } from './types.js';
 import { requireValidModelPath } from './utils/model-validator.js';
 
+// Backend implementations
+type BackendType = 'napi' | 'ffi';
+
+interface RKLLMBackend {
+  init(params: RKLLMParam): Promise<void>;
+  run(input: RKLLMInput): Promise<RKLLMResult>;
+  runStream(input: RKLLMInput, options: StreamOptions): Promise<void>;
+  loadLoRA?(adapter: RKLLMLoraAdapter): Promise<void>;
+  unloadLoRA?(): Promise<void>;
+  getContextLength?(): number;
+  clearContext?(): Promise<void>;
+  destroy(): Promise<void>;
+  get initialized(): boolean;
+}
+
+/**
+ * Detect the best available backend
+ */
+function detectBackend(): BackendType {
+  // Check if we're running in Bun and FFI is available
+  if (typeof Bun !== 'undefined' && typeof Bun.version === 'string') {
+    return 'ffi';
+  }
+  
+  // Default to N-API for Node.js and other environments
+  return 'napi';
+}
+
 /**
  * Main RKLLM class for interacting with Rockchip LLM Runtime
  */
 export class RKLLM {
-  private handle: any = null;
-  private isInitialized = false;
-  private addon: any = null;
+  private backend: RKLLMBackend | null = null;
+  private currentBackendType: BackendType | null = null;
 
   /**
    * Initialize the LLM with the given parameters
    * @param params Configuration parameters for the LLM
+   * @param preferredBackend Optional backend preference ('napi' | 'ffi')
    */
-  async init(params: RKLLMParam): Promise<void> {
-    if (this.isInitialized) {
+  async init(params: RKLLMParam, preferredBackend?: BackendType): Promise<void> {
+    if (this.backend?.initialized) {
       throw new Error('RKLLM is already initialized');
     }
 
     // Validate model path before attempting to initialize
-    await requireValidModelPath(params.modelPath);        try {
-            // Load the native addon using standard require
-            // @ts-ignore - Native module loading
-            const { createRequire } = await import('module');
-            const require = createRequire(import.meta.url);
-            this.addon = require('../build/Release/rkllmjs.node');
-            
-            if (!this.addon) {
-                throw new Error('Failed to load native addon');
-            }
-            
-            this.handle = await this.addon.rkllmInit(params);
-      this.isInitialized = true;
+    await requireValidModelPath(params.modelPath);
+    
+    // Determine which backend to use
+    this.currentBackendType = preferredBackend || detectBackend();
+    
+    try {
+      this.backend = await this.createBackend(this.currentBackendType);
+      await this.backend.init(params);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to initialize RKLLM: ${errorMessage}`);
+      
+      // If FFI fails and we auto-detected it, try falling back to N-API
+      if (this.currentBackendType === 'ffi' && !preferredBackend) {
+        console.warn('FFI backend failed, falling back to N-API:', errorMessage);
+        try {
+          this.currentBackendType = 'napi';
+          this.backend = await this.createBackend(this.currentBackendType);
+          await this.backend.init(params);
+          return;
+        } catch (napiError) {
+          const napiErrorMessage = napiError instanceof Error ? napiError.message : String(napiError);
+          throw new Error(`Both backends failed. FFI: ${errorMessage}, N-API: ${napiErrorMessage}`);
+        }
+      }
+      
+      throw new Error(`Failed to initialize RKLLM with ${this.currentBackendType} backend: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Create backend implementation
+   */
+  private async createBackend(type: BackendType): Promise<RKLLMBackend> {
+    switch (type) {
+      case 'ffi': {
+        const { RKLLMFFIImpl } = await import('./ffi/rkllm-ffi-impl.js');
+        return new RKLLMFFIImpl();
+      }
+      case 'napi': {
+        const { RKLLMNAPIImpl } = await import('./napi/rkllm-napi-impl.js');
+        return new RKLLMNAPIImpl();
+      }
+      default:
+        throw new Error(`Unknown backend type: ${type}`);
     }
   }
 
@@ -45,13 +101,7 @@ export class RKLLM {
    */
   async run(input: RKLLMInput): Promise<RKLLMResult> {
     this.checkInitialized();
-    
-    try {
-      return await this.addon.rkllmRun(this.handle, input);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Inference failed: ${errorMessage}`);
-    }
+    return await this.backend!.run(input);
   }
 
   /**
@@ -61,13 +111,7 @@ export class RKLLM {
    */
   async runStream(input: RKLLMInput, options: StreamOptions): Promise<void> {
     this.checkInitialized();
-    
-    try {
-      return await this.addon.rkllmRunStream(this.handle, input, options);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Streaming inference failed: ${errorMessage}`);
-    }
+    return await this.backend!.runStream(input, options);
   }
 
   /**
@@ -77,11 +121,10 @@ export class RKLLM {
   async loadLoraAdapter(adapter: RKLLMLoraAdapter): Promise<void> {
     this.checkInitialized();
     
-    try {
-      return await this.addon.rkllmLoadLora(this.handle, adapter);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to load LoRA adapter: ${errorMessage}`);
+    if (this.backend!.loadLoRA) {
+      return await this.backend!.loadLoRA(adapter);
+    } else {
+      throw new Error(`LoRA adapter loading not supported with ${this.currentBackendType} backend`);
     }
   }
 
@@ -91,11 +134,10 @@ export class RKLLM {
   async unloadLoraAdapter(): Promise<void> {
     this.checkInitialized();
     
-    try {
-      return await this.addon.rkllmUnloadLora(this.handle);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to unload LoRA adapter: ${errorMessage}`);
+    if (this.backend!.unloadLoRA) {
+      return await this.backend!.unloadLoRA();
+    } else {
+      throw new Error(`LoRA adapter unloading not supported with ${this.currentBackendType} backend`);
     }
   }
 
@@ -105,11 +147,10 @@ export class RKLLM {
   getContextLength(): number {
     this.checkInitialized();
     
-    try {
-      return this.addon.rkllmGetContextLength(this.handle);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to get context length: ${errorMessage}`);
+    if (this.backend!.getContextLength) {
+      return this.backend!.getContextLength();
+    } else {
+      throw new Error(`Context length retrieval not supported with ${this.currentBackendType} backend`);
     }
   }
 
@@ -119,11 +160,10 @@ export class RKLLM {
   async clearContext(): Promise<void> {
     this.checkInitialized();
     
-    try {
-      return await this.addon.rkllmClearContext(this.handle);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to clear context: ${errorMessage}`);
+    if (this.backend!.clearContext) {
+      return await this.backend!.clearContext();
+    } else {
+      throw new Error(`Context clearing not supported with ${this.currentBackendType} backend`);
     }
   }
 
@@ -131,26 +171,20 @@ export class RKLLM {
    * Destroy the LLM instance and free resources
    */
   async destroy(): Promise<void> {
-    if (!this.isInitialized) {
+    if (!this.backend?.initialized) {
       return;
     }
 
-    try {
-      await this.addon.rkllmDestroy(this.handle);
-      this.handle = null;
-      this.addon = null;
-      this.isInitialized = false;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to destroy RKLLM: ${errorMessage}`);
-    }
+    await this.backend.destroy();
+    this.backend = null;
+    this.currentBackendType = null;
   }
 
   /**
    * Check if the LLM is initialized
    */
   private checkInitialized(): void {
-    if (!this.isInitialized || !this.addon) {
+    if (!this.backend?.initialized) {
       throw new Error('RKLLM is not initialized. Call init() first.');
     }
   }
@@ -159,7 +193,14 @@ export class RKLLM {
    * Check if the LLM is initialized
    */
   get initialized(): boolean {
-    return this.isInitialized;
+    return this.backend?.initialized ?? false;
+  }
+
+  /**
+   * Get the current backend type
+   */
+  get backendType(): BackendType | null {
+    return this.currentBackendType;
   }
 }
 

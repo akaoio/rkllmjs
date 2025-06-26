@@ -7,6 +7,13 @@ export * from './types.js';
 export * from './rkllm.js';
 export { RKLLM, createRKLLM } from './rkllm.js';
 
+// FFI-specific exports (only available in Bun)
+export { 
+  initializeFFI, 
+  isFFIAvailable, 
+  isBunRuntime 
+} from './ffi/rkllm-ffi.js';
+
 // Version information
 export const version = '0.1.0';
 
