@@ -417,6 +417,7 @@ bun run example:comparison
 
 ## 📖 Documentation
 
+- **[Universal Package Guide](SUMMARY.md)** - Comprehensive guide for packaging and multi-runtime considerations
 - **[Bun.FFI Integration Guide](docs/bun-ffi-guide.md)** - Complete guide to using Bun.FFI
 - **[API Reference](docs/api.md)** - Detailed API documentation
 - **[Contributing](CONTRIBUTING.md)** - Development and contribution guide
