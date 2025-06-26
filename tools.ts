@@ -4,19 +4,15 @@
  * RKLLMJS Model Management Tool
  * 
  * Usage:
- *   bun tools.ts pull [repo] [filename]           - Download single model file
- *   bun tools.ts pull-complete [repo] [model]     - Download model + essential technical files
- *   bun tools.ts pull-model-only [repo] [model]   - Download ONLY the specified model file
- *   bun tools.ts download [repo] [model]          - Alias for pull-complete
+ *   bun tools.ts pull [repo] [filename]           - Download specified RKLLM model + essential technical files
  *   bun tools.ts list                             - List all downloaded models
  *   bun tools.ts info [model-name]                - Show model information
  *   bun tools.ts remove [model-name]              - Remove a model
  *   bun tools.ts clean                            - Clean all models
  * 
  * Examples:
- *   bun tools.ts pull-complete limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4
- *   bun tools.ts pull-model-only limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
- *   bun tools.ts download limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4
+ *   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
+ *   bun tools.ts pull punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm
  */
 
 interface ModelInfo {
@@ -50,7 +46,7 @@ class RKLLMModelManager {
   }
 
   /**
-   * Download a model from HuggingFace repository
+   * Download a specified RKLLM model and essential technical files from HuggingFace repository
    */
   async pullModel(repo?: string, filename?: string): Promise<void> {
     if (!repo) {
@@ -61,173 +57,7 @@ class RKLLMModelManager {
       filename = await this.promptForFilename(repo);
     }
 
-    const repoDir = `${this.modelsDir}/${repo}`;
-    const modelPath = `${repoDir}/${filename}`;
-
-    console.log(`🚀 Downloading model from ${repo}/${filename}...`);
-    console.log(`📥 Target: ${modelPath}`);
-
-    // Create repo directory
-    try {
-      Bun.spawnSync(['mkdir', '-p', repoDir]);
-    } catch (error) {
-      console.error(`❌ Failed to create directory: ${error}`);
-      return;
-    }
-
-    try {
-      // HuggingFace Hub download URL
-      const downloadUrl = `https://huggingface.co/${repo}/resolve/main/${filename}`;
-      console.log(`🔗 URL: ${downloadUrl}`);
-
-      const response = await fetch(downloadUrl);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const totalSize = parseInt(response.headers.get('content-length') || '0');
-      console.log(`📊 File size: ${this.formatBytes(totalSize)}`);
-
-      // Check available disk space (rough estimate)
-      if (totalSize > 0) {
-        try {
-          const spaceCheck = Bun.spawnSync(['df', '-h', '.']);
-          const spaceOutput = spaceCheck.stdout.toString();
-          console.log(`💽 Checking disk space...`);
-          
-          // Warn if file is very large
-          if (totalSize > 5 * 1024 * 1024 * 1024) { // > 5GB
-            console.log(`⚠️  Large file detected (${this.formatBytes(totalSize)}). This may take a while...`);
-          }
-        } catch {
-          // Ignore disk space check errors
-        }
-      }
-
-      if (!response.body) {
-        throw new Error('Response body is null');
-      }
-
-      // Download with progress tracking
-      const reader = response.body.getReader();
-      let downloadedBytes = 0;
-      let lastProgressUpdate = 0;
-
-      // Reset progress tracking variables
-      this.downloadStartTime = 0;
-      this.lastDownloadedBytes = 0;
-      this.lastSpeedUpdate = 0;
-      this.lastCalculatedSpeed = 0;
-
-      console.log(`\n⬇️  Downloading...`);
-      this.showProgressBar(0, totalSize);
-
-      // Create a writable file stream to avoid memory issues with large files
-      const file = Bun.file(modelPath);
-      const writer = file.writer();
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) break;
-          
-          // Write chunk directly to file
-          writer.write(value);
-          downloadedBytes += value.length;
-          
-          // Update progress more frequently for better visual feedback
-          const progressPercent = (downloadedBytes / totalSize) * 100;
-          const shouldUpdate = progressPercent - lastProgressUpdate >= 0.5 || // Every 0.5%
-                             downloadedBytes - (lastProgressUpdate * totalSize / 100) >= 512 * 1024 || // Every 512KB
-                             Date.now() - this.lastSpeedUpdate >= 250; // Every 250ms
-          
-          if (shouldUpdate || downloadedBytes === totalSize) {
-            this.showProgressBar(downloadedBytes, totalSize);
-            lastProgressUpdate = progressPercent;
-          }
-        }
-
-        // Finalize the file
-        await writer.end();
-        
-        console.log('\n'); // New line after progress bar
-
-      } catch (writeError) {
-        await writer.end();
-        throw writeError;
-      }
-
-      // Save metadata
-      const metadataPath = `${repoDir}/meta.json`;
-      const metadata = {
-        repo
-      };
-      await Bun.write(metadataPath, JSON.stringify(metadata, null, 2));
-
-      console.log(`✅ Model downloaded successfully!`);
-      console.log(`📂 Path: ${modelPath}`);
-      console.log(`💾 Size: ${this.formatBytes(downloadedBytes)}`);
-
-    } catch (error) {
-      console.error(`❌ Download failed: ${(error as Error).message}`);
-      
-      // Clean up partial download
-      try {
-        const partialFile = Bun.file(modelPath);
-        if (await partialFile.exists()) {
-          Bun.spawnSync(['rm', '-f', modelPath]);
-          console.log(`🧹 Cleaned up partial download`);
-        }
-      } catch {
-        // Ignore cleanup errors
-      }
-      
-      // Suggest some popular models if the download fails
-      console.log(`\n💡 Popular RKLLM models you might try:`);
-      console.log(`   • microsoft/DialoGPT-medium`);
-      console.log(`   • microsoft/DialoGPT-small`);
-      console.log(`   • gpt2`);
-      console.log(`   • distilgpt2`);
-      console.log(`\n💭 Tips for large files:`);
-      console.log(`   • Ensure stable internet connection`);
-      console.log(`   • Check available disk space`);
-      console.log(`   • Try smaller model variants first`);
-      
-      process.exit(1);
-    }
-  }
-
-  /**
-   * Get list of files from HuggingFace repository
-   */
-  async getRepoFiles(repo: string): Promise<string[]> {
-    try {
-      console.log(`🔍 Getting file list from ${repo}...`);
-      const apiUrl = `https://huggingface.co/api/models/${repo}/tree/main`;
-      
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to get repo info: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      const files = data.filter((item: any) => item.type === 'file').map((item: any) => item.path);
-      
-      console.log(`📄 Found ${files.length} files in repository`);
-      return files;
-    } catch (error) {
-      console.error(`❌ Failed to get repo files: ${error}`);
-      return [];
-    }
-  }
-
-  /**
-   * Download all essential files from a model repository
-   */
-  async pullModelComplete(repo: string, modelFileName?: string): Promise<void> {
-    console.log(`🚀 Downloading specific model and essential files from ${repo}...`);
+    console.log(`🚀 Downloading specified model and essential files from ${repo}...`);
     
     const repoDir = `${this.modelsDir}/${repo}`;
     
@@ -259,29 +89,17 @@ class RKLLMModelManager {
     // Build final download list
     const filesToDownload: string[] = [];
 
-    // 1. Add specific model file if requested
-    if (modelFileName) {
-      if (allFiles.includes(modelFileName)) {
-        filesToDownload.push(modelFileName);
-        console.log(`📄 Target model: ${modelFileName}`);
-      } else {
-        console.error(`❌ Requested model file '${modelFileName}' not found in repository`);
-        const availableModels = allFiles.filter(f => 
-          f.endsWith('.rkllm') || f.endsWith('.bin') || f.endsWith('.safetensors') || f.endsWith('.gguf')
-        );
-        console.log('📋 Available model files:', availableModels.slice(0, 5).join(', '));
-        return;
-      }
+    // 1. Add specific model file
+    if (allFiles.includes(filename)) {
+      filesToDownload.push(filename);
+      console.log(`📄 Target model: ${filename}`);
     } else {
-      // If no specific model file, find the first .rkllm file
-      const rkllmFiles = allFiles.filter(f => f.endsWith('.rkllm'));
-      if (rkllmFiles.length > 0) {
-        filesToDownload.push(rkllmFiles[0]);
-        console.log(`📄 Auto-selected model: ${rkllmFiles[0]}`);
-      } else {
-        console.error('❌ No .rkllm model files found in repository');
-        return;
-      }
+      console.error(`❌ Requested model file '${filename}' not found in repository`);
+      const availableModels = allFiles.filter(f => 
+        f.endsWith('.rkllm') || f.endsWith('.bin') || f.endsWith('.safetensors') || f.endsWith('.gguf')
+      );
+      console.log('📋 Available model files:', availableModels.slice(0, 5).join(', '));
+      return;
     }
 
     // 2. Add only essential technical files that exist
@@ -337,11 +155,35 @@ class RKLLMModelManager {
         console.error(`⚠️  Failed to save metadata: ${error}`);
       }
       
-      console.log(`🎉 Targeted download completed! Files saved to: ${repoDir}`);
-      console.log(`📁 Model file: ${filesToDownload[0]}`);
+      console.log(`🎉 Download completed! Files saved to: ${repoDir}`);
+      console.log(`📁 Model file: ${filename}`);
       console.log(`⚙️  Technical files: ${filesToDownload.length - 1}`);
     } else {
       console.error(`❌ No files were downloaded successfully`);
+    }
+  }
+
+  /**
+   * Get list of files from HuggingFace repository
+   */
+  async getRepoFiles(repo: string): Promise<string[]> {
+    try {
+      console.log(`🔍 Getting file list from ${repo}...`);
+      const apiUrl = `https://huggingface.co/api/models/${repo}/tree/main`;
+      
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to get repo info: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const files = data.filter((item: any) => item.type === 'file').map((item: any) => item.path);
+      
+      console.log(`📄 Found ${files.length} files in repository`);
+      return files;
+    } catch (error) {
+      console.error(`❌ Failed to get repo files: ${error}`);
+      return [];
     }
   }
 
@@ -902,53 +744,6 @@ class RKLLMModelManager {
     const models = await this.getAllModels();
     return models.find(model => model.name === modelName) || null;
   }
-
-  /**
-   * Download only a specific model file (no tokenizer or config files)
-   */
-  async pullModelOnly(repo: string, modelFileName: string): Promise<void> {
-    console.log(`🎯 Downloading specific model file: ${modelFileName} from ${repo}...`);
-    
-    const repoDir = `${this.modelsDir}/${repo}`;
-    
-    // Create repo directory
-    try {
-      Bun.spawnSync(['mkdir', '-p', repoDir]);
-      console.log(`📁 Created directory: ${repoDir}`);
-    } catch (error) {
-      console.error(`❌ Failed to create directory: ${error}`);
-      return;
-    }
-
-    // Check if file exists in repo
-    const allFiles = await this.getRepoFiles(repo);
-    if (!allFiles.includes(modelFileName)) {
-      console.error(`❌ Model file '${modelFileName}' not found in repository`);
-      const availableModels = allFiles.filter(f => 
-        f.endsWith('.rkllm') || f.endsWith('.bin') || f.endsWith('.safetensors') || f.endsWith('.gguf')
-      );
-      console.log('📋 Available model files:', availableModels.slice(0, 5).join(', '));
-      return;
-    }
-
-    try {
-      console.log(`⬇️  Downloading ${modelFileName}...`);
-      await this.downloadFile(repo, modelFileName, repoDir);
-      
-      // Save minimal metadata
-      const metadataPath = `${repoDir}/meta.json`;
-      const metadata = {
-        repo
-      };
-      
-      await Bun.write(metadataPath, JSON.stringify(metadata, null, 2));
-      console.log(`🎉 Model file downloaded successfully!`);
-      console.log(`📁 Path: ${repoDir}/${modelFileName}`);
-      
-    } catch (error) {
-      console.error(`❌ Failed to download ${modelFileName}: ${error}`);
-    }
-  }
 }
 
 // CLI Interface
@@ -963,20 +758,13 @@ async function main() {
     case 'pull':
       const repo = args[1];
       const filename = args[2];
-      await manager.pullModel(repo, filename);
-      break;
-
-    case 'pull-complete':
-    case 'download':
-      const repoComplete = args[1];
-      const modelFile = args[2];
-      if (!repoComplete) {
-        console.log(`❌ Please specify a repository.`);
-        console.log(`Usage: bun tools.ts pull-complete <repo> [model-file]`);
-        console.log(`Example: bun tools.ts pull-complete punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4`);
+      if (!repo || !filename) {
+        console.log(`❌ Please specify both repository and filename.`);
+        console.log(`Usage: bun tools.ts pull <repo> <filename>`);
+        console.log(`Example: bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm`);
         process.exit(1);
       }
-      await manager.pullModelComplete(repoComplete, modelFile);
+      await manager.pullModel(repo, filename);
       break;
 
     case 'list':
@@ -1045,37 +833,21 @@ async function main() {
       await manager.listModels();
       break;
 
-    case 'pull-model-only':
-      const repoModelOnly = args[1];
-      const modelFileOnly = args[2];
-      if (!repoModelOnly || !modelFileOnly) {
-        console.log(`❌ Please specify repository and model file.`);
-        console.log(`Usage: bun tools.ts pull-model-only <repo> <model-file>`);
-        console.log(`Example: bun tools.ts pull-model-only limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm`);
-        process.exit(1);
-      }
-      await manager.pullModelOnly(repoModelOnly, modelFileOnly);
-      break;
-
     default:
       console.log(`📖 Usage:`);
-      console.log(`   bun tools.ts pull [repo] [filename]           - Download single model file`);
-      console.log(`   bun tools.ts pull-complete [repo] [model]     - Download model + essential technical files`);
-      console.log(`   bun tools.ts pull-model-only [repo] [model]   - Download ONLY the specified model file`);
-      console.log(`   bun tools.ts download [repo] [model]          - Alias for pull-complete`);
+      console.log(`   bun tools.ts pull <repo> <filename>           - Download specified RKLLM model + essential technical files`);
       console.log(`   bun tools.ts list                             - List all downloaded models`);
-      console.log(`   bun tools.ts info [model-name]                - Show model information`);
-      console.log(`   bun tools.ts remove [model-name]              - Remove a model`);
+      console.log(`   bun tools.ts info <model-name>                - Show model information`);
+      console.log(`   bun tools.ts remove <model-name>              - Remove a model`);
       console.log(`   bun tools.ts clean                            - Clean all models`);
       console.log(`\n📚 Examples:`);
-      console.log(`   # Download complete model with tokenizer:`);
-      console.log(`   bun tools.ts pull-complete punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4`);
-      console.log(`   bun tools.ts download punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm`);
-      console.log(`\n   # Traditional single file download:`);
-      console.log(`   bun tools.ts pull microsoft/DialoGPT-medium pytorch_model.bin`);
+      console.log(`   # Download RKLLM model with essential technical files:`);
+      console.log(`   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm`);
+      console.log(`   bun tools.ts pull punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm`);
       console.log(`\n   # Management:`);
       console.log(`   bun tools.ts list`);
-      console.log(`   bun tools.ts info punchnox_Tinnyllama-1.1B-rk3588-rkllm-1.1.4`);
+      console.log(`   bun tools.ts info Qwen2.5-0.5B-Instruct-rk3588-1.1.4`);
+      console.log(`   bun tools.ts remove Qwen2.5-0.5B-Instruct-rk3588-1.1.4`);
       break;
   }
 }
