@@ -70,8 +70,8 @@ RKLLMJS is now exclusively built on Bun.FFI for maximum performance and simplici
 First, download a model using the built-in model manager:
 
 ```bash
-# Download a small conversational model
-bun tools.ts pull microsoft/DialoGPT-small pytorch_model.bin
+# Download a lightweight RKLLM model
+bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
 
 # Or list available models if you already have some
 bun tools.ts list
@@ -334,8 +334,8 @@ RKLLMJS includes a built-in model manager to download and manage models from Hug
 ### Download Models
 
 ```bash
-# Download a specific model
-bun tools.ts pull microsoft/DialoGPT-small pytorch_model.bin
+# Download a specific RKLLM model
+bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
 
 # Interactive download (will prompt for repo and filename)
 bun tools.ts pull
@@ -344,28 +344,28 @@ bun tools.ts pull
 bun tools.ts list
 
 # Show model information
-bun tools.ts info DialoGPT-small
+bun tools.ts info Qwen2.5-0.5B-Instruct-rk3588-1.1.4
 
 # Remove a model
-bun tools.ts remove DialoGPT-small
+bun tools.ts remove Qwen2.5-0.5B-Instruct-rk3588-1.1.4
 
 # Clean all models
 bun tools.ts clean
 ```
 
-### Popular Models for RKLLM
+### Popular RKLLM Models
 
 ```bash
-# Small conversational models
-bun tools.ts pull microsoft/DialoGPT-small pytorch_model.bin
-bun tools.ts pull microsoft/DialoGPT-medium pytorch_model.bin
+# Lightweight models for testing
+bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
+bun tools.ts pull punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm
 
-# General purpose models
-bun tools.ts pull gpt2 pytorch_model.bin
-bun tools.ts pull distilgpt2 pytorch_model.bin
+# More capable models (larger)
+bun tools.ts pull akaoio/Qwen2.5-3B-Instruct-rk3588 Qwen2.5-3B-Instruct-rk3588-w8a8-opt-0.rkllm
+bun tools.ts pull rockchip/Llama-2-7b-chat-rk3588 llama-2-7b-chat-rk3588-w8a8.rkllm
 ```
 
-> **💡 Tip**: Start with smaller models first to test your setup, then move to larger models as needed.
+> **💡 Tip**: Start with the 0.5B or 1.1B models first to test your setup, then move to larger models as needed.
 
 ## 🏗️ Building from Source
 

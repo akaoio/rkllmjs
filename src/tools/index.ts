@@ -1,0 +1,132 @@
+#!/usr/bin/env bun
+
+/**
+ * RKLLMJS Model Management Tool CLI Interface
+ * 
+ * Usage:
+ *   bun tools.ts pull [repo] [filename]           - Download specified RKLLM model + essential technical files
+ *   bun tools.ts list                             - List all downloaded models
+ *   bun tools.ts info [model-name]                - Show model information
+ *   bun tools.ts remove [model-name]              - Remove a model
+ *   bun tools.ts clean                            - Clean all models
+ * 
+ * Examples:
+ *   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
+ *   bun tools.ts pull punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm
+ */
+
+import { RKLLMModelManager } from './model-manager';
+
+// CLI Interface
+async function main() {
+  const args = Bun.argv.slice(2);
+  const command = args[0];
+  const manager = new RKLLMModelManager();
+
+  console.log(`🤖 RKLLMJS Model Manager\n`);
+
+  switch (command) {
+    case 'pull':
+      const repo = args[1];
+      const filename = args[2];
+      if (!repo || !filename) {
+        console.log(`❌ Please specify both repository and filename.`);
+        console.log(`Usage: bun tools.ts pull <repo> <filename>`);
+        console.log(`Example: bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm`);
+        process.exit(1);
+      }
+      await manager.pullModel(repo, filename);
+      break;
+
+    case 'list':
+      await manager.listModels();
+      break;
+
+    case 'info':
+      const modelName = args[1];
+      if (!modelName) {
+        console.log(`❌ Please specify a model name.`);
+        console.log(`Usage: bun tools.ts info <model-name>`);
+        process.exit(1);
+      }
+      await manager.showModelInfo(modelName);
+      break;
+
+    case 'remove':
+      const removeModelName = args[1];
+      if (!removeModelName) {
+        console.log(`❌ Please specify a model name.`);
+        console.log(`Usage: bun tools.ts remove <model-name>`);
+        process.exit(1);
+      }
+      await manager.removeModel(removeModelName);
+      break;
+
+    case 'clean':
+      await manager.cleanModels();
+      break;
+
+    case 'debug':
+      console.log('🔧 Debug Mode: Scanning models directory...');
+      const fs = require('fs');
+      const path = require('path');
+      
+      const modelsDir = './models';
+      console.log(`📂 Models directory: ${modelsDir}`);
+      console.log(`📂 Exists: ${fs.existsSync(modelsDir)}`);
+      
+      if (fs.existsSync(modelsDir)) {
+        const items = fs.readdirSync(modelsDir, { withFileTypes: true });
+        console.log(`📁 Found ${items.length} items:`);
+        
+        for (const item of items) {
+          const itemPath = path.join(modelsDir, item.name);
+          console.log(`  ${item.isDirectory() ? '📁' : '📄'} ${item.name}`);
+          
+          if (item.isDirectory()) {
+            const subItems = fs.readdirSync(itemPath, { withFileTypes: true });
+            console.log(`    Sub-items (${subItems.length}):`);
+            
+            for (const subItem of subItems) {
+              const subItemPath = path.join(itemPath, subItem.name);
+              const subStat = fs.statSync(subItemPath);
+              console.log(`      ${subItem.isDirectory() ? '📁' : '📄'} ${subItem.name} (${subStat.size} bytes)`);
+              
+              if (subItem.name.endsWith('.rkllm')) {
+                console.log(`      *** 🤖 RKLLM MODEL FOUND: ${subItemPath} ***`);
+              }
+            }
+          }
+        }
+      }
+      
+      console.log('\n🔧 Testing manager.listModels()...');
+      await manager.listModels();
+      break;
+
+    default:
+      console.log(`📖 Usage:`);
+      console.log(`   bun tools.ts pull <repo> <filename>           - Download specified RKLLM model + essential technical files`);
+      console.log(`   bun tools.ts list                             - List all downloaded models`);
+      console.log(`   bun tools.ts info <model-name>                - Show model information`);
+      console.log(`   bun tools.ts remove <model-name>              - Remove a model`);
+      console.log(`   bun tools.ts clean                            - Clean all models`);
+      console.log(`\n📚 Examples:`);
+      console.log(`   # Download RKLLM model with essential technical files:`);
+      console.log(`   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm`);
+      console.log(`   bun tools.ts pull punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm`);
+      console.log(`\n   # Management:`);
+      console.log(`   bun tools.ts list`);
+      console.log(`   bun tools.ts info Qwen2.5-0.5B-Instruct-rk3588-1.1.4`);
+      console.log(`   bun tools.ts remove Qwen2.5-0.5B-Instruct-rk3588-1.1.4`);
+      break;
+  }
+}
+
+// Export for use in other files
+export { RKLLMModelManager };
+
+// Run CLI if this file is executed directly
+if (import.meta.main) {
+  main().catch(console.error);
+}

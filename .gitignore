@@ -166,3 +166,6 @@ tests/.tmp/
 .idea/
 *.swp
 *.swo
+
+# Backup files
+*.backup
