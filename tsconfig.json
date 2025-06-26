@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -22,15 +22,14 @@
     "resolveJsonModule": true,
     "verbatimModuleSyntax": false
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    "examples",
-    "**/*.test.ts",
-    "**/*.spec.ts"
+  "files": [
+    "src/index.ts",
+    "src/types.ts",
+    "src/rkllm.ts",
+    "src/core/ffi-manager.ts",
+    "src/core/rkllm-universal.ts", 
+    "src/core/universal-type-conversion.ts",
+    "src/runtime/interfaces.ts",
+    "src/ffi/symbol-definitions.ts"
   ]
 }

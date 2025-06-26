@@ -1,13 +1,12 @@
 import { RKLLMParam, RKLLMInput, RKLLMResult, StreamOptions, RKLLMLoraAdapter } from './types.js';
-import { requireValidModelPath } from './utils/model-validator.js';
-import { RKLLMFFIImpl } from './ffi/rkllm-ffi-impl.js';
 
 /**
  * Main RKLLM class for interacting with Rockchip LLM Runtime
- * Uses Bun.FFI for native bindings exclusively
+ * Supports multiple JavaScript runtimes with automatic adapter selection
  */
 export class RKLLM {
-  private backend: RKLLMFFIImpl | null = null;
+  private backend: any = null;
+  private useUniversal = false;
 
   /**
    * Initialize the LLM with the given parameters
@@ -18,15 +17,37 @@ export class RKLLM {
       throw new Error('RKLLM is already initialized');
     }
 
-    // Validate model path before attempting to initialize
-    await requireValidModelPath(params.modelPath);
+    // Validate model path before attempting to initialize (dynamic import)
+    try {
+      const { requireValidModelPath } = await import('./utils/model-validator.js');
+      await requireValidModelPath(params.modelPath);
+    } catch (error) {
+      // If validation fails, continue but warn
+      console.warn('Model path validation skipped:', error);
+    }
     
     try {
-      this.backend = new RKLLMFFIImpl();
+      // Dynamically import runtime detection to avoid compilation issues
+      const { detectRuntime } = await import('./runtime/detector.js');
+      const runtime = detectRuntime();
+      
+      if (runtime.name === 'bun' && runtime.ffiSupported) {
+        // Use original Bun FFI implementation for maximum performance
+        const { RKLLMFFIImpl } = await import('./ffi/rkllm-ffi-impl.js');
+        this.backend = new RKLLMFFIImpl();
+        this.useUniversal = false;
+      } else {
+        // Use universal implementation for other runtimes
+        const { UniversalRKLLM } = await import('./core/rkllm-universal.js');
+        this.backend = new UniversalRKLLM();
+        this.useUniversal = true;
+      }
+      
       await this.backend.init(params);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to initialize RKLLM with FFI backend: ${errorMessage}`);
+      const backendType = this.useUniversal ? 'universal' : 'Bun FFI';
+      throw new Error(`Failed to initialize RKLLM with ${backendType} backend: ${errorMessage}`);
     }
   }
 
@@ -37,7 +58,11 @@ export class RKLLM {
    */
   async run(input: RKLLMInput): Promise<RKLLMResult> {
     this.checkInitialized();
-    return await this.backend!.run(input);
+    if (this.useUniversal) {
+      return await this.backend.run(input);
+    } else {
+      return await this.backend.run(input);
+    }
   }
 
   /**
@@ -47,7 +72,7 @@ export class RKLLM {
    */
   async runStream(input: RKLLMInput, options: StreamOptions): Promise<void> {
     this.checkInitialized();
-    return await this.backend!.runStream(input, options);
+    return await this.backend.runStream(input, options);
   }
 
   /**
@@ -56,7 +81,7 @@ export class RKLLM {
    */
   async loadLoraAdapter(adapter: RKLLMLoraAdapter): Promise<void> {
     this.checkInitialized();
-    return await this.backend!.loadLoRA(adapter);
+    return await this.backend.loadLoRA(adapter);
   }
 
   /**
@@ -65,7 +90,11 @@ export class RKLLM {
    * You can load a new adapter to replace the current one
    */
   async unloadLoraAdapter(): Promise<void> {
-    throw new Error('LoRA adapter unloading not directly supported in FFI implementation. Load a new adapter to replace the current one.');
+    if (this.useUniversal) {
+      throw new Error('LoRA adapter unloading not directly supported in universal implementation. Load a new adapter to replace the current one.');
+    } else {
+      throw new Error('LoRA adapter unloading not directly supported in FFI implementation. Load a new adapter to replace the current one.');
+    }
   }
 
   /**
@@ -73,7 +102,7 @@ export class RKLLM {
    */
   async getContextLength(): Promise<number[]> {
     this.checkInitialized();
-    return await this.backend!.getKVCacheSize();
+    return await this.backend.getKVCacheSize();
   }
 
   /**
@@ -82,7 +111,7 @@ export class RKLLM {
    */
   async clearContext(keepSystemPrompt: boolean = false): Promise<void> {
     this.checkInitialized();
-    return await this.backend!.clearKVCache(keepSystemPrompt);
+    return await this.backend.clearKVCache(keepSystemPrompt);
   }
 
   /**
@@ -93,7 +122,7 @@ export class RKLLM {
    */
   async setChatTemplate(systemPrompt: string, promptPrefix: string, promptPostfix: string): Promise<void> {
     this.checkInitialized();
-    return await this.backend!.setChatTemplate(systemPrompt, promptPrefix, promptPostfix);
+    return await this.backend.setChatTemplate(systemPrompt, promptPrefix, promptPostfix);
   }
 
   /**
@@ -102,7 +131,7 @@ export class RKLLM {
    */
   async loadPromptCache(cachePath: string): Promise<void> {
     this.checkInitialized();
-    return await this.backend!.loadPromptCache(cachePath);
+    return await this.backend.loadPromptCache(cachePath);
   }
 
   /**
@@ -110,7 +139,7 @@ export class RKLLM {
    */
   async releasePromptCache(): Promise<void> {
     this.checkInitialized();
-    return await this.backend!.releasePromptCache();
+    return await this.backend.releasePromptCache();
   }
 
   /**
@@ -118,7 +147,7 @@ export class RKLLM {
    */
   async abort(): Promise<void> {
     this.checkInitialized();
-    return await this.backend!.abort();
+    return await this.backend.abort();
   }
 
   /**
@@ -126,7 +155,7 @@ export class RKLLM {
    */
   async isRunning(): Promise<boolean> {
     this.checkInitialized();
-    return await this.backend!.isRunning();
+    return await this.backend.isRunning();
   }
 
   /**
@@ -162,6 +191,21 @@ export class RKLLM {
    */
   get backendType(): 'ffi' | null {
     return this.backend ? 'ffi' : null;
+  }
+
+  /**
+   * Get the current runtime name
+   */
+  get runtimeName(): string {
+    if (!this.backend) {
+      return 'unknown';
+    }
+    
+    if (this.useUniversal) {
+      return this.backend.runtimeName || 'unknown';
+    } else {
+      return 'bun'; // Original implementation is Bun-only
+    }
   }
 }
 

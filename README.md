@@ -1,10 +1,10 @@
 # 🚀 RKLLMJS
 
-High-performance JavaScript bindings for Rockchip LLM Runtime - run local LLMs on Rockchip NPUs (RK3588, RK356x, etc.) with blazing speed using **Bun.FFI**.
+High-performance JavaScript bindings for Rockchip LLM Runtime - run local LLMs on Rockchip NPUs (RK3588, RK356x, etc.) with **universal multi-runtime support**.
 
-> **⚡ Built for Bun** - Optimized for Bun's fast JavaScript runtime with native ES modules support
+> **🌍 Universal Runtime Support** - Works seamlessly across Bun, Node.js, and Deno
 > 
-> **🆕 Bun.FFI Exclusive** - Direct native library access without C++ compilation required!
+> **⚡ Zero Compilation** - Direct FFI access without C++ compilation required!
 
 [![NPM Version](https://img.shields.io/npm/v/rkllmjs.svg)](https://www.npmjs.com/package/rkllmjs)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -13,10 +13,11 @@ High-performance JavaScript bindings for Rockchip LLM Runtime - run local LLMs o
 ## ✨ Features
 
 - 🏎️ **High Performance**: Direct bindings to Rockchip's optimized LLM runtime
-- ⚡ **Bun.FFI Exclusive**: Zero compilation setup with direct native calls
-- 🔧 **Easy Integration**: Simple JavaScript/TypeScript API
+- 🌍 **Universal Runtime**: Supports Bun, Node.js, and Deno with automatic adapter selection
+- ⚡ **Zero Compilation**: FFI-only architecture with no build steps
+- 🔧 **Easy Integration**: Same JavaScript/TypeScript API across all runtimes
 - 🌊 **Streaming Support**: Real-time token generation with callbacks
-- 🚀 **Bun Runtime**: Optimized exclusively for Bun's FFI system
+- 🚀 **Optimal Performance**: Bun gets native FFI, Node.js uses koffi, Deno uses native FFI
 - 🔄 **Async/Await**: Modern promise-based API
 - 📱 **Multi-modal**: Support for text and image inputs
 - 🎨 **LoRA Adapters**: Dynamic model fine-tuning support
@@ -32,40 +33,78 @@ High-performance JavaScript bindings for Rockchip LLM Runtime - run local LLMs o
 
 ## 📦 Installation
 
+### Quick Install (All Runtimes)
+
 ```bash
 # npm
 npm install rkllmjs
 
-# yarn
+# yarn  
 yarn add rkllmjs
 
 # pnpm
 pnpm add rkllmjs
 
-# bun
+# bun (recommended)
 bun add rkllmjs
 ```
 
-## 🚀 Bun.FFI Architecture
+### Runtime-Specific Setup
 
-RKLLMJS is now exclusively built on Bun.FFI for maximum performance and simplicity:
+#### Bun (Recommended - Best Performance)
+```bash
+bun add rkllmjs
+# Ready to use! No additional setup needed
+```
 
-### ✨ Bun.FFI Advantages:
+#### Node.js
+```bash
+npm install rkllmjs koffi
+# OR alternatively: npm install rkllmjs ffi-napi ref-napi
+```
+
+#### Deno
+```bash
+# No installation needed, just run with FFI permissions:
+deno run --allow-ffi --allow-read your-app.ts
+```
+
+## 🚀 Universal FFI Architecture
+
+RKLLMJS uses a universal FFI architecture that automatically selects the best implementation for your runtime:
+
+| Runtime | FFI Implementation | Performance | Setup |
+|---------|-------------------|-------------|--------|
+| **Bun** | Native `Bun.dlopen` | **Optimal** | Zero config |
+| **Node.js** | `koffi` or `ffi-napi` | High | Install FFI deps |
+| **Deno** | Native `Deno.dlopen` | High | Enable permissions |
+
+### ✨ Universal Advantages:
 - ⚡ **Zero Compilation**: No C++ build step required
-- 🚀 **Direct Native Calls**: Minimal overhead between JavaScript and native code
+- 🌍 **Runtime Agnostic**: Same code works everywhere
+- 🚀 **Optimal Performance**: Each runtime uses its best FFI implementation  
 - 🔧 **Instant Setup**: Install and run immediately
 - 🧠 **Full API Access**: Complete access to all RKLLM runtime features
 - 📊 **Better Debugging**: Direct access to native function calls
-- 🎯 **Modern Architecture**: Built for Bun's high-performance runtime
+- 🎯 **Modern Architecture**: Built for high-performance runtimes
 
 ### Prerequisites:
-- **Bun 1.0+** runtime (required)
+- **JavaScript Runtime**: Bun 1.0+ (recommended), Node.js 16+, or Deno 1.25+
 - **Rockchip NPU** (RK3588, RK356x, etc.)
 - **ARM64 or ARMhf** architecture
 
 ## 🚀 Quick Start
 
-### 1. Download a Model
+### 1. Check Your Runtime
+
+```bash
+# Test runtime compatibility
+bun run scripts/test-runtime.js
+# or: node scripts/test-runtime.js
+# or: deno run --allow-ffi scripts/test-runtime.js
+```
+
+### 2. Download a Model
 
 First, download a model using the built-in model manager:
 
@@ -77,13 +116,17 @@ bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Ins
 bun tools.ts list
 ```
 
-### 2. Basic Inference
+### 3. Basic Inference (Universal)
 
 ```javascript
-import { RKLLM, RKLLMInputType } from 'rkllmjs';
+import { RKLLM, RKLLMInputType, detectRuntime } from 'rkllmjs';
 
 async function main() {
-  // Initialize RKLLM with FFI backend
+  // Check runtime info
+  const runtime = detectRuntime();
+  console.log(`Running on ${runtime.name} with FFI: ${runtime.ffiSupported}`);
+
+  // Initialize RKLLM - works on all runtimes
   const llm = new RKLLM();
   await llm.init({
     modelPath: './models/your-model.rkllm',
@@ -92,7 +135,9 @@ async function main() {
     temperature: 0.7,
   });
 
-  console.log(`Using ${llm.backendType} backend`); // Always 'ffi'
+  console.log(`Using ${llm.backendType} backend on ${llm.runtimeName}`);
+
+  // Run inference - same API everywhere
 
   // Run inference
   const result = await llm.run({

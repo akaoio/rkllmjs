@@ -22,8 +22,11 @@
   "scripts": {
     "build": "tsc",
     "test": "bun test",
+    "test:node": "node --experimental-loader tsx ./node_modules/.bin/jest",
+    "test:deno": "deno test --allow-ffi --allow-read",
     "clean": "rm -rf dist",
-    "example": "bun run examples/bun-ffi-example.ts"
+    "example": "bun run examples/bun-ffi-example.ts",
+    "check-runtime": "bun run -e \"console.log(JSON.stringify(require('./src/runtime/detector.js').detectRuntime(), null, 2))\""
   },
   "keywords": [
     "rockchip",
@@ -38,7 +41,11 @@
     "javascript",
     "typescript",
     "bun",
+    "node",
+    "deno",
     "ffi",
+    "universal",
+    "multi-runtime",
     "esm"
   ],
   "author": "Your Name",
@@ -52,7 +59,9 @@
   },
   "homepage": "https://github.com/akaoio/rkllmjs#readme",
   "engines": {
-    "bun": ">=1.0.0"
+    "bun": ">=1.0.0",
+    "node": ">=16.0.0",
+    "deno": ">=1.25.0"
   },
   "os": [
     "linux"
@@ -61,8 +70,14 @@
     "arm64",
     "arm"
   ],
+  "optionalDependencies": {
+    "koffi": "^2.4.0",
+    "ffi-napi": "^4.0.3",
+    "ref-napi": "^3.0.3"
+  },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/node": "^20.0.0",
     "bun-types": "latest",
     "eslint": "^8.57.0",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
