@@ -1,4 +1,5 @@
 import { RKLLMParam, RKLLMInput, RKLLMResult, StreamOptions, RKLLMLoraAdapter } from './types.js';
+import { requireValidModelPath } from './utils/model-validator.js';
 
 /**
  * Main RKLLM class for interacting with Rockchip LLM Runtime
@@ -16,6 +17,9 @@ export class RKLLM {
     if (this.isInitialized) {
       throw new Error('RKLLM is already initialized');
     }
+
+    // Validate model path before attempting to initialize
+    await requireValidModelPath(params.modelPath);
 
     try {
       // Load the native addon - Bun will handle this appropriately

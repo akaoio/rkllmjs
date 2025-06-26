@@ -4,11 +4,19 @@
  * RKLLMJS Model Management Tool
  * 
  * Usage:
- *   bun tools.ts pull [repo] [filename]  - Download model from HuggingFace
- *   bun tools.ts list                    - List all downloaded models
- *   bun tools.ts info [model-name]       - Show model information
- *   bun tools.ts remove [model-name]     - Remove a model
- *   bun tools.ts clean                   - Clean all models
+ *   bun tools.ts pull [repo] [filename]           - Download single model file
+ *   bun tools.ts pull-complete [repo] [model]     - Download model + essential technical files
+ *   bun tools.ts pull-model-only [repo] [model]   - Download ONLY the specified model file
+ *   bun tools.ts download [repo] [model]          - Alias for pull-complete
+ *   bun tools.ts list                             - List all downloaded models
+ *   bun tools.ts info [model-name]                - Show model information
+ *   bun tools.ts remove [model-name]              - Remove a model
+ *   bun tools.ts clean                            - Clean all models
+ * 
+ * Examples:
+ *   bun tools.ts pull-complete limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4
+ *   bun tools.ts pull-model-only limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
+ *   bun tools.ts download limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4
  */
 
 interface ModelInfo {
@@ -23,16 +31,15 @@ interface ModelInfo {
 class RKLLMModelManager {
   private modelsDir: string;
 
-  constructor() {
-    this.modelsDir = './models';
+  constructor(modelsDir: string = './models') {
+    this.modelsDir = modelsDir;
     this.ensureModelsDirectory();
   }
 
   private ensureModelsDirectory(): void {
     try {
-      // Use Bun's file system API
-      const file = Bun.file(this.modelsDir);
-      if (!file.exists()) {
+      const fs = require('fs');
+      if (!fs.existsSync(this.modelsDir)) {
         // Create directory
         Bun.spawnSync(['mkdir', '-p', this.modelsDir]);
         console.log(`📁 Created models directory: ${this.modelsDir}`);
@@ -54,7 +61,7 @@ class RKLLMModelManager {
       filename = await this.promptForFilename(repo);
     }
 
-    const repoDir = `${this.modelsDir}/${repo.replace('/', '_')}`;
+    const repoDir = `${this.modelsDir}/${repo}`;
     const modelPath = `${repoDir}/${filename}`;
 
     console.log(`🚀 Downloading model from ${repo}/${filename}...`);
@@ -130,10 +137,11 @@ class RKLLMModelManager {
           writer.write(value);
           downloadedBytes += value.length;
           
-          // Update progress every 1% or every 1MB, whichever comes first
+          // Update progress more frequently for better visual feedback
           const progressPercent = (downloadedBytes / totalSize) * 100;
-          const shouldUpdate = progressPercent - lastProgressUpdate >= 1 || 
-                             downloadedBytes - (lastProgressUpdate * totalSize / 100) >= 1024 * 1024;
+          const shouldUpdate = progressPercent - lastProgressUpdate >= 0.5 || // Every 0.5%
+                             downloadedBytes - (lastProgressUpdate * totalSize / 100) >= 512 * 1024 || // Every 512KB
+                             Date.now() - this.lastSpeedUpdate >= 250; // Every 250ms
           
           if (shouldUpdate || downloadedBytes === totalSize) {
             this.showProgressBar(downloadedBytes, totalSize);
@@ -152,13 +160,9 @@ class RKLLMModelManager {
       }
 
       // Save metadata
-      const metadataPath = `${repoDir}/${filename}.meta.json`;
+      const metadataPath = `${repoDir}/meta.json`;
       const metadata = {
-        repo,
-        filename,
-        downloadedAt: new Date().toISOString(),
-        size: downloadedBytes,
-        url: downloadUrl
+        repo
       };
       await Bun.write(metadataPath, JSON.stringify(metadata, null, 2));
 
@@ -196,11 +200,246 @@ class RKLLMModelManager {
   }
 
   /**
+   * Get list of files from HuggingFace repository
+   */
+  async getRepoFiles(repo: string): Promise<string[]> {
+    try {
+      console.log(`🔍 Getting file list from ${repo}...`);
+      const apiUrl = `https://huggingface.co/api/models/${repo}/tree/main`;
+      
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to get repo info: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const files = data.filter((item: any) => item.type === 'file').map((item: any) => item.path);
+      
+      console.log(`📄 Found ${files.length} files in repository`);
+      return files;
+    } catch (error) {
+      console.error(`❌ Failed to get repo files: ${error}`);
+      return [];
+    }
+  }
+
+  /**
+   * Download all essential files from a model repository
+   */
+  async pullModelComplete(repo: string, modelFileName?: string): Promise<void> {
+    console.log(`🚀 Downloading specific model and essential files from ${repo}...`);
+    
+    const repoDir = `${this.modelsDir}/${repo}`;
+    
+    // Create repo directory
+    try {
+      Bun.spawnSync(['mkdir', '-p', repoDir]);
+      console.log(`📁 Created directory: ${repoDir}`);
+    } catch (error) {
+      console.error(`❌ Failed to create directory: ${error}`);
+      return;
+    }
+
+    // Get all files from repo to check availability
+    const allFiles = await this.getRepoFiles(repo);
+    if (allFiles.length === 0) {
+      console.error('❌ No files found in repository');
+      return;
+    }
+
+    // Define essential technical files (minimal set)
+    const essentialTechnicalFiles = [
+      'tokenizer.json',
+      'tokenizer_config.json', 
+      'config.json',
+      'special_tokens_map.json',
+      'generation_config.json'
+    ];
+
+    // Build final download list
+    const filesToDownload: string[] = [];
+
+    // 1. Add specific model file if requested
+    if (modelFileName) {
+      if (allFiles.includes(modelFileName)) {
+        filesToDownload.push(modelFileName);
+        console.log(`📄 Target model: ${modelFileName}`);
+      } else {
+        console.error(`❌ Requested model file '${modelFileName}' not found in repository`);
+        const availableModels = allFiles.filter(f => 
+          f.endsWith('.rkllm') || f.endsWith('.bin') || f.endsWith('.safetensors') || f.endsWith('.gguf')
+        );
+        console.log('📋 Available model files:', availableModels.slice(0, 5).join(', '));
+        return;
+      }
+    } else {
+      // If no specific model file, find the first .rkllm file
+      const rkllmFiles = allFiles.filter(f => f.endsWith('.rkllm'));
+      if (rkllmFiles.length > 0) {
+        filesToDownload.push(rkllmFiles[0]);
+        console.log(`📄 Auto-selected model: ${rkllmFiles[0]}`);
+      } else {
+        console.error('❌ No .rkllm model files found in repository');
+        return;
+      }
+    }
+
+    // 2. Add only essential technical files that exist
+    for (const techFile of essentialTechnicalFiles) {
+      if (allFiles.includes(techFile)) {
+        filesToDownload.push(techFile);
+      }
+    }
+
+    console.log(`📦 Will download ${filesToDownload.length} files (1 model + ${filesToDownload.length - 1} technical):`);
+    filesToDownload.forEach(file => {
+      const isModel = file.endsWith('.rkllm') || file.endsWith('.bin') || file.endsWith('.safetensors') || file.endsWith('.gguf');
+      console.log(`  ${isModel ? '🤖' : '⚙️ '} ${file}`);
+    });
+
+    let successCount = 0;
+    let failCount = 0;
+
+    // Download each file
+    for (const fileName of filesToDownload) {
+      try {
+        console.log(`\n⬇️  Downloading ${fileName}...`);
+        await this.downloadFile(repo, fileName, repoDir);
+        successCount++;
+      } catch (error) {
+        console.error(`❌ Failed to download ${fileName}: ${error}`);
+        failCount++;
+        
+        // If model file fails, it's critical
+        const isModel = fileName.endsWith('.rkllm') || fileName.endsWith('.bin') || fileName.endsWith('.safetensors') || fileName.endsWith('.gguf');
+        if (isModel) {
+          console.error(`❌ Critical: Model file download failed. Aborting.`);
+          return;
+        }
+      }
+    }
+
+    console.log(`\n📊 Download Summary:`);
+    console.log(`✅ Success: ${successCount} files`);
+    console.log(`❌ Failed: ${failCount} files`);
+    
+    if (successCount > 0) {
+      // Save metadata
+      const metadataPath = `${repoDir}/meta.json`;
+      const metadata = {
+        repo
+      };
+      
+      try {
+        await Bun.write(metadataPath, JSON.stringify(metadata, null, 2));
+        console.log(`💾 Saved metadata to ${metadataPath}`);
+      } catch (error) {
+        console.error(`⚠️  Failed to save metadata: ${error}`);
+      }
+      
+      console.log(`🎉 Targeted download completed! Files saved to: ${repoDir}`);
+      console.log(`📁 Model file: ${filesToDownload[0]}`);
+      console.log(`⚙️  Technical files: ${filesToDownload.length - 1}`);
+    } else {
+      console.error(`❌ No files were downloaded successfully`);
+    }
+  }
+
+  /**
+   * Download a single file from HuggingFace repository
+   */
+  private async downloadFile(repo: string, fileName: string, targetDir: string): Promise<void> {
+    const targetPath = `${targetDir}/${fileName}`;
+    const downloadUrl = `https://huggingface.co/${repo}/resolve/main/${fileName}`;
+
+    const response = await fetch(downloadUrl);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const totalSize = parseInt(response.headers.get('content-length') || '0');
+    
+    if (totalSize > 0) {
+      console.log(`📊 Size: ${this.formatBytes(totalSize)}`);
+      
+      if (totalSize > 100 * 1024 * 1024) { // > 100MB
+        console.log(`⚠️  Large file detected (${this.formatBytes(totalSize)}). This may take a while...`);
+      }
+    }
+
+    // Stream download with progress
+    if (response.body) {
+      const reader = response.body.getReader();
+      const file = Bun.file(targetPath);
+      const writer = file.writer();
+      
+      let downloadedBytes = 0;
+      const startTime = Date.now();
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) break;
+          
+          writer.write(value);
+          downloadedBytes += value.length;
+          
+          // Show progress more frequently with better visual feedback
+          if (totalSize > 1024 * 1024) { // Files > 1MB get progress bar
+            const progress = totalSize > 0 ? (downloadedBytes / totalSize * 100).toFixed(1) : '?';
+            
+            // Update every 256KB or every 2%
+            if (downloadedBytes % (256 * 1024) === 0 || 
+                (totalSize > 0 && Math.floor((downloadedBytes / totalSize) * 50) !== Math.floor(((downloadedBytes - value.length) / totalSize) * 50))) {
+              
+              const elapsed = (Date.now() - startTime) / 1000;
+              const speed = elapsed > 0 ? downloadedBytes / elapsed : 0;
+              
+              // Create simple progress bar
+              const barLength = 20;
+              const filled = Math.floor((downloadedBytes / totalSize) * barLength);
+              const bar = '█'.repeat(filled) + '░'.repeat(barLength - filled);
+              
+              process.stdout.write(
+                `\r📥 [${bar}] ${progress}% (${this.formatBytes(downloadedBytes)}/${this.formatBytes(totalSize)}) ${this.formatBytes(speed)}/s`
+              );
+            }
+          }
+        }
+        
+        writer.flush();
+        writer.end();
+        
+        // New line after progress bar
+        if (totalSize > 1024 * 1024) {
+          console.log(''); // New line
+        }
+        
+        const duration = (Date.now() - startTime) / 1000;
+        console.log(`✅ Downloaded ${fileName} (${this.formatBytes(downloadedBytes)} in ${duration.toFixed(1)}s)`);
+        
+      } catch (error) {
+        writer.end();
+        // Clean up partial file
+        try {
+          await Bun.file(targetPath).exists() && Bun.spawnSync(['rm', targetPath]);
+        } catch {}
+        throw error;
+      }
+    } else {
+      throw new Error('No response body');
+    }
+  }
+
+  /**
    * List all downloaded models
    */
   async listModels(): Promise<ModelInfo[]> {
-    const modelsFile = Bun.file(this.modelsDir);
-    if (!(await modelsFile.exists())) {
+    const fs = require('fs');
+    
+    if (!fs.existsSync(this.modelsDir)) {
       console.log(`📭 No models directory found. Run 'bun tools.ts pull' to download models.`);
       return [];
     }
@@ -208,9 +447,14 @@ class RKLLMModelManager {
     const models: ModelInfo[] = [];
     
     try {
-      // Get list of directories
-      const result = Bun.spawnSync(['find', this.modelsDir, '-type', 'd', '-mindepth', '1', '-maxdepth', '1']);
-      const repoDirs = result.stdout.toString().trim().split('\n').filter(dir => dir);
+      console.log(`🔍 Scanning models directory: ${this.modelsDir}`);
+      
+      // Use readdir instead of find for better reliability
+      const readdirResult = await this.readDirectoryRecursive(this.modelsDir);
+      console.log(`📂 Found ${readdirResult.length} items in models directory`);
+      
+      const repoDirs = readdirResult.filter(item => item.isDirectory);
+      console.log(`📁 Found ${repoDirs.length} repository directories:`, repoDirs.map(d => d.name));
 
       if (repoDirs.length === 0) {
         console.log(`📭 No models found. Run 'bun tools.ts pull' to download models.`);
@@ -222,22 +466,34 @@ class RKLLMModelManager {
       console.log(`${'Model Name'.padEnd(30)} ${'Size'.padEnd(12)} ${'Date'.padEnd(20)} ${'Path'}`);
       console.log(`${'-'.repeat(80)}`);
 
-      for (const repoDirPath of repoDirs) {
+      for (const repoDir of repoDirs) {
+        console.log(`🔍 Scanning repository: ${repoDir.name}`);
+        
         // Get files in the repo directory
-        const filesResult = Bun.spawnSync(['find', repoDirPath, '-type', 'f', '-name', '*.rkllm', '-o', '-name', '*.bin', '-o', '-name', '*.safetensors', '-o', '-name', '*.gguf']);
-        const modelFiles = filesResult.stdout.toString().trim().split('\n').filter(file => file);
+        const repoFiles = await this.readDirectoryRecursive(repoDir.path);
+        console.log(`📄 Found ${repoFiles.length} files in ${repoDir.name}`);
+        
+        const modelFiles = repoFiles.filter(item => 
+          !item.isDirectory && 
+          (item.name.endsWith('.rkllm') || 
+           item.name.endsWith('.bin') || 
+           item.name.endsWith('.safetensors') || 
+           item.name.endsWith('.gguf'))
+        );
+        
+        console.log(`🤖 Found ${modelFiles.length} model files in ${repoDir.name}:`, modelFiles.map(f => f.name));
 
-        for (const filePath of modelFiles) {
-          if (!filePath) continue;
+        for (const modelFile of modelFiles) {
+          if (!modelFile) continue;
           
-          const file = Bun.file(filePath);
+          const file = Bun.file(modelFile.path);
           if (await file.exists()) {
             const stats = await file.stat();
-            const repoName = repoDirPath.split('/').pop() || '';
-            const fileName = filePath.split('/').pop() || '';
+            const repoName = repoDir.name;
+            const fileName = modelFile.name;
             
             // Try to load metadata
-            const metadataPath = `${filePath}.meta.json`;
+            const metadataPath = `${repoDir.path}/meta.json`;
             let metadata: any = {};
             const metadataFile = Bun.file(metadataPath);
             if (await metadataFile.exists()) {
@@ -248,7 +504,7 @@ class RKLLMModelManager {
 
             const modelInfo: ModelInfo = {
               name: `${repoName}/${fileName}`,
-              path: filePath,
+              path: modelFile.path,
               size: stats.size,
               created: new Date(stats.birthtime || stats.mtime),
               repo: metadata.repo,
@@ -314,13 +570,13 @@ class RKLLMModelManager {
     }
 
     // Check if metadata exists
-    const metadataPath = `${model.path}.meta.json`;
+    const modelDir = model.path.substring(0, model.path.lastIndexOf('/'));
+    const metadataPath = `${modelDir}/meta.json`;
     const metadataFile = Bun.file(metadataPath);
     if (await metadataFile.exists()) {
       try {
         const metadata = await metadataFile.json();
-        console.log(`Download URL: ${metadata.url}`);
-        console.log(`Downloaded: ${new Date(metadata.downloadedAt).toLocaleString()}`);
+        console.log(`Repository: ${metadata.repo}`);
       } catch {}
     }
   }
@@ -344,8 +600,9 @@ class RKLLMModelManager {
       // Remove model file
       Bun.spawnSync(['rm', '-f', model.path]);
       
-      // Remove metadata if exists
-      const metadataPath = `${model.path}.meta.json`;
+      // Remove metadata if exists (now in repo directory)
+      const modelDir = model.path.substring(0, model.path.lastIndexOf('/'));
+      const metadataPath = `${modelDir}/meta.json`;
       Bun.spawnSync(['rm', '-f', metadataPath]);
 
       console.log(`✅ Removed model: ${model.name}`);
@@ -393,35 +650,42 @@ class RKLLMModelManager {
   }
 
   private async getAllModels(): Promise<ModelInfo[]> {
-    const modelsFile = Bun.file(this.modelsDir);
-    if (!(await modelsFile.exists())) {
+    const fs = require('fs');
+    
+    if (!fs.existsSync(this.modelsDir)) {
       return [];
     }
 
     const models: ModelInfo[] = [];
     
     try {
-      // Get list of directories
-      const result = Bun.spawnSync(['find', this.modelsDir, '-type', 'd', '-mindepth', '1', '-maxdepth', '1']);
-      const repoDirs = result.stdout.toString().trim().split('\n').filter(dir => dir);
+      // Use readdir instead of find for better reliability
+      const readdirResult = await this.readDirectoryRecursive(this.modelsDir);
+      const repoDirs = readdirResult.filter(item => item.isDirectory);
 
-      for (const repoDirPath of repoDirs) {
+      for (const repoDir of repoDirs) {
         // Get files in the repo directory
-        const filesResult = Bun.spawnSync(['find', repoDirPath, '-type', 'f', '-name', '*.rkllm', '-o', '-name', '*.bin', '-o', '-name', '*.safetensors', '-o', '-name', '*.gguf']);
-        const modelFiles = filesResult.stdout.toString().trim().split('\n').filter(file => file);
+        const repoFiles = await this.readDirectoryRecursive(repoDir.path);
+        const modelFiles = repoFiles.filter(item => 
+          !item.isDirectory && 
+          (item.name.endsWith('.rkllm') || 
+           item.name.endsWith('.bin') || 
+           item.name.endsWith('.safetensors') || 
+           item.name.endsWith('.gguf'))
+        );
 
-        for (const filePath of modelFiles) {
-          if (!filePath) continue;
+        for (const modelFile of modelFiles) {
+          if (!modelFile) continue;
           
-          const file = Bun.file(filePath);
+          const file = Bun.file(modelFile.path);
           if (await file.exists()) {
             const stats = await file.stat();
-            const repoName = repoDirPath.split('/').pop() || '';
-            const fileName = filePath.split('/').pop() || '';
+            const repoName = repoDir.name;
+            const fileName = modelFile.name;
             
             models.push({
               name: `${repoName}/${fileName}`,
-              path: filePath,
+              path: modelFile.path,
               size: stats.size,
               created: new Date(stats.birthtime || stats.mtime)
             });
@@ -528,6 +792,18 @@ class RKLLMModelManager {
       `(${this.formatBytes(downloaded)}/${this.formatBytes(total)}) ` +
       `${this.formatBytes(speed)}/s ${eta}`
     );
+    
+    // Force immediate output
+    try {
+      (process.stdout as any).flush?.();
+    } catch {
+      // Ignore flush errors
+    }
+    
+    // Add newline when complete
+    if (percentage >= 100) {
+      process.stdout.write('\n✅ Download completed!\n');
+    }
   }
 
   private downloadStartTime: number = 0;
@@ -580,6 +856,99 @@ class RKLLMModelManager {
       return `ETA: ${hours}h ${minutes}m`;
     }
   }
+
+  /**
+   * Recursively read directory contents
+   */
+  private async readDirectoryRecursive(dirPath: string): Promise<{name: string, path: string, isDirectory: boolean}[]> {
+    const items: {name: string, path: string, isDirectory: boolean}[] = [];
+    
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      if (!fs.existsSync(dirPath)) {
+        return items;
+      }
+
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = path.join(dirPath, entry.name);
+        
+        items.push({
+          name: entry.name,
+          path: fullPath,
+          isDirectory: entry.isDirectory()
+        });
+
+        // Recursively scan subdirectories
+        if (entry.isDirectory()) {
+          const subItems = await this.readDirectoryRecursive(fullPath);
+          items.push(...subItems);
+        }
+      }
+    } catch (error) {
+      console.error(`Error reading directory ${dirPath}: ${error}`);
+    }
+    
+    return items;
+  }
+
+  /**
+   * Get model info by name
+   */
+  async getModelInfo(modelName: string): Promise<ModelInfo | null> {
+    const models = await this.getAllModels();
+    return models.find(model => model.name === modelName) || null;
+  }
+
+  /**
+   * Download only a specific model file (no tokenizer or config files)
+   */
+  async pullModelOnly(repo: string, modelFileName: string): Promise<void> {
+    console.log(`🎯 Downloading specific model file: ${modelFileName} from ${repo}...`);
+    
+    const repoDir = `${this.modelsDir}/${repo}`;
+    
+    // Create repo directory
+    try {
+      Bun.spawnSync(['mkdir', '-p', repoDir]);
+      console.log(`📁 Created directory: ${repoDir}`);
+    } catch (error) {
+      console.error(`❌ Failed to create directory: ${error}`);
+      return;
+    }
+
+    // Check if file exists in repo
+    const allFiles = await this.getRepoFiles(repo);
+    if (!allFiles.includes(modelFileName)) {
+      console.error(`❌ Model file '${modelFileName}' not found in repository`);
+      const availableModels = allFiles.filter(f => 
+        f.endsWith('.rkllm') || f.endsWith('.bin') || f.endsWith('.safetensors') || f.endsWith('.gguf')
+      );
+      console.log('📋 Available model files:', availableModels.slice(0, 5).join(', '));
+      return;
+    }
+
+    try {
+      console.log(`⬇️  Downloading ${modelFileName}...`);
+      await this.downloadFile(repo, modelFileName, repoDir);
+      
+      // Save minimal metadata
+      const metadataPath = `${repoDir}/meta.json`;
+      const metadata = {
+        repo
+      };
+      
+      await Bun.write(metadataPath, JSON.stringify(metadata, null, 2));
+      console.log(`🎉 Model file downloaded successfully!`);
+      console.log(`📁 Path: ${repoDir}/${modelFileName}`);
+      
+    } catch (error) {
+      console.error(`❌ Failed to download ${modelFileName}: ${error}`);
+    }
+  }
 }
 
 // CLI Interface
@@ -595,6 +964,19 @@ async function main() {
       const repo = args[1];
       const filename = args[2];
       await manager.pullModel(repo, filename);
+      break;
+
+    case 'pull-complete':
+    case 'download':
+      const repoComplete = args[1];
+      const modelFile = args[2];
+      if (!repoComplete) {
+        console.log(`❌ Please specify a repository.`);
+        console.log(`Usage: bun tools.ts pull-complete <repo> [model-file]`);
+        console.log(`Example: bun tools.ts pull-complete punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4`);
+        process.exit(1);
+      }
+      await manager.pullModelComplete(repoComplete, modelFile);
       break;
 
     case 'list':
@@ -625,18 +1007,75 @@ async function main() {
       await manager.cleanAllModels();
       break;
 
+    case 'debug':
+      console.log('🔧 Debug Mode: Scanning models directory...');
+      const fs = require('fs');
+      const path = require('path');
+      
+      const modelsDir = './models';
+      console.log(`📂 Models directory: ${modelsDir}`);
+      console.log(`📂 Exists: ${fs.existsSync(modelsDir)}`);
+      
+      if (fs.existsSync(modelsDir)) {
+        const items = fs.readdirSync(modelsDir, { withFileTypes: true });
+        console.log(`📁 Found ${items.length} items:`);
+        
+        for (const item of items) {
+          const itemPath = path.join(modelsDir, item.name);
+          console.log(`  ${item.isDirectory() ? '📁' : '📄'} ${item.name}`);
+          
+          if (item.isDirectory()) {
+            const subItems = fs.readdirSync(itemPath, { withFileTypes: true });
+            console.log(`    Sub-items (${subItems.length}):`);
+            
+            for (const subItem of subItems) {
+              const subItemPath = path.join(itemPath, subItem.name);
+              const subStat = fs.statSync(subItemPath);
+              console.log(`      ${subItem.isDirectory() ? '📁' : '📄'} ${subItem.name} (${subStat.size} bytes)`);
+              
+              if (subItem.name.endsWith('.rkllm')) {
+                console.log(`      *** 🤖 RKLLM MODEL FOUND: ${subItemPath} ***`);
+              }
+            }
+          }
+        }
+      }
+      
+      console.log('\n🔧 Testing manager.listModels()...');
+      await manager.listModels();
+      break;
+
+    case 'pull-model-only':
+      const repoModelOnly = args[1];
+      const modelFileOnly = args[2];
+      if (!repoModelOnly || !modelFileOnly) {
+        console.log(`❌ Please specify repository and model file.`);
+        console.log(`Usage: bun tools.ts pull-model-only <repo> <model-file>`);
+        console.log(`Example: bun tools.ts pull-model-only limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm`);
+        process.exit(1);
+      }
+      await manager.pullModelOnly(repoModelOnly, modelFileOnly);
+      break;
+
     default:
       console.log(`📖 Usage:`);
-      console.log(`   bun tools.ts pull [repo] [filename]  - Download model from HuggingFace`);
-      console.log(`   bun tools.ts list                    - List all downloaded models`);
-      console.log(`   bun tools.ts info [model-name]       - Show model information`);
-      console.log(`   bun tools.ts remove [model-name]     - Remove a model`);
-      console.log(`   bun tools.ts clean                   - Clean all models`);
+      console.log(`   bun tools.ts pull [repo] [filename]           - Download single model file`);
+      console.log(`   bun tools.ts pull-complete [repo] [model]     - Download model + essential technical files`);
+      console.log(`   bun tools.ts pull-model-only [repo] [model]   - Download ONLY the specified model file`);
+      console.log(`   bun tools.ts download [repo] [model]          - Alias for pull-complete`);
+      console.log(`   bun tools.ts list                             - List all downloaded models`);
+      console.log(`   bun tools.ts info [model-name]                - Show model information`);
+      console.log(`   bun tools.ts remove [model-name]              - Remove a model`);
+      console.log(`   bun tools.ts clean                            - Clean all models`);
       console.log(`\n📚 Examples:`);
+      console.log(`   # Download complete model with tokenizer:`);
+      console.log(`   bun tools.ts pull-complete punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4`);
+      console.log(`   bun tools.ts download punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm`);
+      console.log(`\n   # Traditional single file download:`);
       console.log(`   bun tools.ts pull microsoft/DialoGPT-medium pytorch_model.bin`);
-      console.log(`   bun tools.ts pull gpt2 model.safetensors`);
+      console.log(`\n   # Management:`);
       console.log(`   bun tools.ts list`);
-      console.log(`   bun tools.ts info DialoGPT-medium`);
+      console.log(`   bun tools.ts info punchnox_Tinnyllama-1.1B-rk3588-rkllm-1.1.4`);
       break;
   }
 }
@@ -646,5 +1085,5 @@ export { RKLLMModelManager };
 
 // Run CLI if this file is executed directly
 if (import.meta.main) {
-  await main();
+  main().catch(console.error);
 }

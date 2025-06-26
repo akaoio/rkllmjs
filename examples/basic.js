@@ -4,10 +4,21 @@ async function basicExample() {
   try {
     console.log('🚀 Initializing RKLLM...');
     
+    // Check for model from environment or prompt user
+    const modelPath = Bun?.env?.RKLLM_MODEL_PATH;
+    if (!modelPath) {
+      console.log('❌ No model path provided!');
+      console.log('💡 Please set RKLLM_MODEL_PATH environment variable or download a model:');
+      console.log('   bun tools.ts pull microsoft/DialoGPT-small pytorch_model.bin');
+      console.log('   export RKLLM_MODEL_PATH="./models/microsoft_DialoGPT-small/pytorch_model.bin"');
+      console.log('   bun examples/basic.js');
+      return;
+    }
+    
     // Create and initialize RKLLM instance
     const llm = new RKLLM();
     await llm.init({
-      modelPath: Bun?.env?.RKLLM_MODEL_PATH || '/path/to/your/model.rkllm',
+      modelPath,
       maxContextLen: 2048,
       maxNewTokens: 256,
       temperature: 0.7,

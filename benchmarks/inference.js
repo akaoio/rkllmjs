@@ -110,9 +110,9 @@ class RKLLMBenchmark {
   }
 }
 
-// Default benchmark configuration
+// Default benchmark configuration - requires real model path
 const defaultConfig = {
-  modelPath: Bun?.env?.RKLLM_MODEL_PATH || '/path/to/your/model.rkllm',
+  modelPath: '', // Will be set from environment variable
   prompts: [
     "What is the capital of France?",
     "Explain quantum computing in simple terms.", 
@@ -126,10 +126,23 @@ const defaultConfig = {
 
 // Run benchmark if this file is executed directly
 if (import.meta.path === Bun?.main) {
+  // Get model path from environment
+  const modelPath = Bun?.env?.RKLLM_MODEL_PATH;
+  
+  if (!modelPath) {
+    console.log('❌ No model path provided!');
+    console.log('💡 Please set RKLLM_MODEL_PATH environment variable:');
+    console.log('   bun tools.ts pull microsoft/DialoGPT-small pytorch_model.bin');
+    console.log('   export RKLLM_MODEL_PATH="./models/microsoft_DialoGPT-small/pytorch_model.bin"');
+    console.log('   bun benchmarks/inference.js');
+    process.exit(1);
+  }
+  
+  defaultConfig.modelPath = modelPath;
   const benchmark = new RKLLMBenchmark(defaultConfig);
   
   console.log('🎯 RKLLM Benchmark Tool');
-  console.log('Usage: RKLLM_MODEL_PATH=/path/to/model.rkllm bun run benchmarks/inference.js');
+  console.log(`📂 Using model: ${modelPath}`);
   console.log();
   
   await benchmark.runBenchmark();

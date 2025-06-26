@@ -31,7 +31,7 @@ Initializes the LLM with the given parameters.
 ```typescript
 const llm = new RKLLM();
 await llm.init({
-  modelPath: '/path/to/model.rkllm',
+  modelPath: process.env.RKLLM_MODEL_PATH, // Set your model path via environment variable
   maxContextLen: 2048,
   temperature: 0.7,
 });
@@ -95,7 +95,7 @@ Loads a LoRA adapter for fine-tuning.
 **Example:**
 ```typescript
 await llm.loadLoraAdapter({
-  loraPath: '/path/to/adapter.bin',
+  loraPath: './models/adapters/my-adapter.bin', // Use real path
   scale: 1.0
 });
 ```
@@ -280,7 +280,7 @@ Convenience function to create and initialize an RKLLM instance in one call.
 **Example:**
 ```typescript
 const llm = await createRKLLM({
-  modelPath: '/path/to/model.rkllm',
+  modelPath: process.env.RKLLM_MODEL_PATH, // Use environment variable
   temperature: 0.8,
 });
 ```

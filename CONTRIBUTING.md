@@ -126,8 +126,10 @@ describe('RKLLM', () => {
   });
 
   it('should initialize with valid parameters', async () => {
+    // Use environment variable or create a test model file
+    const testModelPath = process.env.TEST_MODEL_PATH || './test-fixtures/test-model.rkllm';
     await expect(llm.init({
-      modelPath: '/path/to/test/model.rkllm'
+      modelPath: testModelPath
     })).resolves.not.toThrow();
   });
 });

@@ -155,6 +155,12 @@ prebuilds/
 # Test coverage
 coverage/
 
+# Test cache và temporary directories
+test*/
+tests/.test-cache/
+tests/.tmp/
+.test-*/
+
 # IDE
 .idea/
 *.swp

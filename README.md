@@ -98,7 +98,9 @@ main();
 const llm = new RKLLM();
 
 await llm.init({
-  modelPath: '/path/to/your/model.rkllm',
+  modelPath: process.env.RKLLM_MODEL_PATH || (() => {
+    throw new Error('Please set RKLLM_MODEL_PATH environment variable or use the model manager: bun run model:download <url>')
+  })(),
   maxContextLen: 2048,
   maxNewTokens: 256,
   temperature: 0.7,
@@ -154,11 +156,20 @@ async function streamingExample() {
   await llm.destroy();
 }
 
-const llm = await createRKLLM({
-  modelPath: '/path/to/your/model.rkllm',
+### Advanced Usage
+
+```javascript
+// Using environment variable for model path
+const llm = new RKLLM();
+await llm.init({
+  modelPath: process.env.RKLLM_MODEL_PATH, // Set via: export RKLLM_MODEL_PATH="./models/your-model.rkllm"
+  maxContextLen: 2048,
+  maxNewTokens: 256,
+  temperature: 0.7,
   isAsync: true,
 });
 
+// Streaming with callback
 await llm.runStream(
   {
     inputType: RKLLMInputType.PROMPT,
@@ -208,7 +219,10 @@ const result = await llm.run({
 
 ```javascript
 await llm.init({
-  modelPath: '/path/to/model.rkllm',
+```javascript
+// Extended configuration example
+await llm.init({
+  modelPath: process.env.RKLLM_MODEL_PATH, // Use environment variable
   extendParam: {
     enabledCpusNum: 4,
     enabledCpusMask: 0xFF, // Use all CPUs
@@ -224,7 +238,7 @@ await llm.init({
 ```javascript
 // Load a LoRA adapter
 await llm.loadLoraAdapter({
-  loraPath: '/path/to/adapter.bin',
+  loraPath: './models/adapters/your-adapter.bin', // Use real path
   scale: 1.0
 });
 

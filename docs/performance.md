@@ -10,7 +10,7 @@ Use the `enabledCpusMask` parameter to assign specific CPU cores to your LLM wor
 
 ```javascript
 await llm.init({
-  modelPath: '/path/to/model.rkllm',
+  modelPath: process.env.RKLLM_MODEL_PATH, // Use environment variable
   extendParam: {
     enabledCpusNum: 4,
     enabledCpusMask: 0xF0, // Use cores 4-7 (big cores on RK3588)
@@ -31,7 +31,7 @@ Enable flash memory for embeddings to reduce RAM usage:
 
 ```javascript
 await llm.init({
-  modelPath: '/path/to/model.rkllm',
+  modelPath: process.env.RKLLM_MODEL_PATH,
   extendParam: {
     embedFlash: true, // Store embeddings in flash memory
   }
@@ -46,7 +46,7 @@ Process multiple inputs in batches for better throughput:
 
 ```javascript
 await llm.init({
-  modelPath: '/path/to/model.rkllm',
+  modelPath: process.env.RKLLM_MODEL_PATH,
   extendParam: {
     nBatch: 4, // Process 4 inputs simultaneously
   }
@@ -81,7 +81,7 @@ Use streaming for real-time applications to reduce perceived latency:
 
 ```javascript
 await llm.init({
-  modelPath: '/path/to/model.rkllm',
+  modelPath: process.env.RKLLM_MODEL_PATH,
   isAsync: true, // Enable async mode
 });
 
@@ -121,7 +121,7 @@ Use quantized models for better performance:
 ```javascript
 // Optimal configuration for RK3588
 await llm.init({
-  modelPath: '/path/to/model.rkllm',
+  modelPath: process.env.RKLLM_MODEL_PATH,
   maxContextLen: 4096,
   extendParam: {
     enabledCpusNum: 8,
@@ -137,7 +137,7 @@ await llm.init({
 ```javascript
 // Optimal configuration for RK3576
 await llm.init({
-  modelPath: '/path/to/model.rkllm',
+  modelPath: process.env.RKLLM_MODEL_PATH, // Set your model path via environment variable
   maxContextLen: 2048,
   extendParam: {
     enabledCpusNum: 4,
@@ -153,7 +153,7 @@ await llm.init({
 ```javascript
 // Optimal configuration for RK3562
 await llm.init({
-  modelPath: '/path/to/model.rkllm',
+  modelPath: process.env.RKLLM_MODEL_PATH, // Set your model path via environment variable
   maxContextLen: 1024,
   maxNewTokens: 128,
   extendParam: {

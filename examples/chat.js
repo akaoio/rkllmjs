@@ -4,9 +4,17 @@ async function multiTurnChatExample() {
   try {
     console.log('🚀 Initializing RKLLM for multi-turn chat...');
     
+    // Check for required model path
+    if (!process.env.RKLLM_MODEL_PATH) {
+      console.error('❌ Error: RKLLM_MODEL_PATH environment variable is required');
+      console.log('💡 Set it with: export RKLLM_MODEL_PATH="./models/your-model.rkllm"');
+      console.log('💡 Or download a model first: bun run model:download <url>');
+      process.exit(1);
+    }
+    
     // Use convenience function to create and initialize
     const llm = await createRKLLM({
-      modelPath: '/path/to/your/chat-model.rkllm',
+      modelPath: process.env.RKLLM_MODEL_PATH,
       maxContextLen: 4096,
       maxNewTokens: 512,
       temperature: 0.8,
