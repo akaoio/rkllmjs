@@ -205,7 +205,7 @@ export async function isFFIAvailable(): Promise<boolean> {
  * Check if we're running in Bun (for backward compatibility)
  */
 export function isBunRuntime(): boolean {
-  return typeof globalThis.Bun !== 'undefined' && typeof globalThis.Bun.version === 'string';
+  return typeof (globalThis as any).Bun !== 'undefined' && typeof (globalThis as any).Bun.version === 'string';
 }
 
 /**

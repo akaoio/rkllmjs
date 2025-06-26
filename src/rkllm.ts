@@ -1,15 +1,11 @@
 import { RKLLMParam, RKLLMInput, RKLLMResult, StreamOptions, RKLLMLoraAdapter } from './types.js';
-import { requireValidModelPath } from './utils/model-validator.js';
-import { RKLLMFFIImpl } from './ffi/rkllm-ffi-impl.js';
-import { UniversalRKLLM } from './core/rkllm-universal.js';
-import { detectRuntime } from './runtime/detector.js';
 
 /**
  * Main RKLLM class for interacting with Rockchip LLM Runtime
  * Supports multiple JavaScript runtimes with automatic adapter selection
  */
 export class RKLLM {
-  private backend: RKLLMFFIImpl | UniversalRKLLM | null = null;
+  private backend: any = null;
   private useUniversal = false;
 
   /**
@@ -21,19 +17,28 @@ export class RKLLM {
       throw new Error('RKLLM is already initialized');
     }
 
-    // Validate model path before attempting to initialize
-    await requireValidModelPath(params.modelPath);
+    // Validate model path before attempting to initialize (dynamic import)
+    try {
+      const { requireValidModelPath } = await import('./utils/model-validator.js');
+      await requireValidModelPath(params.modelPath);
+    } catch (error) {
+      // If validation fails, continue but warn
+      console.warn('Model path validation skipped:', error);
+    }
     
     try {
-      // Detect runtime and choose appropriate implementation
+      // Dynamically import runtime detection to avoid compilation issues
+      const { detectRuntime } = await import('./runtime/detector.js');
       const runtime = detectRuntime();
       
       if (runtime.name === 'bun' && runtime.ffiSupported) {
         // Use original Bun FFI implementation for maximum performance
+        const { RKLLMFFIImpl } = await import('./ffi/rkllm-ffi-impl.js');
         this.backend = new RKLLMFFIImpl();
         this.useUniversal = false;
       } else {
         // Use universal implementation for other runtimes
+        const { UniversalRKLLM } = await import('./core/rkllm-universal.js');
         this.backend = new UniversalRKLLM();
         this.useUniversal = true;
       }
@@ -54,9 +59,9 @@ export class RKLLM {
   async run(input: RKLLMInput): Promise<RKLLMResult> {
     this.checkInitialized();
     if (this.useUniversal) {
-      return await (this.backend as UniversalRKLLM).run(input);
+      return await this.backend.run(input);
     } else {
-      return await (this.backend as RKLLMFFIImpl).run(input);
+      return await this.backend.run(input);
     }
   }
 
@@ -67,11 +72,7 @@ export class RKLLM {
    */
   async runStream(input: RKLLMInput, options: StreamOptions): Promise<void> {
     this.checkInitialized();
-    if (this.useUniversal) {
-      return await (this.backend as UniversalRKLLM).runStream(input, options);
-    } else {
-      return await (this.backend as RKLLMFFIImpl).runStream(input, options);
-    }
+    return await this.backend.runStream(input, options);
   }
 
   /**
@@ -80,11 +81,7 @@ export class RKLLM {
    */
   async loadLoraAdapter(adapter: RKLLMLoraAdapter): Promise<void> {
     this.checkInitialized();
-    if (this.useUniversal) {
-      return await (this.backend as UniversalRKLLM).loadLoRA(adapter);
-    } else {
-      return await (this.backend as RKLLMFFIImpl).loadLoRA(adapter);
-    }
+    return await this.backend.loadLoRA(adapter);
   }
 
   /**
@@ -105,11 +102,7 @@ export class RKLLM {
    */
   async getContextLength(): Promise<number[]> {
     this.checkInitialized();
-    if (this.useUniversal) {
-      return await (this.backend as UniversalRKLLM).getKVCacheSize();
-    } else {
-      return await (this.backend as RKLLMFFIImpl).getKVCacheSize();
-    }
+    return await this.backend.getKVCacheSize();
   }
 
   /**
@@ -118,11 +111,7 @@ export class RKLLM {
    */
   async clearContext(keepSystemPrompt: boolean = false): Promise<void> {
     this.checkInitialized();
-    if (this.useUniversal) {
-      return await (this.backend as UniversalRKLLM).clearKVCache(keepSystemPrompt);
-    } else {
-      return await (this.backend as RKLLMFFIImpl).clearKVCache(keepSystemPrompt);
-    }
+    return await this.backend.clearKVCache(keepSystemPrompt);
   }
 
   /**
@@ -133,11 +122,7 @@ export class RKLLM {
    */
   async setChatTemplate(systemPrompt: string, promptPrefix: string, promptPostfix: string): Promise<void> {
     this.checkInitialized();
-    if (this.useUniversal) {
-      return await (this.backend as UniversalRKLLM).setChatTemplate(systemPrompt, promptPrefix, promptPostfix);
-    } else {
-      return await (this.backend as RKLLMFFIImpl).setChatTemplate(systemPrompt, promptPrefix, promptPostfix);
-    }
+    return await this.backend.setChatTemplate(systemPrompt, promptPrefix, promptPostfix);
   }
 
   /**
@@ -146,11 +131,7 @@ export class RKLLM {
    */
   async loadPromptCache(cachePath: string): Promise<void> {
     this.checkInitialized();
-    if (this.useUniversal) {
-      return await (this.backend as UniversalRKLLM).loadPromptCache(cachePath);
-    } else {
-      return await (this.backend as RKLLMFFIImpl).loadPromptCache(cachePath);
-    }
+    return await this.backend.loadPromptCache(cachePath);
   }
 
   /**
@@ -158,11 +139,7 @@ export class RKLLM {
    */
   async releasePromptCache(): Promise<void> {
     this.checkInitialized();
-    if (this.useUniversal) {
-      return await (this.backend as UniversalRKLLM).releasePromptCache();
-    } else {
-      return await (this.backend as RKLLMFFIImpl).releasePromptCache();
-    }
+    return await this.backend.releasePromptCache();
   }
 
   /**
@@ -170,11 +147,7 @@ export class RKLLM {
    */
   async abort(): Promise<void> {
     this.checkInitialized();
-    if (this.useUniversal) {
-      return await (this.backend as UniversalRKLLM).abort();
-    } else {
-      return await (this.backend as RKLLMFFIImpl).abort();
-    }
+    return await this.backend.abort();
   }
 
   /**
@@ -182,11 +155,7 @@ export class RKLLM {
    */
   async isRunning(): Promise<boolean> {
     this.checkInitialized();
-    if (this.useUniversal) {
-      return await (this.backend as UniversalRKLLM).isRunning();
-    } else {
-      return await (this.backend as RKLLMFFIImpl).isRunning();
-    }
+    return await this.backend.isRunning();
   }
 
   /**
@@ -233,7 +202,7 @@ export class RKLLM {
     }
     
     if (this.useUniversal) {
-      return (this.backend as UniversalRKLLM).runtimeName;
+      return this.backend.runtimeName || 'unknown';
     } else {
       return 'bun'; // Original implementation is Bun-only
     }

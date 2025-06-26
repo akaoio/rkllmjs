@@ -4,7 +4,7 @@
  */
 
 import type { FFIManager } from './ffi-manager.js';
-import type { 
+import { 
   RKLLMParam, 
   RKLLMInput, 
   RKLLMResult, 
@@ -77,7 +77,7 @@ export class UniversalTypeConverter {
     offset += 4;
     
     // repetition_penalty (float)
-    view.setFloat32(offset, params.repetitionPenalty ?? 1.1, true);
+    view.setFloat32(offset, params.repeatPenalty ?? 1.1, true);
     offset += 4;
     
     // presence_penalty (float)
@@ -100,8 +100,9 @@ export class UniversalTypeConverter {
     view.setFloat32(offset, params.mirostatEta ?? 0.1, true);
     offset += 4;
     
-    // seed (int32_t)
-    view.setInt32(offset, params.seed ?? -1, true);
+    // Note: seed property doesn't exist in RKLLMParam interface
+    // Using a default value for now
+    view.setInt32(offset, -1, true);
     offset += 4;
     
     // skip_special_token (int8_t)

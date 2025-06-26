@@ -96,8 +96,7 @@ export class UniversalRKLLM {
       const rkllmResult: RKLLMResult = {
         text: 'Placeholder result - implementation needed',
         state: 2, // LLMCallState.FINISH
-        tokens: [],
-        logprobs: null
+        tokens: []
       };
 
       // Clean up input buffer
