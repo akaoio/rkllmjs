@@ -543,12 +543,12 @@ class RKLLMModelManager {
   }
 
   private async promptForRepo(): Promise<string> {
-    console.log(`\n🤖 Enter HuggingFace repository (e.g., 'microsoft/DialoGPT-medium'):`);
-    console.log(`💡 Popular choices:`);
-    console.log(`   • microsoft/DialoGPT-medium`);
-    console.log(`   • microsoft/DialoGPT-small`);
-    console.log(`   • gpt2`);
-    console.log(`   • distilgpt2`);
+    console.log(`\n🤖 Enter HuggingFace repository (e.g., 'limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4'):`);
+    console.log(`💡 Popular RKLLM models:`);
+    console.log(`   • limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4`);
+    console.log(`   • punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4`);
+    console.log(`   • akaoio/Qwen2.5-0.5B-RKLLM-rk3588`);
+    console.log(`   • rockchip/Llama-2-7b-chat-rk3588`);
     
     const input = prompt(`Repository: `);
     if (!input || input.trim() === '') {

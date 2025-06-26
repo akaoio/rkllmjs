@@ -11,7 +11,7 @@ async function streamingExample() {
     
     if (!modelPath) {
       console.log('❌ No models found! Please download a model first:');
-      console.log('   bun tools.ts pull microsoft/DialoGPT-small pytorch_model.bin');
+      console.log('   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm');
       console.log('   bun tools.ts list  # to see available models');
       return;
     }
