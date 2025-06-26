@@ -1,47 +1,19 @@
 import { RKLLMParam, RKLLMInput, RKLLMResult, StreamOptions, RKLLMLoraAdapter } from './types.js';
 import { requireValidModelPath } from './utils/model-validator.js';
-
-// Backend implementations
-type BackendType = 'napi' | 'ffi';
-
-interface RKLLMBackend {
-  init(params: RKLLMParam): Promise<void>;
-  run(input: RKLLMInput): Promise<RKLLMResult>;
-  runStream(input: RKLLMInput, options: StreamOptions): Promise<void>;
-  loadLoRA?(adapter: RKLLMLoraAdapter): Promise<void>;
-  unloadLoRA?(): Promise<void>;
-  getContextLength?(): number;
-  clearContext?(): Promise<void>;
-  destroy(): Promise<void>;
-  get initialized(): boolean;
-}
-
-/**
- * Detect the best available backend
- */
-function detectBackend(): BackendType {
-  // Check if we're running in Bun and FFI is available
-  if (typeof Bun !== 'undefined' && typeof Bun.version === 'string') {
-    return 'ffi';
-  }
-  
-  // Default to N-API for Node.js and other environments
-  return 'napi';
-}
+import { RKLLMFFIImpl } from './ffi/rkllm-ffi-impl.js';
 
 /**
  * Main RKLLM class for interacting with Rockchip LLM Runtime
+ * Uses Bun.FFI for native bindings exclusively
  */
 export class RKLLM {
-  private backend: RKLLMBackend | null = null;
-  private currentBackendType: BackendType | null = null;
+  private backend: RKLLMFFIImpl | null = null;
 
   /**
    * Initialize the LLM with the given parameters
    * @param params Configuration parameters for the LLM
-   * @param preferredBackend Optional backend preference ('napi' | 'ffi')
    */
-  async init(params: RKLLMParam, preferredBackend?: BackendType): Promise<void> {
+  async init(params: RKLLMParam): Promise<void> {
     if (this.backend?.initialized) {
       throw new Error('RKLLM is already initialized');
     }
@@ -49,48 +21,12 @@ export class RKLLM {
     // Validate model path before attempting to initialize
     await requireValidModelPath(params.modelPath);
     
-    // Determine which backend to use
-    this.currentBackendType = preferredBackend || detectBackend();
-    
     try {
-      this.backend = await this.createBackend(this.currentBackendType);
+      this.backend = new RKLLMFFIImpl();
       await this.backend.init(params);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      // If FFI fails and we auto-detected it, try falling back to N-API
-      if (this.currentBackendType === 'ffi' && !preferredBackend) {
-        console.warn('FFI backend failed, falling back to N-API:', errorMessage);
-        try {
-          this.currentBackendType = 'napi';
-          this.backend = await this.createBackend(this.currentBackendType);
-          await this.backend.init(params);
-          return;
-        } catch (napiError) {
-          const napiErrorMessage = napiError instanceof Error ? napiError.message : String(napiError);
-          throw new Error(`Both backends failed. FFI: ${errorMessage}, N-API: ${napiErrorMessage}`);
-        }
-      }
-      
-      throw new Error(`Failed to initialize RKLLM with ${this.currentBackendType} backend: ${errorMessage}`);
-    }
-  }
-
-  /**
-   * Create backend implementation
-   */
-  private async createBackend(type: BackendType): Promise<RKLLMBackend> {
-    switch (type) {
-      case 'ffi': {
-        const { RKLLMFFIImpl } = await import('./ffi/rkllm-ffi-impl.js');
-        return new RKLLMFFIImpl();
-      }
-      case 'napi': {
-        const { RKLLMNAPIImpl } = await import('./napi/rkllm-napi-impl.js');
-        return new RKLLMNAPIImpl();
-      }
-      default:
-        throw new Error(`Unknown backend type: ${type}`);
+      throw new Error(`Failed to initialize RKLLM with FFI backend: ${errorMessage}`);
     }
   }
 
@@ -120,51 +56,77 @@ export class RKLLM {
    */
   async loadLoraAdapter(adapter: RKLLMLoraAdapter): Promise<void> {
     this.checkInitialized();
-    
-    if (this.backend!.loadLoRA) {
-      return await this.backend!.loadLoRA(adapter);
-    } else {
-      throw new Error(`LoRA adapter loading not supported with ${this.currentBackendType} backend`);
-    }
+    return await this.backend!.loadLoRA(adapter);
   }
 
   /**
    * Unload the current LoRA adapter
+   * Note: FFI implementation doesn't have a direct unload method
+   * You can load a new adapter to replace the current one
    */
   async unloadLoraAdapter(): Promise<void> {
-    this.checkInitialized();
-    
-    if (this.backend!.unloadLoRA) {
-      return await this.backend!.unloadLoRA();
-    } else {
-      throw new Error(`LoRA adapter unloading not supported with ${this.currentBackendType} backend`);
-    }
+    throw new Error('LoRA adapter unloading not directly supported in FFI implementation. Load a new adapter to replace the current one.');
   }
 
   /**
-   * Get the current context length
+   * Get the current KV cache size
    */
-  getContextLength(): number {
+  async getContextLength(): Promise<number[]> {
     this.checkInitialized();
-    
-    if (this.backend!.getContextLength) {
-      return this.backend!.getContextLength();
-    } else {
-      throw new Error(`Context length retrieval not supported with ${this.currentBackendType} backend`);
-    }
+    return await this.backend!.getKVCacheSize();
   }
 
   /**
-   * Clear the current context
+   * Clear the current KV cache
+   * @param keepSystemPrompt Whether to keep system prompt in cache
    */
-  async clearContext(): Promise<void> {
+  async clearContext(keepSystemPrompt: boolean = false): Promise<void> {
     this.checkInitialized();
-    
-    if (this.backend!.clearContext) {
-      return await this.backend!.clearContext();
-    } else {
-      throw new Error(`Context clearing not supported with ${this.currentBackendType} backend`);
-    }
+    return await this.backend!.clearKVCache(keepSystemPrompt);
+  }
+
+  /**
+   * Set chat template for the model
+   * @param systemPrompt System prompt for the chat
+   * @param promptPrefix Prefix for user prompts
+   * @param promptPostfix Postfix for user prompts
+   */
+  async setChatTemplate(systemPrompt: string, promptPrefix: string, promptPostfix: string): Promise<void> {
+    this.checkInitialized();
+    return await this.backend!.setChatTemplate(systemPrompt, promptPrefix, promptPostfix);
+  }
+
+  /**
+   * Load prompt cache from file
+   * @param cachePath Path to the cache file
+   */
+  async loadPromptCache(cachePath: string): Promise<void> {
+    this.checkInitialized();
+    return await this.backend!.loadPromptCache(cachePath);
+  }
+
+  /**
+   * Release prompt cache from memory
+   */
+  async releasePromptCache(): Promise<void> {
+    this.checkInitialized();
+    return await this.backend!.releasePromptCache();
+  }
+
+  /**
+   * Abort current inference operation
+   */
+  async abort(): Promise<void> {
+    this.checkInitialized();
+    return await this.backend!.abort();
+  }
+
+  /**
+   * Check if inference is currently running
+   */
+  async isRunning(): Promise<boolean> {
+    this.checkInitialized();
+    return await this.backend!.isRunning();
   }
 
   /**
@@ -177,7 +139,6 @@ export class RKLLM {
 
     await this.backend.destroy();
     this.backend = null;
-    this.currentBackendType = null;
   }
 
   /**
@@ -197,10 +158,10 @@ export class RKLLM {
   }
 
   /**
-   * Get the current backend type
+   * Get the current backend type (always 'ffi')
    */
-  get backendType(): BackendType | null {
-    return this.currentBackendType;
+  get backendType(): 'ffi' | null {
+    return this.backend ? 'ffi' : null;
   }
 }
 

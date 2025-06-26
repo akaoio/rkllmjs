@@ -52,21 +52,22 @@ describe('Bun.FFI Integration', () => {
     }
   });
 
-  it('should support backend selection', async () => {
+  it('should use FFI backend exclusively', async () => {
     const llm = new RKLLM();
     
     try {
-      // Try to initialize with explicit backend preference
+      // Try to initialize - should always use FFI backend
       await llm.init({
         modelPath: './non-existent-model.rkllm',
         maxContextLen: 1024,
-      }, 'ffi');
+      });
     } catch (error) {
       // Should fail but not crash
       expect(error).toBeDefined();
     }
     
-    expect(llm.backendType).toBeOneOf([null, 'ffi', 'napi']);
+    // Should only be null (not initialized) or 'ffi'
+    expect(llm.backendType === null || llm.backendType === 'ffi').toBe(true);
   });
 
   it('should provide consistent API', () => {
@@ -82,9 +83,16 @@ describe('Bun.FFI Integration', () => {
     expect(typeof llm.getContextLength).toBe('function');
     expect(typeof llm.clearContext).toBe('function');
     
+    // FFI-specific methods
+    expect(typeof llm.setChatTemplate).toBe('function');
+    expect(typeof llm.loadPromptCache).toBe('function');
+    expect(typeof llm.releasePromptCache).toBe('function');
+    expect(typeof llm.abort).toBe('function');
+    expect(typeof llm.isRunning).toBe('function');
+    
     // Check properties
     expect(typeof llm.initialized).toBe('boolean');
-    expect(llm.backendType === null || typeof llm.backendType === 'string').toBe(true);
+    expect(llm.backendType === null || llm.backendType === 'ffi').toBe(true);
   });
 });
 

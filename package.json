@@ -16,19 +16,14 @@
     "dist",
     "libs",
     "src",
-    "binding.gyp",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "bun run build:native && bun run build:ts",
-    "build:native": "node-gyp rebuild",
-    "build:ts": "tsc",
+    "build": "tsc",
     "test": "bun test",
-    "test:ffi": "bun test tests/bun-ffi.test.ts",
-    "clean": "rm -rf dist build",
-    "example:ffi": "bun run examples/bun-ffi-example.ts",
-    "example:comparison": "bun run examples/backend-comparison.ts"
+    "clean": "rm -rf dist",
+    "example": "bun run examples/bun-ffi-example.ts"
   },
   "keywords": [
     "rockchip",
@@ -43,8 +38,8 @@
     "javascript",
     "typescript",
     "bun",
-    "esm",
-    "node-addon"
+    "ffi",
+    "esm"
   ],
   "author": "Your Name",
   "license": "MIT",
@@ -72,14 +67,7 @@
     "eslint": "^8.57.0",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",
-    "node-gyp": "^10.0.1",
     "prettier": "^3.2.5",
     "typescript": "^5.4.2"
-  },
-  "dependencies": {
-    "node-addon-api": "^7.1.0"
-  },
-  "trustedDependencies": [
-    "node-addon-api"
-  ]
+  }
 }

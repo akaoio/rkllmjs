@@ -14,7 +14,7 @@ async function runBunFFIExample() {
   console.log('==========================\n');
 
   try {
-    // Create RKLLM instance with explicit FFI backend preference
+    // Create RKLLM instance (now FFI-only)
     console.log('📦 Initializing RKLLM with Bun.FFI backend...');
     
     const llm = new RKLLM();
@@ -25,7 +25,7 @@ async function runBunFFIExample() {
       temperature: 0.7,
       topP: 0.9,
       topK: 50,
-    }, 'ffi'); // Explicitly request FFI backend
+    }); // FFI backend is used automatically
 
     console.log(`✅ Initialized with ${llm.backendType} backend\n`);
 
@@ -110,38 +110,29 @@ async function runBunFFIExample() {
   }
 }
 
-// Utility function to demonstrate the FFI backend selection
-async function demonstrateBackendSelection() {
-  console.log('🔍 Backend Selection Demo');
-  console.log('========================\n');
+// Utility function to demonstrate FFI functionality
+async function demonstrateFFIOnlyUsage() {
+  console.log('🔍 FFI-Only Demo');
+  console.log('================\n');
 
-  // Create instances with different backend preferences
-  const backends = [
-    { name: 'Auto-detect', preference: undefined },
-    { name: 'FFI (explicit)', preference: 'ffi' as const },
-    { name: 'N-API (explicit)', preference: 'napi' as const },
-  ];
-
-  for (const { name, preference } of backends) {
-    console.log(`Testing ${name}...`);
+  console.log('Testing FFI backend...');
+  
+  try {
+    const llm = new RKLLM();
+    await llm.init({
+      modelPath: process.env.RKLLM_MODEL_PATH || './models/test.rkllm',
+      maxContextLen: 512,
+      maxNewTokens: 50,
+    });
     
-    try {
-      const llm = new RKLLM();
-      await llm.init({
-        modelPath: process.env.RKLLM_MODEL_PATH || './models/test.rkllm',
-        maxContextLen: 512,
-        maxNewTokens: 50,
-      }, preference);
-      
-      console.log(`✅ Success with ${llm.backendType} backend`);
-      await llm.destroy();
-      
-    } catch (error) {
-      console.log(`❌ Failed: ${error instanceof Error ? error.message : error}`);
-    }
+    console.log(`✅ Success with ${llm.backendType} backend`);
+    await llm.destroy();
     
-    console.log();
+  } catch (error) {
+    console.log(`❌ Failed: ${error instanceof Error ? error.message : error}`);
   }
+  
+  console.log();
 }
 
 // Utility function showing FFI-specific features
@@ -186,7 +177,7 @@ async function main() {
   console.log('🎯 RKLLMJS Bun.FFI Complete Example\n');
   
   // Run all demonstrations
-  await demonstrateBackendSelection();
+  await demonstrateFFIOnlyUsage();
   await demonstrateFFIFeatures();
   await runBunFFIExample();
 }
@@ -196,4 +187,4 @@ if (import.meta.main) {
   main().catch(console.error);
 }
 
-export { runBunFFIExample, demonstrateBackendSelection, demonstrateFFIFeatures };
+export { runBunFFIExample, demonstrateFFIOnlyUsage, demonstrateFFIFeatures };

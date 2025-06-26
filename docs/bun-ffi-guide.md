@@ -4,12 +4,12 @@ This guide explains how to use RKLLMJS with Bun's Foreign Function Interface (FF
 
 ## Overview
 
-RKLLMJS now supports two backends:
+RKLLMJS is now exclusively built on Bun.FFI:
 
-1. **N-API Backend** - Traditional Node.js native addon (requires compilation)
-2. **Bun.FFI Backend** - Direct library access using Bun's FFI (no compilation required)
-
-The library automatically detects the best available backend, with FFI preferred when running in Bun.
+- **Bun.FFI Only** - Direct library access using Bun's FFI (no compilation required)
+- **Optimized Performance** - Direct native function calls with minimal overhead
+- **Instant Setup** - No build step or compilation needed
+- **Full API Access** - Complete RKLLM runtime functionality available
 
 ## Quick Start with Bun.FFI
 
@@ -67,20 +67,20 @@ await llm.init({
 console.log(`Using ${llm.backendType} backend`); // "ffi"
 ```
 
-## Features Comparison
+## FFI Features Overview
 
-| Feature | N-API | Bun.FFI | Notes |
-|---------|-------|---------|-------|
-| Basic Inference | ✅ | ✅ | Core functionality |
-| Streaming Inference | ✅ | 🚧 | FFI implementation in progress |
-| LoRA Adapters | ✅ | ✅ | Load/unload model adapters |
-| Prompt Caching | ✅ | ✅ | Cache frequently used prompts |
-| KV Cache Management | ❌ | ✅ | Clear and manage key-value cache |
-| Chat Templates | ❌ | ✅ | Set system prompts and templates |
-| Function Calling | ❌ | ✅ | Tool/function calling support |
-| Cross Attention | ❌ | ✅ | Advanced attention mechanisms |
-| Runtime Support | Node.js, Bun | Bun only | Platform compatibility |
-| Compilation Required | Yes | No | Setup complexity |
+| Feature | FFI Support | Notes |
+|---------|-------------|-------|
+| Basic Inference | ✅ | Core functionality |
+| Streaming Inference | ✅ | Real-time token generation |
+| LoRA Adapters | ✅ | Load model adapters |
+| Prompt Caching | ✅ | Cache frequently used prompts |
+| KV Cache Management | ✅ | Clear and manage key-value cache |
+| Chat Templates | ✅ | Set system prompts and templates |
+| Function Calling | ✅ | Tool/function calling support |
+| Cross Attention | ✅ | Advanced attention mechanisms |
+| Runtime Support | Bun only | Optimized for Bun FFI |
+| Compilation Required | No | Zero build step setup |
 
 ## Advanced FFI Features
 
@@ -136,27 +136,24 @@ await llm.setChatTemplate(
 ### 4. Performance Monitoring
 
 ```typescript
-// Benchmark different backends
-import { benchmarkBackend } from './examples/backend-comparison.js';
+// Monitor FFI performance
+import { performanceMonitor } from './utils/performance.js';
 
-const napiResult = await benchmarkBackend('napi');
-const ffiResult = await benchmarkBackend('ffi');
-
-console.log('N-API Init Time:', napiResult.initTime, 'ms');
-console.log('FFI Init Time:', ffiResult.initTime, 'ms');
+const result = await performanceMonitor();
+console.log('FFI Init Time:', result.initTime, 'ms');
+console.log('Inference Time:', result.inferenceTime, 'ms');
 ```
 
 ## Examples
 
 See the `examples/` directory for complete examples:
 
-- `bun-ffi-example.ts` - Basic FFI usage
-- `backend-comparison.ts` - Performance comparison between backends
+- `bun-ffi-example.ts` - Comprehensive FFI usage demonstration
 
 Run examples with:
 
 ```bash
-# Basic FFI example
+# FFI example
 bun run examples/bun-ffi-example.ts
 
 # Backend comparison
@@ -224,15 +221,7 @@ Error: Could not load RKLLM library from any location
 2. Add the library path to `LD_LIBRARY_PATH`
 3. Verify you're running on a supported architecture
 
-### Backend Fallback
-
-```
-Warning: FFI backend failed, falling back to N-API
-```
-
-This is normal behavior when FFI is not available. The library will automatically use N-API as a fallback.
-
-### Bun Runtime Not Detected
+### FFI Initialization Failed
 
 ```
 Error: RKLLM FFI implementation is only available in Bun runtime
@@ -241,25 +230,28 @@ Error: RKLLM FFI implementation is only available in Bun runtime
 **Solution:** Make sure you're running with Bun:
 ```bash
 bun run your-script.ts
-# instead of
-node your-script.js
+# Bun is required for FFI support
 ```
+
+### Library Path Issues
+
+If you get library loading errors, ensure the RKLLM library is in the correct location and properly linked.
 
 ## Best Practices
 
-1. **Use FFI in Bun environments** for maximum performance and features
-2. **Explicit backend selection** when you need specific features
-3. **Handle fallbacks gracefully** when FFI is not available
-4. **Monitor performance** to choose the best backend for your use case
-5. **Clean up resources** properly with `destroy()` method
+1. **Use Bun runtime** - Required for FFI functionality
+2. **Clean up resources** properly with `destroy()` method
+3. **Handle errors gracefully** with try-catch blocks
+4. **Monitor performance** with built-in utilities
+5. **Use TypeScript** for better development experience
 
-## Migration from N-API Only
+## Migration from Dual Backend
 
-If you're upgrading from a version that only supported N-API:
+If you're upgrading from a version that supported both N-API and FFI:
 
-1. **No code changes required** - the API remains the same
-2. **Install Bun** to take advantage of FFI features
-3. **Test both backends** to ensure compatibility
-4. **Update deployment scripts** if moving to FFI-only setup
+1. **Remove backend selection parameters** - `init()` no longer takes a backend parameter
+2. **Ensure Bun runtime** - Node.js is no longer supported
+3. **Update deployment scripts** - Use Bun instead of Node.js
+4. **Test FFI features** - Take advantage of advanced capabilities
 
-The library maintains full backward compatibility while adding new FFI capabilities.
+The API remains largely the same, but you now get the full power of FFI without backend complexity.
