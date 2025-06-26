@@ -25,7 +25,10 @@
     "build:native": "node-gyp rebuild",
     "build:ts": "tsc",
     "test": "bun test",
-    "clean": "rm -rf dist build"
+    "test:ffi": "bun test tests/bun-ffi.test.ts",
+    "clean": "rm -rf dist build",
+    "example:ffi": "bun run examples/bun-ffi-example.ts",
+    "example:comparison": "bun run examples/backend-comparison.ts"
   },
   "keywords": [
     "rockchip",
