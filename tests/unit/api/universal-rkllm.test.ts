@@ -141,15 +141,15 @@ describe('Universal RKLLM Implementation', () => {
     const llm = new RKLLM();
     
     // Should not throw when destroying uninitialized instance
-    await expect(llm.destroy()).resolves.not.toThrow();
+    await expect(async () => await llm.destroy()).not.toThrow();
   });
 
   it('should maintain backward compatibility with existing API', () => {
     const llm = new RKLLM();
     
     // Properties that should exist for backward compatibility
-    expect(llm.hasOwnProperty('initialized')).toBe(true);
-    expect(llm.hasOwnProperty('backendType')).toBe(true);
+    expect('initialized' in llm).toBe(true);
+    expect('backendType' in llm).toBe(true);
     
     // Backend type should be null when not initialized
     expect(llm.backendType).toBe(null);

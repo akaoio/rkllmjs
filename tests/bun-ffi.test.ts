@@ -47,14 +47,14 @@ describe('Universal Multi-Runtime FFI', () => {
     }
   });
 
-  it('should handle FFI initialization gracefully', () => {
+  it('should handle FFI initialization gracefully', async () => {
     // This may fail if library is not available, but should not throw
-    const success = initializeFFI();
+    const success = await initializeFFI();
     expect(typeof success).toBe('boolean');
   });
 
-  it('should detect FFI availability', () => {
-    const available = isFFIAvailable();
+  it('should detect FFI availability', async () => {
+    const available = await isFFIAvailable();
     expect(typeof available).toBe('boolean');
   });
 
