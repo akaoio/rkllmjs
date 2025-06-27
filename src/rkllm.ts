@@ -7,14 +7,29 @@ import { RKLLMParam, RKLLMInput, RKLLMResult, StreamOptions, RKLLMLoraAdapter } 
 export class RKLLM {
   private backend: any = null;
   private useUniversal = false;
+  private useMock = false;
 
   /**
    * Initialize the LLM with the given parameters
    * @param params Configuration parameters for the LLM
+   * @param options Optional configuration including test mode
    */
-  async init(params: RKLLMParam): Promise<void> {
+  async init(params: RKLLMParam, options?: { mockMode?: boolean }): Promise<void> {
     if (this.backend?.initialized) {
       throw new Error('RKLLM is already initialized');
+    }
+
+    // Check if we should use mock mode (for testing)
+    const mockMode = options?.mockMode || false;
+
+    if (mockMode) {
+      // Use mock implementation for testing
+      const { RKLLMFFIMock } = await import('./ffi/rkllm-ffi-mock.js');
+      this.backend = new RKLLMFFIMock();
+      this.useMock = true;
+      this.useUniversal = false;
+      await this.backend.init(params);
+      return;
     }
 
     // Validate model path before attempting to initialize (dynamic import)
@@ -187,10 +202,12 @@ export class RKLLM {
   }
 
   /**
-   * Get the current backend type (always 'ffi')
+   * Get the current backend type
    */
-  get backendType(): 'ffi' | null {
-    return this.backend ? 'ffi' : null;
+  get backendType(): 'ffi' | 'mock' | null {
+    if (!this.backend) return null;
+    if (this.useMock) return 'mock';
+    return 'ffi';
   }
 
   /**
@@ -199,6 +216,10 @@ export class RKLLM {
   get runtimeName(): string {
     if (!this.backend) {
       return 'unknown';
+    }
+    
+    if (this.useMock) {
+      return 'mock';
     }
     
     if (this.useUniversal) {
@@ -212,10 +233,11 @@ export class RKLLM {
 /**
  * Utility function to create a new RKLLM instance
  * @param params Configuration parameters
+ * @param options Optional configuration including test mode
  * @returns Promise resolving to initialized RKLLM instance
  */
-export async function createRKLLM(params: RKLLMParam): Promise<RKLLM> {
+export async function createRKLLM(params: RKLLMParam, options?: { mockMode?: boolean }): Promise<RKLLM> {
   const llm = new RKLLM();
-  await llm.init(params);
+  await llm.init(params, options);
   return llm;
 }

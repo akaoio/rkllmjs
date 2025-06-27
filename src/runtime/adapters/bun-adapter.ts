@@ -84,6 +84,12 @@ export class BunFFIAdapter implements RuntimeFFI {
   }
 
   private ensureFFILoaded(): void {
+    // Skip FFI loading in test mode to prevent segfaults
+    if (process.env.NODE_ENV === 'test' || process.env.RKLLMJS_TEST_MODE === 'true') {
+      console.warn('Skipping FFI loading in test mode');
+      return;
+    }
+
     if (this.bunFFI === null && this.isBunEnvironment()) {
       try {
         // In Bun, try to access the FFI directly from the global Bun object

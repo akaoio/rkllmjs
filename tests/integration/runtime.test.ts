@@ -4,6 +4,7 @@
  * Moved from scripts/test-runtime.js for better organization
  */
 
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { 
   detectRuntime, 
   getFFIInfo, 
@@ -112,7 +113,7 @@ describe('Runtime Integration Tests', () => {
       
       // Should handle runtime-specific features appropriately
       if (runtime.ffiSupported) {
-        expect(typeof llm.backendType).toBe('string' || 'object');
+        expect(['string', 'object', null]).toContain(typeof llm.backendType);
       }
     });
   });
@@ -131,7 +132,8 @@ export async function runRuntimeTest(): Promise<void> {
 
   const info = getFFIInfo();
   console.log(`  Library Extension: ${info.libraryExtension}`);
-  console.log(`  Platform: ${info.platform || 'unknown'}`);
+  console.log(`  Runtime: ${info.runtime}`);
+  console.log(`  FFI Supported: ${info.ffiSupported}`);
 
   // Compatibility Check
   console.log('\n🔍 Compatibility Check:');

@@ -2,8 +2,10 @@
  * Implementation Validation Test
  * Validates that all requirements from the original issue have been met
  * Moved from scripts/validate-implementation.js for better organization
+ * Uses mock mode to prevent native crashes during testing
  */
 
+import { describe, it, expect } from 'bun:test';
 import { 
   RKLLM,
   detectRuntime,
@@ -121,7 +123,7 @@ describe('Implementation Validation Tests', () => {
       // Override the backend for testing
       (llm as any).backend = mockBackend;
       
-      await expect(llm.init(DEFAULT_TEST_CONFIG))
+      await expect(llm.init(DEFAULT_TEST_CONFIG, { mockMode: true }))
         .rejects.toThrow(EXPECTED_ERRORS.ALREADY_INITIALIZED);
     });
   });
