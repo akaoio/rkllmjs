@@ -7,6 +7,12 @@ import { describe, it, expect } from 'bun:test';
 import { RKLLM } from '../../../src/rkllm.js';
 import { RKLLMInputType } from '../../../src/types.js';
 import { detectRuntime } from '../../../src/runtime/detector.js';
+import { 
+  TEST_MODEL_PATHS, 
+  CONTEXT_LENGTHS, 
+  DEFAULT_TEST_CONFIG,
+  EXPECTED_ERRORS
+} from '../../test-constants.js';
 
 describe('Universal RKLLM Implementation', () => {
   it('should create RKLLM instance', () => {
@@ -27,8 +33,8 @@ describe('Universal RKLLM Implementation', () => {
     
     try {
       await llm.init({
-        modelPath: './non-existent-model.rkllm',
-        maxContextLen: 1024,
+        modelPath: TEST_MODEL_PATHS.NONEXISTENT_ALT,
+        maxContextLen: CONTEXT_LENGTHS.SMALL,
       });
       
       // Should not reach here
@@ -37,7 +43,7 @@ describe('Universal RKLLM Implementation', () => {
       // Should throw an error for non-existent model
       expect(error).toBeDefined();
       expect(error instanceof Error).toBe(true);
-      expect(error.message).toContain('model');
+      expect(error.message).toContain(EXPECTED_ERRORS.INVALID_MODEL);
     }
   });
 
@@ -83,8 +89,8 @@ describe('Universal RKLLM Implementation', () => {
     try {
       // First initialization attempt (will fail due to invalid model)
       await llm.init({
-        modelPath: './test-model.rkllm',
-        maxContextLen: 1024,
+        modelPath: TEST_MODEL_PATHS.NONEXISTENT,
+        maxContextLen: CONTEXT_LENGTHS.SMALL,
       });
     } catch (error) {
       // Expected to fail
@@ -93,15 +99,15 @@ describe('Universal RKLLM Implementation', () => {
     try {
       // Second initialization attempt should also fail with proper error
       await llm.init({
-        modelPath: './another-model.rkllm',
-        maxContextLen: 1024,
+        modelPath: TEST_MODEL_PATHS.NONEXISTENT_ALT,
+        maxContextLen: CONTEXT_LENGTHS.SMALL,
       });
       
       // Should not reach here if first init had any effect
       expect(true).toBe(false);
     } catch (error) {
       // Should get initialization error, not "already initialized" if first failed
-      expect(error.message).not.toContain('already initialized');
+      expect(error.message).not.toContain(EXPECTED_ERRORS.ALREADY_INITIALIZED);
     }
   });
 
