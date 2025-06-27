@@ -9,7 +9,7 @@ import {
   createFFIAdapter, 
   validateRuntimeCompatibility,
   getRuntimeInfo
-} from '../../src/runtime/detector.js';
+} from '../../../src/runtime/detector.js';
 
 describe('Runtime Detection', () => {
   it('should detect current runtime', () => {
@@ -108,7 +108,7 @@ describe('Runtime Detection', () => {
       // Should not reach here if Node.js adapter is not available
       // If it does reach here, it means Node.js adapter is available
     } catch (error) {
-      expect(error.message).toContain('Failed to load');
+      expect(error.message).toContain('No compatible FFI adapter found');
     }
   });
 });

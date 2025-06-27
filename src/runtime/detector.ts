@@ -11,10 +11,19 @@ import type { RuntimeInfo, RuntimeFFI, FFIOptions } from './interfaces.js';
 export function detectRuntime(): RuntimeInfo {
   // Check for Bun
   if (typeof globalThis.Bun !== 'undefined' && typeof globalThis.Bun.version === 'string') {
+    let ffiSupported = false;
+    try {
+      // Try to access bun:ffi module
+      const ffiModule = require('bun:ffi');
+      ffiSupported = typeof ffiModule.dlopen === 'function';
+    } catch (error) {
+      ffiSupported = false;
+    }
+    
     return {
       name: 'bun',
       version: globalThis.Bun.version,
-      ffiSupported: typeof globalThis.Bun.dlopen === 'function'
+      ffiSupported
     };
   }
 

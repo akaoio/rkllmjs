@@ -16,12 +16,13 @@ export class BunFFIAdapter implements RuntimeFFI {
     // Initialize Bun FFI synchronously if available
     if (this.isBunEnvironment()) {
       try {
-        // In Bun environment, these modules are available globally
+        // Import FFI functions from bun:ffi module
+        const ffiModule = require('bun:ffi');
         this.bunFFI = {
-          dlopen: globalThis.Bun.dlopen,
-          ptr: globalThis.Bun.ptr,
-          FFIType: globalThis.Bun.FFIType,
-          suffix: globalThis.Bun.dlopen.suffix || 'so'
+          dlopen: ffiModule.dlopen,
+          ptr: ffiModule.ptr,
+          FFIType: ffiModule.FFIType,
+          suffix: ffiModule.suffix || 'so'
         };
       } catch (error) {
         // FFI not available
@@ -134,9 +135,18 @@ export class BunFFIAdapter implements RuntimeFFI {
    * Check if we're running in Bun environment
    */
   private isBunEnvironment(): boolean {
-    return typeof globalThis.Bun !== 'undefined' && 
-           typeof globalThis.Bun.version === 'string' &&
-           typeof globalThis.Bun.dlopen === 'function';
+    if (typeof globalThis.Bun === 'undefined' || typeof globalThis.Bun.version !== 'string') {
+      return false;
+    }
+    
+    // Check if FFI is available via bun:ffi import
+    try {
+      // Try to access bun:ffi module
+      const ffiModule = require('bun:ffi');
+      return typeof ffiModule.dlopen === 'function';
+    } catch (error) {
+      return false;
+    }
   }
 
   /**

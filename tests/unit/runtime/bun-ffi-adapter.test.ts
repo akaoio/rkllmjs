@@ -3,7 +3,7 @@
  * Tests for the Bun FFI adapter implementation
  */
 
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'bun:test';
 import { BunFFIAdapter } from '../../../src/runtime/adapters/bun-adapter.js';
 import { RKLLM_SYMBOLS } from '../../../src/ffi/symbol-definitions.js';
 

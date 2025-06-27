@@ -8,12 +8,12 @@ export * from './types.js';
 export * from './rkllm.js';
 export { RKLLM, createRKLLM } from './rkllm.js';
 
-// Universal runtime exports - dynamic imports to avoid compilation issues
-export async function detectRuntime() {
-  const { detectRuntime: _detectRuntime } = await import('./runtime/detector.js');
-  return _detectRuntime();
-}
+// Universal runtime exports - provide both sync and async versions
+export { detectRuntime, validateRuntimeCompatibility, getRuntimeInfo } from './runtime/detector.js';
+export { getFFIInfo } from './runtime/factory.js';
+export { isBunRuntime } from './core/ffi-manager.js';
 
+// Async exports
 export async function createFFIAdapter(options: any = {}) {
   const { createFFIAdapter: _createFFIAdapter } = await import('./runtime/detector.js');
   return _createFFIAdapter(options);
@@ -22,11 +22,6 @@ export async function createFFIAdapter(options: any = {}) {
 export async function getFFIAdapter(options: any = {}) {
   const { getFFIAdapter: _getFFIAdapter } = await import('./runtime/factory.js');
   return _getFFIAdapter(options);
-}
-
-export async function getFFIInfo() {
-  const { getFFIInfo: _getFFIInfo } = await import('./runtime/factory.js');
-  return _getFFIInfo();
 }
 
 // Legacy FFI-specific exports (for backward compatibility)
@@ -38,11 +33,6 @@ export async function initializeFFI(preferredRuntime?: 'bun' | 'node' | 'deno') 
 export async function isFFIAvailable() {
   const { isFFIAvailable: _isFFIAvailable } = await import('./core/ffi-manager.js');
   return _isFFIAvailable();
-}
-
-export async function isBunRuntime() {
-  const { isBunRuntime: _isBunRuntime } = await import('./core/ffi-manager.js');
-  return _isBunRuntime();
 }
 
 // Version information
