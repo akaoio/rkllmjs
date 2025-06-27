@@ -3,6 +3,7 @@
  */
 
 import { ModelInfo } from './types';
+import { REPOSITORY_SUGGESTIONS, CLI_EXAMPLES } from './tool-constants.js';
 
 const fs = require('fs');
 const path = require('path');
@@ -179,12 +180,11 @@ export class RKLLMModelManager {
   }
 
   private async promptForRepo(): Promise<string> {
-    console.log(`\n🤖 Enter HuggingFace repository (e.g., 'limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4'):`);
+    console.log(`\n🤖 Enter HuggingFace repository (e.g., '${REPOSITORY_SUGGESTIONS[0]}'):`);
     console.log(`💡 Popular RKLLM models:`);
-    console.log(`   • limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4`);
-    console.log(`   • punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4`);
-    console.log(`   • akaoio/Qwen2.5-0.5B-RKLLM-rk3588`);
-    console.log(`   • rockchip/Llama-2-7b-chat-rk3588`);
+    REPOSITORY_SUGGESTIONS.forEach(repo => {
+      console.log(`   • ${repo}`);
+    });
     
     const input = prompt(`Repository: `);
     if (!input || input.trim() === '') {
@@ -245,7 +245,7 @@ export class RKLLMModelManager {
     
     if (models.length === 0) {
       console.log('🚫 No models found. Download some models using:');
-      console.log('   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm');
+      console.log(`   ${CLI_EXAMPLES.PULL_QWEN}`);
       return;
     }
 

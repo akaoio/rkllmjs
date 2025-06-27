@@ -7,6 +7,16 @@ import { describe, it, expect } from 'bun:test';
 import { RKLLM, createRKLLM } from '../../src/rkllm.js';
 import { RKLLMInputType } from '../../src/types.js';
 import { detectRuntime } from '../../src/runtime/detector.js';
+import { 
+  TEST_MODEL_PATHS, 
+  CONTEXT_LENGTHS,
+  GENERATION_PARAMS,
+  TEST_INPUTS,
+  EXPECTED_ERRORS,
+  PERFORMANCE_CONFIG,
+  DEFAULT_TEST_CONFIG,
+  TIMEOUTS
+} from '../test-constants.js';
 
 describe('Full Pipeline Integration', () => {
   it('should handle complete workflow with mock model', async () => {
@@ -22,12 +32,12 @@ describe('Full Pipeline Integration', () => {
     // Test initialization phase
     try {
       await llm.init({
-        modelPath: './test-model.rkllm', // Non-existent model for testing
-        maxContextLen: 2048,
-        maxNewTokens: 256,
-        temperature: 0.7,
-        topP: 0.9,
-        topK: 50,
+        modelPath: TEST_MODEL_PATHS.NONEXISTENT, // Non-existent model for testing
+        maxContextLen: CONTEXT_LENGTHS.MEDIUM,
+        maxNewTokens: GENERATION_PARAMS.MAX_NEW_TOKENS.SMALL,
+        temperature: GENERATION_PARAMS.TEMPERATURE.CREATIVE,
+        topP: GENERATION_PARAMS.TOP_P.DIVERSE,
+        topK: GENERATION_PARAMS.TOP_K.DIVERSE,
       });
       
       // If initialization succeeds, test the rest of the pipeline
@@ -38,7 +48,7 @@ describe('Full Pipeline Integration', () => {
       // Test inference
       const result = await llm.run({
         inputType: RKLLMInputType.PROMPT,
-        inputData: 'Hello, how are you?'
+        inputData: TEST_INPUTS.SIMPLE_PROMPT
       });
       
       expect(result).toBeDefined();
@@ -55,9 +65,9 @@ describe('Full Pipeline Integration', () => {
       
       // Should be a meaningful error about the model or library
       expect(
-        error.message.includes('model') || 
-        error.message.includes('library') ||
-        error.message.includes('FFI')
+        error.message.includes(EXPECTED_ERRORS.INVALID_MODEL) || 
+        error.message.includes(EXPECTED_ERRORS.INVALID_LIBRARY) ||
+        error.message.includes(EXPECTED_ERRORS.FFI_ERROR)
       ).toBe(true);
     }
   });
@@ -65,8 +75,8 @@ describe('Full Pipeline Integration', () => {
   it('should handle createRKLLM utility function', async () => {
     try {
       const llm = await createRKLLM({
-        modelPath: './test-model.rkllm',
-        maxContextLen: 1024,
+        modelPath: TEST_MODEL_PATHS.NONEXISTENT,
+        maxContextLen: CONTEXT_LENGTHS.SMALL,
       });
       
       // If successful, should be initialized
@@ -91,8 +101,8 @@ describe('Full Pipeline Integration', () => {
     
     try {
       await llm.init({
-        modelPath: './test-model.rkllm',
-        maxContextLen: 1024,
+        modelPath: TEST_MODEL_PATHS.NONEXISTENT,
+        maxContextLen: CONTEXT_LENGTHS.SMALL,
         isAsync: true, // Enable streaming
       });
       
@@ -101,7 +111,7 @@ describe('Full Pipeline Integration', () => {
       await llm.runStream(
         {
           inputType: RKLLMInputType.PROMPT,
-          inputData: 'Tell me a story'
+          inputData: TEST_INPUTS.LONG_PROMPT
         },
         {
           callback: (result, userdata, state) => {
@@ -135,8 +145,8 @@ describe('Full Pipeline Integration', () => {
     
     try {
       await llm.init({
-        modelPath: './test-model.rkllm',
-        maxContextLen: 4096,
+        modelPath: TEST_MODEL_PATHS.NONEXISTENT,
+        maxContextLen: CONTEXT_LENGTHS.LARGE,
         extendParam: {
           enabledCpusNum: 4,
           enabledCpusMask: 0xF,
@@ -182,8 +192,8 @@ describe('Full Pipeline Integration', () => {
     // Test with completely invalid parameters
     try {
       await llm.init({
-        modelPath: '', // Empty path
-        maxContextLen: -1, // Invalid context length
+        modelPath: TEST_MODEL_PATHS.EMPTY, // Empty path
+        maxContextLen: CONTEXT_LENGTHS.INVALID, // Invalid context length
       });
       
       expect(false).toBe(true); // Should not reach here
@@ -194,8 +204,8 @@ describe('Full Pipeline Integration', () => {
     // Test with invalid model format
     try {
       await llm.init({
-        modelPath: './README.md', // Wrong file type
-        maxContextLen: 1024,
+        modelPath: TEST_MODEL_PATHS.INVALID_FORMAT, // Wrong file type
+        maxContextLen: CONTEXT_LENGTHS.SMALL,
       });
       
       expect(false).toBe(true); // Should not reach here
@@ -218,14 +228,14 @@ describe('Full Pipeline Integration', () => {
     try {
       const llm = new RKLLM();
       await llm.init({
-        modelPath: './test-model.rkllm',
-        maxContextLen: 1024,
+        modelPath: TEST_MODEL_PATHS.NONEXISTENT,
+        maxContextLen: CONTEXT_LENGTHS.SMALL,
       });
       
       const initTime = Date.now() - startTime;
       
       // Initialization should be relatively fast (even when failing)
-      expect(initTime).toBeLessThan(5000); // 5 seconds max
+      expect(initTime).toBeLessThan(TIMEOUTS.QUICK); // 5 seconds max
       
       await llm.destroy();
       
@@ -233,7 +243,7 @@ describe('Full Pipeline Integration', () => {
       const initTime = Date.now() - startTime;
       
       // Even failed initialization should be fast
-      expect(initTime).toBeLessThan(5000);
+      expect(initTime).toBeLessThan(TIMEOUTS.QUICK);
     }
   });
 
@@ -251,8 +261,8 @@ describe('Full Pipeline Integration', () => {
     // Try to initialize them concurrently
     const promises = instances.map(llm => 
       llm.init({
-        modelPath: './test-model.rkllm',
-        maxContextLen: 1024,
+        modelPath: TEST_MODEL_PATHS.NONEXISTENT,
+        maxContextLen: CONTEXT_LENGTHS.SMALL,
       }).catch(error => error) // Catch errors to prevent promise rejection
     );
     

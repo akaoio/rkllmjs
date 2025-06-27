@@ -13,6 +13,13 @@ import {
   getFFIInfo
 } from '../src/index.js';
 import { RKLLMInputType } from '../src/types.js';
+import { 
+  TEST_MODEL_PATHS, 
+  CONTEXT_LENGTHS, 
+  DEFAULT_TEST_CONFIG,
+  EXPECTED_ERRORS,
+  TIMEOUTS
+} from './test-constants.js';
 
 describe('Universal Multi-Runtime FFI', () => {
   it('should detect current runtime correctly', () => {
@@ -62,8 +69,8 @@ describe('Universal Multi-Runtime FFI', () => {
     
     try {
       await llm.init({
-        modelPath: './non-existent-model.rkllm',
-        maxContextLen: 1024,
+        modelPath: TEST_MODEL_PATHS.NONEXISTENT_ALT,
+        maxContextLen: CONTEXT_LENGTHS.SMALL,
       });
       
       // Should not reach here
@@ -81,8 +88,8 @@ describe('Universal Multi-Runtime FFI', () => {
     try {
       // Try to initialize - should always use FFI backend
       await llm.init({
-        modelPath: './non-existent-model.rkllm',
-        maxContextLen: 1024,
+        modelPath: TEST_MODEL_PATHS.NONEXISTENT_ALT,
+        maxContextLen: CONTEXT_LENGTHS.SMALL,
       });
     } catch (error) {
       // Should fail but not crash
@@ -135,18 +142,18 @@ describe('Error Handling', () => {
     await expect(llm.run({
       inputType: RKLLMInputType.PROMPT,
       inputData: "test"
-    })).rejects.toThrow('not initialized');
+    })).rejects.toThrow(EXPECTED_ERRORS.NOT_INITIALIZED);
     
     await expect(llm.runStream({
       inputType: RKLLMInputType.PROMPT,
       inputData: "test"
     }, {
       callback: () => {}
-    })).rejects.toThrow('not initialized');
+    })).rejects.toThrow(EXPECTED_ERRORS.NOT_INITIALIZED);
     
-    expect(() => llm.getContextLength()).toThrow('not initialized');
+    expect(() => llm.getContextLength()).toThrow(EXPECTED_ERRORS.NOT_INITIALIZED);
     
-    await expect(llm.clearContext()).rejects.toThrow('not initialized');
+    await expect(llm.clearContext()).rejects.toThrow(EXPECTED_ERRORS.NOT_INITIALIZED);
   });
 
   it('should handle double initialization', async () => {
@@ -165,8 +172,8 @@ describe('Error Handling', () => {
     (llm as any).backend = mockBackend;
     
     await expect(llm.init({
-      modelPath: './test.rkllm',
-      maxContextLen: 1024,
-    })).rejects.toThrow('already initialized');
+      modelPath: TEST_MODEL_PATHS.NONEXISTENT,
+      maxContextLen: CONTEXT_LENGTHS.SMALL,
+    })).rejects.toThrow(EXPECTED_ERRORS.ALREADY_INITIALIZED);
   });
 });

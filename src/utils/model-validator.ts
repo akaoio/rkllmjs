@@ -3,6 +3,8 @@
  * Ensures model files exist before attempting to use them
  */
 
+import { CLI_EXAMPLES } from '../tools/tool-constants.js';
+
 /**
  * Validates if a model path exists and is accessible
  */
@@ -31,7 +33,7 @@ export async function getValidModelPath(preferredPath?: string): Promise<string>
   throw new Error(
     '❌ No valid model found!\n' +
     '💡 Please provide a valid model path or download a model:\n' +
-    '   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm\n' +
+    `   ${CLI_EXAMPLES.PULL_QWEN}\n` +
     '   bun tools.ts list  # to see available models'
   );
 }
@@ -44,7 +46,7 @@ export async function requireValidModelPath(modelPath: string): Promise<void> {
     throw new Error(
       '❌ Model path is required!\n' +
       '💡 Please provide a valid model path or download a model:\n' +
-      '   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm'
+      `   ${CLI_EXAMPLES.PULL_QWEN}`
     );
   }
 
@@ -52,7 +54,7 @@ export async function requireValidModelPath(modelPath: string): Promise<void> {
     throw new Error(
       '❌ Please provide a real model path, not a placeholder!\n' +
       '💡 Download a model first:\n' +
-      '   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm\n' +
+      `   ${CLI_EXAMPLES.PULL_QWEN}\n` +
       '   bun tools.ts list  # to see available models'
     );
   }
@@ -61,7 +63,7 @@ export async function requireValidModelPath(modelPath: string): Promise<void> {
     throw new Error(
       `❌ Model file not found: ${modelPath}\n` +
       '💡 Please check the path or download a model:\n' +
-      '   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm\n' +
+      `   ${CLI_EXAMPLES.PULL_QWEN}\n` +
       '   bun tools.ts list  # to see available models'
     );
   }

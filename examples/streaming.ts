@@ -1,5 +1,11 @@
 import { RKLLM, RKLLMInputType, LLMCallState } from '../src/index.js';
 import { RKLLMModelManager } from '../tools.js';
+import { 
+  EXAMPLE_MODEL,
+  RUNTIME_CONFIGS,
+  EXAMPLE_PROMPTS,
+  DOWNLOAD_INSTRUCTIONS
+} from './example-constants.js';
 
 async function streamingExample() {
   try {
@@ -11,7 +17,7 @@ async function streamingExample() {
     
     if (!modelPath) {
       console.log('❌ No models found! Please download a model first:');
-      console.log('   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm');
+      console.log(`   ${DOWNLOAD_INSTRUCTIONS.COMMAND}`);
       console.log('   bun tools.ts list  # to see available models');
       return;
     }
@@ -19,15 +25,16 @@ async function streamingExample() {
     console.log(`📂 Using model: ${modelPath}`);
     
     const llm = new RKLLM();
+    const config = RUNTIME_CONFIGS.CREATIVE;
     await llm.init({
       modelPath,
-      maxContextLen: 2048,
-      maxNewTokens: 256,
-      temperature: 0.7,
+      maxContextLen: config.maxContextLen,
+      maxNewTokens: config.maxNewTokens,
+      temperature: config.temperature,
       isAsync: true, // Enable async mode for streaming
     });
     
-    const prompt = "Write a short story about a robot learning to paint:";
+    const prompt = EXAMPLE_PROMPTS.STORY;
     console.log(`💬 Prompt: ${prompt}`);
     console.log('🎯 Streaming response:');
     

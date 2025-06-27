@@ -99,9 +99,11 @@ RKLLMJS uses a universal FFI architecture that automatically selects the best im
 
 ```bash
 # Test runtime compatibility
-bun run scripts/test-runtime.js
-# or: node scripts/test-runtime.js
-# or: deno run --allow-ffi scripts/test-runtime.js
+npm test
+# or run integration tests directly:
+bun test tests/integration/runtime-test.ts
+# node test: node --loader tsx --test tests/integration/runtime-test.ts
+# deno test: deno test --allow-ffi tests/integration/runtime-test.ts
 ```
 
 ### 2. Download a Model

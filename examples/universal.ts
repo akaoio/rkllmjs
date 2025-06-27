@@ -10,6 +10,13 @@ import {
   validateRuntimeCompatibility,
   RKLLMInputType 
 } from '../src/index.js';
+import { 
+  EXAMPLE_MODEL,
+  RUNTIME_CONFIGS,
+  EXAMPLE_PROMPTS,
+  DOWNLOAD_INSTRUCTIONS,
+  ENV_VARS
+} from './example-constants.js';
 
 async function universalExample() {
   console.log('🌍 RKLLMJS Universal Runtime Example\n');
@@ -44,24 +51,16 @@ async function universalExample() {
   
   try {
     // Note: This will fail without a real model file
+    const config = RUNTIME_CONFIGS[runtime.name.toUpperCase()] || RUNTIME_CONFIGS.NODE;
     await llm.init({
-      modelPath: process.env.RKLLM_MODEL_PATH || './models/qwen-0.5b.rkllm',
-      maxContextLen: 2048,
-      maxNewTokens: 256,
-      temperature: 0.7,
-      topP: 0.9,
-      topK: 50,
+      modelPath: process.env[ENV_VARS.MODEL_PATH] || EXAMPLE_MODEL.PATH,
+      maxContextLen: config.maxContextLen,
+      maxNewTokens: config.maxNewTokens,
+      temperature: config.temperature,
+      topP: config.topP,
+      topK: config.topK,
       // Runtime-specific optimizations
-      extendParam: runtime.name === 'bun' ? {
-        enabledCpusNum: 8,
-        enabledCpusMask: 0xFF,
-        nBatch: 4,
-        useCrossAttn: true
-      } : {
-        enabledCpusNum: 4,
-        enabledCpusMask: 0xF,
-        nBatch: 2
-      }
+      extendParam: config.extendParam
     });
     
     console.log('  ✅ RKLLM initialized successfully');
@@ -71,7 +70,7 @@ async function universalExample() {
     // Step 4: Run Inference
     console.log('\n💭 Step 4: Run Inference');
     
-    const prompt = "Hello! Can you tell me about Rockchip NPUs?";
+    const prompt = EXAMPLE_PROMPTS.QUESTION;
     console.log(`  Prompt: "${prompt}"`);
     
     const result = await llm.run({
@@ -105,7 +104,7 @@ async function universalExample() {
     await llm.runStream(
       {
         inputType: RKLLMInputType.PROMPT,
-        inputData: "Count from 1 to 5:"
+        inputData: EXAMPLE_PROMPTS.CREATIVE
       },
       {
         callback: (result, userdata, state) => {
@@ -127,17 +126,9 @@ async function universalExample() {
     console.log(`  ❌ Error: ${error.message}`);
     
     if (error.message.includes('model')) {
-      console.log('\n💡 Model Loading Help:');
-      console.log('  1. Download a model file:');
-      console.log('     bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm');
-      console.log('  2. Set model path:');
-      console.log('     export RKLLM_MODEL_PATH=./models/your-model.rkllm');
-      console.log('  3. Run this example again');
+      console.log(DOWNLOAD_INSTRUCTIONS.HELP_TEXT);
     } else if (error.message.includes('library')) {
-      console.log('\n💡 Library Loading Help:');
-      console.log('  1. Ensure RKLLM libraries are in ./libs/ directory');
-      console.log('  2. Check that librkllmrt.so exists for your architecture');
-      console.log('  3. Verify file permissions');
+      console.log(DOWNLOAD_INSTRUCTIONS.LIBRARY_HELP);
     }
   }
   
