@@ -164,6 +164,14 @@ else
     echo "✗ armhf library missing"
 fi
 
+# Cleanup: Remove rknn-llm directory after successful setup
+if [ -d "rknn-llm" ]; then
+    echo "Cleaning up: Removing rknn-llm directory..."
+    rm -rf rknn-llm
+    echo "✓ rknn-llm directory removed"
+fi
+
 echo ""
 echo "=== Setup Complete ==="
 echo "Dependencies installed and RKLLM libraries are ready!"
+echo "Note: rknn-llm temporary directory has been cleaned up."
