@@ -1,5 +1,11 @@
 import { RKLLM, RKLLMInputType } from '../src/index.js';
 import { RKLLMModelManager } from '../tools.js';
+import { 
+  EXAMPLE_MODEL,
+  RUNTIME_CONFIGS,
+  EXAMPLE_PROMPTS,
+  DOWNLOAD_INSTRUCTIONS
+} from './example-constants.js';
 
 async function basicExample(): Promise<void> {
   try {
@@ -11,7 +17,7 @@ async function basicExample(): Promise<void> {
     
     if (!modelPath) {
       console.log('❌ No models found! Please download a model first:');
-      console.log('   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm');
+      console.log(`   ${DOWNLOAD_INSTRUCTIONS.COMMAND}`);
       console.log('   bun tools.ts list  # to see available models');
       return;
     }
@@ -20,19 +26,20 @@ async function basicExample(): Promise<void> {
     
     // Create and initialize RKLLM instance
     const llm = new RKLLM();
+    const config = RUNTIME_CONFIGS.BALANCED;
     await llm.init({
       modelPath,
-      maxContextLen: 2048,
-      maxNewTokens: 256,
-      temperature: 0.7,
-      topP: 0.9,
-      topK: 50,
+      maxContextLen: config.maxContextLen,
+      maxNewTokens: config.maxNewTokens,
+      temperature: config.temperature,
+      topP: config.topP,
+      topK: config.topK,
     });
     
     console.log('✅ RKLLM initialized successfully');
     
     // Run inference
-    const prompt = "Hello, how are you today?";
+    const prompt = EXAMPLE_PROMPTS.GREETING;
     console.log(`💬 Prompt: ${prompt}`);
     
     const result = await llm.run({

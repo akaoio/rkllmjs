@@ -16,6 +16,7 @@
  */
 
 import { RKLLMModelManager } from './model-manager';
+import { CLI_EXAMPLES } from './tool-constants.js';
 
 // CLI Interface
 async function main() {
@@ -32,7 +33,7 @@ async function main() {
       if (!repo || !filename) {
         console.log(`❌ Please specify both repository and filename.`);
         console.log(`Usage: bun tools.ts pull <repo> <filename>`);
-        console.log(`Example: bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm`);
+        console.log(`Example: ${CLI_EXAMPLES.PULL_QWEN}`);
         process.exit(1);
       }
       await manager.pullModel(repo, filename);
@@ -113,12 +114,12 @@ async function main() {
       console.log(`   bun tools.ts clean                            - Clean all models`);
       console.log(`\n📚 Examples:`);
       console.log(`   # Download RKLLM model with essential technical files:`);
-      console.log(`   bun tools.ts pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm`);
-      console.log(`   bun tools.ts pull punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm`);
+      console.log(`   ${CLI_EXAMPLES.PULL_QWEN}`);
+      console.log(`   ${CLI_EXAMPLES.PULL_TINYLLAMA}`);
       console.log(`\n   # Management:`);
-      console.log(`   bun tools.ts list`);
-      console.log(`   bun tools.ts info Qwen2.5-0.5B-Instruct-rk3588-1.1.4`);
-      console.log(`   bun tools.ts remove Qwen2.5-0.5B-Instruct-rk3588-1.1.4`);
+      console.log(`   ${CLI_EXAMPLES.LIST}`);
+      console.log(`   ${CLI_EXAMPLES.INFO}`);
+      console.log(`   ${CLI_EXAMPLES.REMOVE}`);
       break;
   }
 }
