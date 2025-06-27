@@ -20,7 +20,9 @@ export class RKLLM {
     }
 
     // Check if we should use mock mode (for testing)
-    const mockMode = options?.mockMode || false;
+    const mockMode = options?.mockMode || 
+                    process.env.NODE_ENV === 'test' || 
+                    process.env.RKLLMJS_TEST_MODE === 'true';
 
     if (mockMode) {
       // Use mock implementation for testing
@@ -28,6 +30,7 @@ export class RKLLM {
       this.backend = new RKLLMFFIMock();
       this.useMock = true;
       this.useUniversal = false;
+      console.log('🧪 Using mock FFI implementation for testing');
       await this.backend.init(params);
       return;
     }

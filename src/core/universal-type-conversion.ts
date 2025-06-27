@@ -153,7 +153,7 @@ export class UniversalTypeConverter {
     
     return {
       buffer: memBuffer,
-      ptr: this.ffiManager.createPointer(memBuffer.view.buffer)
+      ptr: this.ffiManager.createPointer(memBuffer.view.buffer as ArrayBuffer)
     };
   }
 
@@ -202,7 +202,7 @@ export class UniversalTypeConverter {
     
     return {
       buffer: memBuffer,
-      ptr: this.ffiManager.createPointer(memBuffer.view.buffer)
+      ptr: this.ffiManager.createPointer(memBuffer.view.buffer as ArrayBuffer)
     };
   }
 
@@ -249,7 +249,7 @@ export class UniversalTypeConverter {
     
     return {
       buffer: memBuffer,
-      ptr: this.ffiManager.createPointer(memBuffer.view.buffer)
+      ptr: this.ffiManager.createPointer(memBuffer.view.buffer as ArrayBuffer)
     };
   }
 
@@ -297,7 +297,7 @@ export class UniversalTypeConverter {
     
     return {
       buffer: memBuffer,
-      ptr: this.ffiManager.createPointer(memBuffer.view.buffer)
+      ptr: this.ffiManager.createPointer(memBuffer.view.buffer as ArrayBuffer)
     };
   }
 }

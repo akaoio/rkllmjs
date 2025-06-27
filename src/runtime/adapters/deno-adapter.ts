@@ -6,6 +6,15 @@
 import type { RuntimeFFI, LibraryHandle, MemoryBuffer, FFISymbol, Pointer } from '../interfaces.js';
 import type { TypeMappings } from '../../ffi/symbol-definitions.js';
 
+// Deno global type declarations
+declare global {
+  interface Window {
+    Deno?: any;
+  }
+}
+
+const DenoGlobal = (globalThis as any).Deno;
+
 /**
  * Deno FFI Adapter implementation
  */
@@ -17,7 +26,7 @@ export class DenoFFIAdapter implements RuntimeFFI {
   }
 
   isAvailable(): boolean {
-    return this.isDenoEnvironment() && typeof globalThis.Deno.dlopen === 'function';
+    return this.isDenoEnvironment() && typeof DenoGlobal?.dlopen === 'function';
   }
 
   getRuntimeName(): 'deno' {
@@ -30,7 +39,7 @@ export class DenoFFIAdapter implements RuntimeFFI {
     }
 
     // Get platform-specific extension from Deno
-    switch (globalThis.Deno.build.os) {
+    switch (DenoGlobal.build.os) {
       case 'windows':
         return 'dll';
       case 'darwin':
@@ -49,7 +58,7 @@ export class DenoFFIAdapter implements RuntimeFFI {
     const denoSymbols = this.convertSymbolsToDeno(symbols);
     
     try {
-      this.lib = globalThis.Deno.dlopen(path, denoSymbols);
+      this.lib = DenoGlobal.dlopen(path, denoSymbols);
       
       return {
         symbols: this.lib.symbols,
@@ -79,7 +88,7 @@ export class DenoFFIAdapter implements RuntimeFFI {
 
     // Deno uses ArrayBuffer for memory management
     const buffer = new ArrayBuffer(size);
-    const ptr = globalThis.Deno.UnsafePointer.of(buffer);
+    const ptr = DenoGlobal.UnsafePointer.of(buffer);
     
     return {
       ptr,
@@ -102,7 +111,7 @@ export class DenoFFIAdapter implements RuntimeFFI {
       throw new Error('Deno environment not available');
     }
     
-    return globalThis.Deno.UnsafePointer.of(buffer);
+    return DenoGlobal.UnsafePointer.of(buffer);
   }
 
   createCString(str: string): Pointer {
@@ -115,7 +124,7 @@ export class DenoFFIAdapter implements RuntimeFFI {
     const buffer = new ArrayBuffer(encoded.length);
     new Uint8Array(buffer).set(encoded);
     
-    return globalThis.Deno.UnsafePointer.of(buffer);
+    return DenoGlobal.UnsafePointer.of(buffer);
   }
 
   readCString(ptr: Pointer): string {
@@ -125,7 +134,7 @@ export class DenoFFIAdapter implements RuntimeFFI {
     
     // Read null-terminated string from pointer
     try {
-      return globalThis.Deno.UnsafePointerView.getCString(ptr);
+      return DenoGlobal.UnsafePointerView.getCString(ptr);
     } catch (error) {
       throw new Error(`Failed to read C string: ${error}`);
     }
@@ -134,10 +143,9 @@ export class DenoFFIAdapter implements RuntimeFFI {
   /**
    * Check if we're running in Deno environment
    */
-  private isDenoEnvironment(): boolean {
-    return typeof globalThis.Deno !== 'undefined' && 
-           typeof globalThis.Deno.version === 'object' &&
-           typeof globalThis.Deno.dlopen === 'function';
+  private isDenoEnvironment(): boolean {    return typeof DenoGlobal !== 'undefined' &&
+           typeof DenoGlobal.version === 'object' &&
+           typeof DenoGlobal.dlopen === 'function';
   }
 
   /**

@@ -124,5 +124,10 @@ async function main() {
   }
 }
 
-// Run CLI
-main().catch(console.error);
+// Export for use in examples and other modules
+export { RKLLMModelManager };
+
+// Run CLI if executed directly
+if (import.meta.main) {
+  main().catch(console.error);
+}
