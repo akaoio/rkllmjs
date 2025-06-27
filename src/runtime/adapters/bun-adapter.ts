@@ -34,7 +34,13 @@ export class BunFFIAdapter implements RuntimeFFI {
   }
 
   isAvailable(): boolean {
-    return this.isBunEnvironment();
+    if (!this.isBunEnvironment()) {
+      return false;
+    }
+    
+    // Try to ensure FFI is loaded (silently fails if not available)
+    this.ensureFFILoaded();
+    return this.bunFFI !== null;
   }
 
   getRuntimeName(): 'bun' {
@@ -42,6 +48,17 @@ export class BunFFIAdapter implements RuntimeFFI {
   }
 
   getLibraryExtension(): string {
+    // Return platform-specific extension
+    if (typeof process !== 'undefined') {
+      switch (process.platform) {
+        case 'win32':
+          return 'dll';
+        case 'darwin':
+          return 'dylib';
+        default:
+          return 'so';
+      }
+    }
     return 'so'; // Default for Linux/Unix
   }
 
@@ -69,17 +86,36 @@ export class BunFFIAdapter implements RuntimeFFI {
   private ensureFFILoaded(): void {
     if (this.bunFFI === null && this.isBunEnvironment()) {
       try {
-        // Use require for synchronous loading in Bun context
-        // This is a special case for Bun where require still works
-        const { dlopen, ptr, FFIType, suffix } = eval('require("bun:ffi")');
-        this.bunFFI = {
-          dlopen,
-          ptr,
-          FFIType,
-          suffix: suffix || 'so'
-        };
+        // In Bun, try to access the FFI directly from the global Bun object
+        const bunGlobal = globalThis.Bun as any;
+        if (bunGlobal && bunGlobal.ffi) {
+          this.bunFFI = {
+            dlopen: bunGlobal.ffi.dlopen,
+            ptr: bunGlobal.ffi.ptr,
+            FFIType: bunGlobal.ffi.FFIType,
+            suffix: bunGlobal.ffi.suffix || 'so'
+          };
+          return;
+        }
+
+        // Fallback: try dynamic import (this will work in newer Bun versions)
+        try {
+          const ffiModule = require('bun:ffi');
+          this.bunFFI = {
+            dlopen: ffiModule.dlopen,
+            ptr: ffiModule.ptr,
+            FFIType: ffiModule.FFIType,
+            suffix: ffiModule.suffix || 'so'
+          };
+          return;
+        } catch (requireError) {
+          // If require fails, FFI is not available - this is not an error
+          // in test environments or when FFI is disabled
+          return;
+        }
       } catch (error) {
-        throw new Error('Failed to load Bun FFI module');
+        // FFI loading failed - mark as unavailable but don't throw
+        return;
       }
     }
   }

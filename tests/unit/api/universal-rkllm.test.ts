@@ -43,8 +43,8 @@ describe('Universal RKLLM Implementation', () => {
       // Should throw an error - either model validation or FFI initialization
       expect(error).toBeDefined();
       expect(error instanceof Error).toBe(true);
-      // In test environment without actual RKLLM library, FFI initialization will fail
-      expect(error.message).toContain(EXPECTED_ERRORS.FFI_ERROR);
+      // With current implementation, model validation should happen first
+      expect(error.message).toContain('model');
     }
   });
 

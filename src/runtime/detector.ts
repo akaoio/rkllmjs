@@ -13,11 +13,17 @@ export function detectRuntime(): RuntimeInfo {
   if (typeof globalThis.Bun !== 'undefined' && typeof globalThis.Bun.version === 'string') {
     let ffiSupported = false;
     try {
-      // Try to access bun:ffi module using eval to avoid static analysis
-      const ffiModule = eval('require("bun:ffi")');
+      // Try to access bun:ffi module more safely
+      const ffiModule = require('bun:ffi');
       ffiSupported = typeof ffiModule.dlopen === 'function';
     } catch (error) {
-      ffiSupported = false;
+      // Check if FFI is available in global Bun object
+      try {
+        const bunGlobal = globalThis.Bun as any;
+        ffiSupported = bunGlobal && bunGlobal.ffi && typeof bunGlobal.ffi.dlopen === 'function';
+      } catch {
+        ffiSupported = false;
+      }
     }
     
     return {
