@@ -15,13 +15,17 @@ export class NodeFFIAdapter implements RuntimeFFI {
   private ffiType: 'koffi' | 'ffi-napi' | null = null;
 
   constructor() {
-    this.initializeNodeFFI();
+    // Initialization will be done lazily
   }
 
-  private async initializeNodeFFI() {
+  private initializeNodeFFI(): void {
+    if (this.ffiLib) {
+      return; // Already initialized
+    }
+
     // Try koffi first (modern, faster)
     try {
-      this.ffiLib = await import('koffi');
+      this.ffiLib = eval('require("koffi")');
       this.ffiType = 'koffi';
       return;
     } catch (error) {
@@ -30,7 +34,7 @@ export class NodeFFIAdapter implements RuntimeFFI {
 
     // Try node-ffi-napi as fallback
     try {
-      this.ffiLib = await import('ffi-napi');
+      this.ffiLib = eval('require("ffi-napi")');
       this.ffiType = 'ffi-napi';
       return;
     } catch (error) {
@@ -39,7 +43,11 @@ export class NodeFFIAdapter implements RuntimeFFI {
   }
 
   isAvailable(): boolean {
-    return this.isNodeEnvironment() && this.ffiLib !== null;
+    if (!this.isNodeEnvironment()) {
+      return false;
+    }
+    this.initializeNodeFFI();
+    return this.ffiLib !== null;
   }
 
   getRuntimeName(): 'node' {
@@ -62,6 +70,8 @@ export class NodeFFIAdapter implements RuntimeFFI {
   }
 
   loadLibrary(path: string, symbols: Record<string, FFISymbol>): LibraryHandle {
+    this.initializeNodeFFI();
+    
     if (!this.ffiLib) {
       throw new Error('Node.js FFI library not available');
     }
@@ -92,6 +102,8 @@ export class NodeFFIAdapter implements RuntimeFFI {
   }
 
   allocateMemory(size: number): MemoryBuffer {
+    this.initializeNodeFFI();
+    
     if (!this.ffiLib) {
       throw new Error('Node.js FFI library not available');
     }
@@ -105,7 +117,7 @@ export class NodeFFIAdapter implements RuntimeFFI {
       ptr = this.ffiLib.decode(buffer, 'void*');
     } else {
       // ffi-napi memory allocation
-      const ref = require('ref-napi');
+      const ref = eval('require("ref-napi")');
       buffer = Buffer.alloc(size);
       ptr = ref.address(buffer);
     }
@@ -126,6 +138,8 @@ export class NodeFFIAdapter implements RuntimeFFI {
   }
 
   createPointer(arrayBuffer: ArrayBuffer): Pointer {
+    this.initializeNodeFFI();
+    
     if (!this.ffiLib) {
       throw new Error('Node.js FFI library not available');
     }
@@ -136,12 +150,14 @@ export class NodeFFIAdapter implements RuntimeFFI {
     if (this.ffiType === 'koffi') {
       return this.ffiLib.decode(buffer, 'void*');
     } else {
-      const ref = require('ref-napi');
+      const ref = eval('require("ref-napi")');
       return ref.address(buffer);
     }
   }
 
   createCString(str: string): Pointer {
+    this.initializeNodeFFI();
+    
     if (!this.ffiLib) {
       throw new Error('Node.js FFI library not available');
     }
@@ -152,12 +168,14 @@ export class NodeFFIAdapter implements RuntimeFFI {
     if (this.ffiType === 'koffi') {
       return this.ffiLib.decode(buffer, 'char*');
     } else {
-      const ref = require('ref-napi');
+      const ref = eval('require("ref-napi")');
       return ref.address(buffer);
     }
   }
 
   readCString(ptr: Pointer): string {
+    this.initializeNodeFFI();
+    
     if (!this.ffiLib) {
       throw new Error('Node.js FFI library not available');
     }
@@ -165,7 +183,7 @@ export class NodeFFIAdapter implements RuntimeFFI {
     if (this.ffiType === 'koffi') {
       return this.ffiLib.decode(ptr, 'char*');
     } else {
-      const ref = require('ref-napi');
+      const ref = eval('require("ref-napi")');
       return ref.readCString(ptr);
     }
   }

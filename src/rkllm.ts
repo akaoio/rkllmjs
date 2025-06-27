@@ -22,8 +22,8 @@ export class RKLLM {
       const { requireValidModelPath } = await import('./utils/model-validator.js');
       await requireValidModelPath(params.modelPath);
     } catch (error) {
-      // If validation fails, continue but warn
-      console.warn('Model path validation skipped:', error);
+      // Re-throw validation errors instead of just warning
+      throw error;
     }
     
     try {

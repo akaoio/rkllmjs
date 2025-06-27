@@ -142,11 +142,11 @@ export function createRKLLMParamStruct(params: RKLLMParam): ArrayBuffer {
   offset += 8;
   
   // extend_param (RKLLMExtendParam struct)
-  if (params.extendParam) {
-    const extendBuffer = createRKLLMExtendParamStruct(params.extendParam);
-    const extendView = new Uint8Array(extendBuffer);
-    uint8View.set(extendView, offset);
-  }
+  // Always create extendParam with defaults to ensure n_batch is properly set
+  const extendParam = params.extendParam || {};
+  const extendBuffer = createRKLLMExtendParamStruct(extendParam);
+  const extendView = new Uint8Array(extendBuffer);
+  uint8View.set(extendView, offset);
   
   return buffer;
 }
@@ -180,8 +180,8 @@ export function createRKLLMExtendParamStruct(params: RKLLMExtendParam): ArrayBuf
   view.setUint32(offset, params.enabledCpusMask ?? 0, true);
   offset += 4;
   
-  // n_batch (uint8_t)
-  uint8View[offset] = params.nBatch ?? 1;
+  // n_batch (uint8_t) - Must be between 1 and 100, default to 1
+  uint8View[offset] = Math.max(1, Math.min(100, params.nBatch ?? 1));
   offset += 1;
   
   // use_cross_attn (int8_t)

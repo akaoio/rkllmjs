@@ -2,7 +2,7 @@
  * RKLLM Model Manager - handles downloading and managing .rkllm models
  */
 
-import { ModelInfo } from './types';
+import type { ModelInfo } from './types.js';
 import { REPOSITORY_SUGGESTIONS, CLI_EXAMPLES } from './tool-constants.js';
 
 const fs = require('fs');
@@ -270,48 +270,50 @@ export class RKLLMModelManager {
         return models;
       }
 
-      const entries = fs.readdirSync(this.modelsDir, { withFileTypes: true });
-      
-      for (const entry of entries) {
-        if (entry.isDirectory()) {
-          const modelDir = path.join(this.modelsDir, entry.name);
-          const files = fs.readdirSync(modelDir, { withFileTypes: true });
+      // Recursively scan for .rkllm files in the models directory
+      const scanDirectory = (dirPath: string, relativePath: string = '') => {
+        const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+        
+        for (const entry of entries) {
+          const fullPath = path.join(dirPath, entry.name);
+          const entryRelativePath = relativePath ? path.join(relativePath, entry.name) : entry.name;
           
-          for (const file of files) {
-            if (file.isFile() && 
-                (file.name.endsWith('.rkllm') ||
-                 file.name.endsWith('.bin') ||
-                 file.name.endsWith('.safetensors') ||
-                 file.name.endsWith('.gguf'))) {
-              
-              const filePath = path.join(modelDir, file.name);
-              const stat = fs.statSync(filePath);
-              
-              // Try to get repo from metadata
-              let repo: string | undefined;
-              try {
-                const metaPath = path.join(modelDir, 'meta.json');
-                if (fs.existsSync(metaPath)) {
-                  const metaContent = fs.readFileSync(metaPath, 'utf8');
-                  const meta = JSON.parse(metaContent);
-                  repo = meta.repo;
-                }
-              } catch {
-                // Ignore metadata errors
+          if (entry.isDirectory()) {
+            // Recursively scan subdirectories
+            scanDirectory(fullPath, entryRelativePath);
+          } else if (entry.isFile() && entry.name.endsWith('.rkllm')) {
+            // Found a .rkllm model file
+            const stat = fs.statSync(fullPath);
+            
+            // Try to get repo from metadata in the same directory
+            let repo: string | undefined;
+            try {
+              const metaPath = path.join(path.dirname(fullPath), 'meta.json');
+              if (fs.existsSync(metaPath)) {
+                const metaContent = fs.readFileSync(metaPath, 'utf8');
+                const meta = JSON.parse(metaContent);
+                repo = meta.repo;
               }
-              
-              models.push({
-                name: entry.name,
-                path: filePath,
-                size: stat.size,
-                created: stat.birthtime,
-                repo,
-                filename: file.name
-              });
+            } catch {
+              // Ignore metadata errors
             }
+            
+            // Use the actual .rkllm filename as the model name (without extension)
+            const modelName = entry.name.replace('.rkllm', '');
+            
+            models.push({
+              name: modelName,
+              path: fullPath,
+              size: stat.size,
+              created: stat.birthtime,
+              repo,
+              filename: entry.name
+            });
           }
         }
-      }
+      };
+
+      scanDirectory(this.modelsDir);
     } catch (error) {
       console.error(`❌ Error reading models: ${error.message}`);
     }
@@ -326,7 +328,20 @@ export class RKLLMModelManager {
 
   async showModelInfo(modelName: string): Promise<void> {
     const models = await this.getModels();
-    const model = models.find(m => m.name === modelName);
+    
+    // Find model by name (with or without .rkllm extension)
+    let model = models.find(m => m.name === modelName);
+    
+    // If not found, try with .rkllm extension
+    if (!model && !modelName.endsWith('.rkllm')) {
+      model = models.find(m => m.name === modelName || m.filename === modelName + '.rkllm');
+    }
+    
+    // If still not found, try without .rkllm extension
+    if (!model && modelName.endsWith('.rkllm')) {
+      const nameWithoutExt = modelName.replace('.rkllm', '');
+      model = models.find(m => m.name === nameWithoutExt);
+    }
     
     if (!model) {
       console.log(`❌ Model '${modelName}' not found.`);
@@ -350,16 +365,34 @@ export class RKLLMModelManager {
   }
 
   async removeModel(modelName: string): Promise<void> {
-    const modelDir = path.join(this.modelsDir, modelName);
+    // Find the model by name (with or without .rkllm extension)
+    const models = await this.getModels();
+    let modelToRemove = models.find(m => m.name === modelName);
     
-    if (!fs.existsSync(modelDir)) {
+    // If not found, try with .rkllm extension
+    if (!modelToRemove && !modelName.endsWith('.rkllm')) {
+      modelToRemove = models.find(m => m.name === modelName || m.filename === modelName + '.rkllm');
+    }
+    
+    // If still not found, try without .rkllm extension
+    if (!modelToRemove && modelName.endsWith('.rkllm')) {
+      const nameWithoutExt = modelName.replace('.rkllm', '');
+      modelToRemove = models.find(m => m.name === nameWithoutExt);
+    }
+    
+    if (!modelToRemove) {
       console.log(`❌ Model '${modelName}' not found.`);
+      console.log('\n📋 Available models:');
+      models.forEach(m => console.log(`   • ${m.name}`));
       return;
     }
 
+    // Get the directory path from the model path
+    const modelDir = path.dirname(modelToRemove.path);
+    
     try {
       Bun.spawnSync(['rm', '-rf', modelDir]);
-      console.log(`🗑️  Model '${modelName}' removed successfully.`);
+      console.log(`🗑️  Model '${modelToRemove.name}' removed successfully.`);
     } catch (error) {
       console.error(`❌ Failed to remove model: ${error.message}`);
     }
@@ -381,6 +414,21 @@ export class RKLLMModelManager {
 
   async getModelByName(modelName: string): Promise<ModelInfo | null> {
     const models = await this.getModels();
-    return models.find(model => model.name === modelName) || null;
+    
+    // Find model by name (with or without .rkllm extension)
+    let model = models.find(m => m.name === modelName);
+    
+    // If not found, try with .rkllm extension
+    if (!model && !modelName.endsWith('.rkllm')) {
+      model = models.find(m => m.name === modelName || m.filename === modelName + '.rkllm');
+    }
+    
+    // If still not found, try without .rkllm extension
+    if (!model && modelName.endsWith('.rkllm')) {
+      const nameWithoutExt = modelName.replace('.rkllm', '');
+      model = models.find(m => m.name === nameWithoutExt);
+    }
+    
+    return model || null;
   }
 }

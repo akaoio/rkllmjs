@@ -13,8 +13,8 @@ export function detectRuntime(): RuntimeInfo {
   if (typeof globalThis.Bun !== 'undefined' && typeof globalThis.Bun.version === 'string') {
     let ffiSupported = false;
     try {
-      // Try to access bun:ffi module
-      const ffiModule = require('bun:ffi');
+      // Try to access bun:ffi module using eval to avoid static analysis
+      const ffiModule = eval('require("bun:ffi")');
       ffiSupported = typeof ffiModule.dlopen === 'function';
     } catch (error) {
       ffiSupported = false;
@@ -28,21 +28,21 @@ export function detectRuntime(): RuntimeInfo {
   }
 
   // Check for Deno
-  if (typeof globalThis.Deno !== 'undefined' && typeof globalThis.Deno.version === 'object') {
+  if (typeof (globalThis as any).Deno !== 'undefined' && typeof (globalThis as any).Deno.version === 'object') {
     return {
       name: 'deno',
-      version: globalThis.Deno.version.deno,
-      ffiSupported: typeof globalThis.Deno.dlopen === 'function'
+      version: (globalThis as any).Deno.version.deno,
+      ffiSupported: typeof (globalThis as any).Deno.dlopen === 'function'
     };
   }
 
   // Check for Node.js
-  if (typeof globalThis.process !== 'undefined' && 
-      globalThis.process.versions && 
-      globalThis.process.versions.node) {
+  if (typeof (globalThis as any).process !== 'undefined' && 
+      (globalThis as any).process.versions && 
+      (globalThis as any).process.versions.node) {
     return {
       name: 'node',
-      version: globalThis.process.versions.node,
+      version: (globalThis as any).process.versions.node,
       ffiSupported: false // Will be determined by adapter availability
     };
   }
@@ -111,21 +111,26 @@ export async function createFFIAdapter(options: FFIOptions = {}): Promise<Runtim
  * Load a specific runtime adapter
  */
 async function loadAdapter(runtime: 'bun' | 'node' | 'deno'): Promise<RuntimeFFI> {
-  switch (runtime) {
-    case 'bun':
-      const { BunFFIAdapter } = await import('./adapters/bun-adapter.js');
-      return new BunFFIAdapter();
-    
-    case 'node':
-      const { NodeFFIAdapter } = await import('./adapters/node-adapter.js');
-      return new NodeFFIAdapter();
-    
-    case 'deno':
-      const { DenoFFIAdapter } = await import('./adapters/deno-adapter.js');
-      return new DenoFFIAdapter();
-    
-    default:
-      throw new Error(`Unsupported runtime: ${runtime}`);
+  try {
+    switch (runtime) {
+      case 'bun':
+        const { BunFFIAdapter } = await import('./adapters/bun-adapter.js');
+        return new BunFFIAdapter();
+      
+      case 'node':
+        const { NodeFFIAdapter } = await import('./adapters/node-adapter.js');
+        return new NodeFFIAdapter();
+      
+      case 'deno':
+        const { DenoFFIAdapter } = await import('./adapters/deno-adapter.js');
+        return new DenoFFIAdapter();
+      
+      default:
+        throw new Error(`Unsupported runtime: ${runtime}`);
+    }
+  } catch (error) {
+    console.warn(`Failed to load ${runtime} adapter:`, error);
+    throw new Error(`Failed to load adapter for ${runtime}: ${error}`);
   }
 }
 
@@ -174,18 +179,18 @@ export function getRuntimeInfo(): RuntimeInfo & {
   const info: any = { ...runtime };
 
   // Add platform information
-  if (typeof globalThis.process !== 'undefined') {
-    info.platform = globalThis.process.platform;
-    info.arch = globalThis.process.arch;
+  if (typeof (globalThis as any).process !== 'undefined') {
+    info.platform = (globalThis as any).process.platform;
+    info.arch = (globalThis as any).process.arch;
   }
 
-  if (typeof globalThis.navigator !== 'undefined') {
-    info.userAgent = globalThis.navigator.userAgent;
+  if (typeof (globalThis as any).navigator !== 'undefined') {
+    info.userAgent = (globalThis as any).navigator.userAgent;
   }
 
-  if (typeof globalThis.Deno !== 'undefined') {
-    info.platform = globalThis.Deno.build.os;
-    info.arch = globalThis.Deno.build.arch;
+  if (typeof (globalThis as any).Deno !== 'undefined') {
+    info.platform = (globalThis as any).Deno.build.os;
+    info.arch = (globalThis as any).Deno.build.arch;
   }
 
   return info;

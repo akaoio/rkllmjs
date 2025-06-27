@@ -30,6 +30,11 @@
     "src/core/rkllm-universal.ts", 
     "src/core/universal-type-conversion.ts",
     "src/runtime/interfaces.ts",
+    "src/runtime/detector.ts",
+    "src/runtime/factory.ts",
+    "src/runtime/adapters/bun-adapter.ts",
+    "src/runtime/adapters/node-adapter.ts",
+    "src/runtime/adapters/deno-adapter.ts",
     "src/ffi/symbol-definitions.ts"
   ]
 }

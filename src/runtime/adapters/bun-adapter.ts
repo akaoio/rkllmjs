@@ -13,25 +13,28 @@ export class BunFFIAdapter implements RuntimeFFI {
   private bunFFI: any = null;
 
   constructor() {
-    // Initialize Bun FFI synchronously if available
-    if (this.isBunEnvironment()) {
-      try {
-        // Import FFI functions from bun:ffi module
-        const ffiModule = require('bun:ffi');
-        this.bunFFI = {
-          dlopen: ffiModule.dlopen,
-          ptr: ffiModule.ptr,
-          FFIType: ffiModule.FFIType,
-          suffix: ffiModule.suffix || 'so'
-        };
-      } catch (error) {
-        // FFI not available
-      }
+    // Try to initialize synchronously
+    this.initializeSync();
+  }
+
+  private initializeSync(): void {
+    if (!this.isBunEnvironment()) {
+      return;
+    }
+
+    try {
+      // Use eval to dynamically import the bun:ffi module
+      // This is a workaround for the synchronous interface requirement
+      const importExpression = `import('bun:ffi')`;
+      // For now, just check if we're in Bun environment
+      // The actual FFI loading will be handled lazily
+    } catch (error) {
+      // FFI not available
     }
   }
 
   isAvailable(): boolean {
-    return this.isBunEnvironment() && this.bunFFI !== null;
+    return this.isBunEnvironment();
   }
 
   getRuntimeName(): 'bun' {
@@ -39,13 +42,12 @@ export class BunFFIAdapter implements RuntimeFFI {
   }
 
   getLibraryExtension(): string {
-    if (!this.bunFFI) {
-      throw new Error('Bun FFI not available');
-    }
-    return this.bunFFI.suffix || 'so';
+    return 'so'; // Default for Linux/Unix
   }
 
   loadLibrary(path: string, symbols: Record<string, FFISymbol>): LibraryHandle {
+    this.ensureFFILoaded();
+    
     if (!this.bunFFI) {
       throw new Error('Bun FFI not available');
     }
@@ -64,6 +66,24 @@ export class BunFFIAdapter implements RuntimeFFI {
     }
   }
 
+  private ensureFFILoaded(): void {
+    if (this.bunFFI === null && this.isBunEnvironment()) {
+      try {
+        // Use require for synchronous loading in Bun context
+        // This is a special case for Bun where require still works
+        const { dlopen, ptr, FFIType, suffix } = eval('require("bun:ffi")');
+        this.bunFFI = {
+          dlopen,
+          ptr,
+          FFIType,
+          suffix: suffix || 'so'
+        };
+      } catch (error) {
+        throw new Error('Failed to load Bun FFI module');
+      }
+    }
+  }
+
   callFunction(handle: LibraryHandle, name: string, ...args: any[]): any {
     if (!(name in handle.symbols)) {
       throw new Error(`Function ${name} not found in library`);
@@ -77,6 +97,8 @@ export class BunFFIAdapter implements RuntimeFFI {
   }
 
   allocateMemory(size: number): MemoryBuffer {
+    this.ensureFFILoaded();
+    
     if (!this.bunFFI) {
       throw new Error('Bun FFI not available');
     }
@@ -101,6 +123,8 @@ export class BunFFIAdapter implements RuntimeFFI {
   }
 
   createPointer(buffer: ArrayBuffer): Pointer {
+    this.ensureFFILoaded();
+    
     if (!this.bunFFI) {
       throw new Error('Bun FFI not available');
     }
@@ -108,6 +132,8 @@ export class BunFFIAdapter implements RuntimeFFI {
   }
 
   createCString(str: string): Pointer {
+    this.ensureFFILoaded();
+    
     if (!this.bunFFI) {
       throw new Error('Bun FFI not available');
     }
@@ -121,6 +147,8 @@ export class BunFFIAdapter implements RuntimeFFI {
   }
 
   readCString(ptr: Pointer): string {
+    this.ensureFFILoaded();
+    
     if (!this.bunFFI) {
       throw new Error('Bun FFI not available');
     }
@@ -141,9 +169,8 @@ export class BunFFIAdapter implements RuntimeFFI {
     
     // Check if FFI is available via bun:ffi import
     try {
-      // Try to access bun:ffi module
-      const ffiModule = require('bun:ffi');
-      return typeof ffiModule.dlopen === 'function';
+      // For synchronous check, just verify Bun exists
+      return true;
     } catch (error) {
       return false;
     }
@@ -153,6 +180,8 @@ export class BunFFIAdapter implements RuntimeFFI {
    * Convert universal FFI symbols to Bun FFI format
    */
   private convertSymbolsToBun(symbols: Record<string, FFISymbol>): Record<string, any> {
+    this.ensureFFILoaded();
+    
     if (!this.bunFFI) {
       throw new Error('Bun FFI not available');
     }
@@ -174,6 +203,8 @@ export class BunFFIAdapter implements RuntimeFFI {
    * Get Bun-specific type mappings
    */
   private getBunTypeMapping(): TypeMappings {
+    this.ensureFFILoaded();
+    
     if (!this.bunFFI) {
       throw new Error('Bun FFI not available');
     }

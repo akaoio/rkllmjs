@@ -42,8 +42,8 @@ export function getFFIInfo() {
           default: return 'so';
         }
       }
-      if (typeof globalThis.Deno !== 'undefined') {
-        switch (globalThis.Deno.build.os) {
+      if (typeof (globalThis as any).Deno !== 'undefined') {
+        switch ((globalThis as any).Deno.build.os) {
           case 'windows': return 'dll';
           case 'darwin': return 'dylib';
           default: return 'so';
