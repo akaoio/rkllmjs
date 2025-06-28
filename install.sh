@@ -2,29 +2,463 @@
 
 set -e  # Exit on any error
 
-echo "=== RKLLM.js Development Setup Script ==="
+echo "=== RKLLM.js Interactive Development Setup ==="
 echo ""
 echo "⚠️  WARNING: This script is intended for DEVELOPMENT ENVIRONMENT ONLY!"
 echo "⚠️  Do NOT run this script on production servers or systems!"
 echo ""
+
+# Detect OS for cross-platform support
+detect_os() {
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        if command -v apt &> /dev/null; then
+            echo "ubuntu"
+        elif command -v yum &> /dev/null; then
+            echo "rhel"
+        elif command -v pacman &> /dev/null; then
+            echo "arch"
+        else
+            echo "linux"
+        fi
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "macos"
+    else
+        echo "unknown"
+    fi
+}
+
+OS=$(detect_os)
+echo "🖥️  Detected OS: $OS"
+
+# Function to install packages based on OS
+install_packages() {
+    local packages=("$@")
+    
+    case $OS in
+        "ubuntu")
+            sudo apt update
+            sudo apt install -y "${packages[@]}"
+            ;;
+        "rhel")
+            sudo yum install -y "${packages[@]}"
+            ;;
+        "arch")
+            sudo pacman -S --noconfirm "${packages[@]}"
+            ;;
+        "macos")
+            if command -v brew &> /dev/null; then
+                brew install "${packages[@]}"
+            else
+                echo "❌ Homebrew not found. Please install Homebrew first."
+                exit 1
+            fi
+            ;;
+        *)
+            echo "❌ Unsupported OS. Please install packages manually:"
+            echo "   ${packages[*]}"
+            exit 1
+            ;;
+    esac
+}
+
+# Check for required tools
+check_required_tools() {
+    local missing_tools=()
+    
+    if ! command -v curl &> /dev/null; then
+        missing_tools+=("curl")
+    fi
+    
+    if ! command -v git &> /dev/null; then
+        missing_tools+=("git")
+    fi
+    
+    # Check for whiptail/dialog for interactive prompts
+    if ! command -v whiptail &> /dev/null && ! command -v dialog &> /dev/null; then
+        case $OS in
+            "ubuntu")
+                missing_tools+=("whiptail")
+                ;;
+            "macos")
+                missing_tools+=("dialog")
+                ;;
+        esac
+    fi
+    
+    if [ ${#missing_tools[@]} -gt 0 ]; then
+        echo "🔧 Installing required tools: ${missing_tools[*]}"
+        install_packages "${missing_tools[@]}"
+    fi
+}
+
+# Interactive runtime selection using whiptail or dialog
+select_runtimes() {
+    local DIALOG_CMD=""
+    if command -v whiptail &> /dev/null; then
+        DIALOG_CMD="whiptail"
+    elif command -v dialog &> /dev/null; then
+        DIALOG_CMD="dialog"
+    else
+        echo "❌ No dialog tool available. Installing all runtimes by default."
+        INSTALL_NODEJS=true
+        INSTALL_BUN=false
+        INSTALL_DENO=false
+        INSTALL_YARN=false
+        return
+    fi
+    
+    echo "🎯 Interactive Runtime Selection"
+    echo ""
+    
+    # Create checklist for runtime selection
+    if [ "$DIALOG_CMD" = "whiptail" ]; then
+        CHOICES=$(whiptail --title "RKLLM.js Runtime Selection" \
+            --checklist "Select JavaScript runtimes to install (Node.js is required):" \
+            15 60 4 \
+            "nodejs" "Node.js (Required - Primary runtime)" ON \
+            "bun" "Bun (Optional - Fast runtime & package manager)" OFF \
+            "deno" "Deno (Optional - Secure TypeScript runtime)" OFF \
+            "yarn" "Yarn (Optional - Alternative package manager)" OFF \
+            3>&1 1>&2 2>&3)
+    else
+        CHOICES=$(dialog --stdout --title "RKLLM.js Runtime Selection" \
+            --checklist "Select JavaScript runtimes to install (Node.js is required):" \
+            15 60 4 \
+            "nodejs" "Node.js (Required - Primary runtime)" on \
+            "bun" "Bun (Optional - Fast runtime & package manager)" off \
+            "deno" "Deno (Optional - Secure TypeScript runtime)" off \
+            "yarn" "Yarn (Optional - Alternative package manager)" off)
+    fi
+    
+    # Check if user cancelled
+    if [ $? -ne 0 ]; then
+        echo "❌ Setup cancelled by user."
+        exit 0
+    fi
+    
+    # Parse selections
+    INSTALL_NODEJS=false
+    INSTALL_BUN=false
+    INSTALL_DENO=false
+    INSTALL_YARN=false
+    
+    for choice in $CHOICES; do
+        case $choice in
+            '"nodejs"'|'nodejs')
+                INSTALL_NODEJS=true
+                ;;
+            '"bun"'|'bun')
+                INSTALL_BUN=true
+                ;;
+            '"deno"'|'deno')
+                INSTALL_DENO=true
+                ;;
+            '"yarn"'|'yarn')
+                INSTALL_YARN=true
+                ;;
+        esac
+    done
+    
+    # Ensure Node.js is always installed (required)
+    if [ "$INSTALL_NODEJS" = false ]; then
+        echo "⚠️  Node.js is required as the primary runtime. Enabling Node.js installation."
+        INSTALL_NODEJS=true
+    fi
+    
+    echo ""
+    echo "📋 Selected runtimes:"
+    echo "   ✅ Node.js (Primary runtime)"
+    [ "$INSTALL_BUN" = true ] && echo "   ✅ Bun (Fast runtime)"
+    [ "$INSTALL_DENO" = true ] && echo "   ✅ Deno (Secure runtime)"  
+    [ "$INSTALL_YARN" = true ] && echo "   ✅ Yarn (Package manager)"
+    echo ""
+}
+
+# Install build essentials for C++ compilation
+install_build_essentials() {
+    echo "🔨 Installing C++ build essentials..."
+    
+    case $OS in
+        "ubuntu")
+            local build_packages=("build-essential" "cmake" "make" "g++" "unzip")
+            install_packages "${build_packages[@]}"
+            ;;
+        "rhel")
+            local build_packages=("gcc-c++" "cmake" "make" "unzip")
+            install_packages "${build_packages[@]}"
+            ;;
+        "arch")
+            local build_packages=("base-devel" "cmake" "unzip")
+            install_packages "${build_packages[@]}"
+            ;;
+        "macos")
+            # Check if Xcode command line tools are installed
+            if ! xcode-select -p &> /dev/null; then
+                echo "Installing Xcode command line tools..."
+                xcode-select --install
+                echo "⚠️  Please complete Xcode installation and run this script again."
+                exit 1
+            fi
+            local build_packages=("cmake" "unzip")
+            install_packages "${build_packages[@]}"
+            ;;
+        *)
+            echo "❌ Please install C++ build tools manually for your OS"
+            ;;
+    esac
+    
+    echo "✅ Build essentials installed"
+}
+
+# Install Node.js
+install_nodejs() {
+    if ! command -v node &> /dev/null; then
+        echo "📦 Installing Node.js..."
+        case $OS in
+            "ubuntu")
+                # Install Node.js 18+ from NodeSource repository
+                curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+                sudo apt-get install -y nodejs
+                ;;
+            "macos")
+                install_packages "node"
+                ;;
+            *)
+                local node_packages=("nodejs" "npm")
+                install_packages "${node_packages[@]}"
+                ;;
+        esac
+        echo "✅ Node.js installed"
+    else
+        echo "✅ Node.js already installed: $(node --version)"
+    fi
+}
+
+# Install Bun
+install_bun() {
+    if ! command -v bun &> /dev/null; then
+        echo "📦 Installing Bun..."
+        curl -fsSL https://bun.sh/install | bash
+        
+        # Add Bun to PATH
+        export PATH="$HOME/.bun/bin:$PATH"
+        
+        # Add to shell profiles
+        for profile in ~/.bashrc ~/.zshrc ~/.profile; do
+            if [ -f "$profile" ]; then
+                if ! grep -q "/.bun/bin" "$profile"; then
+                    echo 'export PATH="$HOME/.bun/bin:$PATH"' >> "$profile"
+                fi
+            fi
+        done
+        
+        echo "✅ Bun installed"
+    else
+        echo "✅ Bun already installed: v$(bun --version)"
+    fi
+}
+
+# Install Deno  
+install_deno() {
+    if ! command -v deno &> /dev/null; then
+        echo "📦 Installing Deno..."
+        curl -fsSL https://deno.land/install.sh | sh
+        
+        # Add Deno to PATH
+        export PATH="$HOME/.deno/bin:$PATH"
+        
+        # Add to shell profiles
+        for profile in ~/.bashrc ~/.zshrc ~/.profile; do
+            if [ -f "$profile" ]; then
+                if ! grep -q "/.deno/bin" "$profile"; then
+                    echo 'export PATH="$HOME/.deno/bin:$PATH"' >> "$profile"
+                fi
+            fi
+        done
+        
+        echo "✅ Deno installed"
+    else
+        echo "✅ Deno already installed: $(deno --version | head -n1)"
+    fi
+}
+
+# Install Yarn
+install_yarn() {
+    if ! command -v yarn &> /dev/null; then
+        echo "📦 Installing Yarn..."
+        case $OS in
+            "ubuntu")
+                curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+                echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+                sudo apt update
+                sudo apt install -y yarn
+                ;;
+            "macos")
+                install_packages "yarn"
+                ;;
+            *)
+                # Fallback to npm installation
+                npm install -g yarn
+                ;;
+        esac
+        echo "✅ Yarn installed"
+    else
+        echo "✅ Yarn already installed: $(yarn --version)"
+    fi
+}
+
+# Setup RKLLM native libraries
+setup_rkllm_libs() {
+    local LIBS_DIR="./libs/rkllm"
+    local REQUIRED_DIRS=("aarch64" "armhf" "include")
+    local MISSING_DIRS=()
+
+    echo "🔍 Checking RKLLM library structure..."
+
+    if [ ! -d "$LIBS_DIR" ]; then
+        echo "libs/rkllm directory not found"
+        MISSING_DIRS=("${REQUIRED_DIRS[@]}")
+    else
+        for dir in "${REQUIRED_DIRS[@]}"; do
+            if [ ! -d "$LIBS_DIR/$dir" ]; then
+                echo "Missing directory: $LIBS_DIR/$dir"
+                MISSING_DIRS+=("$dir")
+            fi
+        done
+    fi
+
+    # If any required directories are missing, clone and setup
+    if [ ${#MISSING_DIRS[@]} -gt 0 ]; then
+        echo "🔧 Setting up RKLLM native libraries..."
+        
+        # Clone rknn-llm repository if it doesn't exist
+        if [ ! -d "rknn-llm" ]; then
+            echo "📥 Cloning rknn-llm repository..."
+            git clone https://github.com/airockchip/rknn-llm
+        fi
+        
+        # Create libs/rkllm directory
+        mkdir -p "$LIBS_DIR"
+        
+        # Copy librkllm_api contents
+        local LIBRKLLM_API_DIR="./rknn-llm/rkllm-runtime/Linux/librkllm_api"
+        
+        if [ -d "$LIBRKLLM_API_DIR" ]; then
+            echo "📋 Copying RKLLM API files..."
+            cp -r "$LIBRKLLM_API_DIR"/* "$LIBS_DIR/"
+            echo "✅ RKLLM libraries setup completed"
+        else
+            echo "❌ Error: librkllm_api directory not found"
+            exit 1
+        fi
+        
+        # Cleanup
+        echo "🧹 Cleaning up temporary files..."
+        rm -rf rknn-llm
+    else
+        echo "✅ RKLLM library structure is complete"
+    fi
+}
+
+# Download standard model using CLI
+download_standard_model() {
+    echo "🤖 Setting up standard RKLLM model..."
+    
+    # Build the project first
+    echo "🔨 Building project..."
+    npm install
+    npm run build
+    
+    # Download the standard model
+    echo "📥 Downloading standard model (dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1)..."
+    echo "   Model file: Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm"
+    
+    # Use the CLI to pull the model
+    npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm
+    
+    echo "✅ Standard model setup completed"
+}
+
+# Main installation flow
+main() {
+    echo "🚀 Starting RKLLM.js interactive setup..."
+    echo ""
+    
+    # Check for required tools first
+    check_required_tools
+    
+    # Interactive runtime selection
+    select_runtimes
+    
+    # Install build essentials
+    install_build_essentials
+    
+    # Install selected runtimes
+    echo "📦 Installing selected runtimes..."
+    
+    if [ "$INSTALL_NODEJS" = true ]; then
+        install_nodejs
+    fi
+    
+    if [ "$INSTALL_BUN" = true ]; then
+        install_bun
+    fi
+    
+    if [ "$INSTALL_DENO" = true ]; then
+        install_deno
+    fi
+    
+    if [ "$INSTALL_YARN" = true ]; then
+        install_yarn
+    fi
+    
+    # Setup RKLLM libraries
+    setup_rkllm_libs
+    
+    # Download standard model
+    download_standard_model
+    
+    echo ""
+    echo "🎉 RKLLM.js Development Setup Complete!"
+    echo ""
+    echo "✅ Installed runtimes:"
+    [ "$INSTALL_NODEJS" = true ] && echo "   🟢 Node.js: $(node --version)"
+    [ "$INSTALL_BUN" = true ] && [ -x "$(command -v bun)" ] && echo "   🟠 Bun: v$(bun --version)"
+    [ "$INSTALL_DENO" = true ] && [ -x "$(command -v deno)" ] && echo "   🔵 Deno: $(deno --version | head -n1)"
+    [ "$INSTALL_YARN" = true ] && [ -x "$(command -v yarn)" ] && echo "   🟡 Yarn: $(yarn --version)"
+    echo ""
+    echo "✅ Standard model: dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1"
+    echo "✅ C++ build essentials configured"
+    echo ""
+    echo "🎯 Next steps:"
+    echo "   1. Restart your terminal or run: source ~/.bashrc"  
+    echo "   2. Start developing with RKLLM.js!"
+    echo "   3. List models: npm run cli list"
+    echo "   4. Run tests: npm test"
+    echo ""
+    echo "⚠️  REMINDER: This setup is for DEVELOPMENT ONLY!"
+}
+
+# Confirmation prompt
 echo "This script will:"
-echo "  • Install system dependencies (Node.js, npm, git, build tools)"
-echo "  • Install JavaScript runtimes (Bun, Deno, Yarn)" 
-echo "  • Download and setup RKLLM native libraries"
-echo "  • Modify your shell profile (~/.bashrc, ~/.zshrc)"
-echo ""
-echo "Are you sure you want to continue? This is a development setup."
+echo "  • Detect your OS and install appropriate packages"
+echo "  • Let you choose which JavaScript runtimes to install"
+echo "  • Install C++ build essentials for your platform"
+echo "  • Setup RKLLM native libraries"
+echo "  • Download the standard RKLLM model"
+echo "  • Modify your shell profile for PATH updates"
 echo ""
 
 while true; do
-    read -p "Do you want to continue? (Y/N): " yn
+    read -p "Do you want to continue with interactive setup? (Y/N): " yn
     case $yn in
         [Yy]* ) 
-            echo "✓ Proceeding with development setup..."
+            echo "✅ Proceeding with interactive setup..."
+            main
             break
             ;;
         [Nn]* ) 
-            echo "Setup cancelled by user."
+            echo "❌ Setup cancelled by user."
             echo "To run this script later, execute: bash install.sh"
             exit 0
             ;;
@@ -33,255 +467,3 @@ while true; do
             ;;
     esac
 done
-
-echo ""
-echo "Setting up RKLLM.js development environment..."
-
-# Check and install dependencies
-echo "Checking and installing system dependencies..."
-
-# Update package list
-sudo apt update
-
-# Array of packages to check and install
-PACKAGES=("nodejs" "npm" "git" "build-essential" "cmake" "unzip")
-MISSING_PACKAGES=()
-
-# Check which packages are missing
-for package in "${PACKAGES[@]}"; do
-    if ! dpkg -l | grep -q "^ii  $package "; then
-        echo "Package $package is not installed"
-        MISSING_PACKAGES+=("$package")
-    else
-        echo "✓ Package $package is already installed"
-    fi
-done
-
-# Install missing packages
-if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
-    echo "Installing missing packages: ${MISSING_PACKAGES[*]}"
-    sudo apt install -y "${MISSING_PACKAGES[@]}"
-else
-    echo "All required packages are already installed"
-fi
-
-# Check and install JavaScript runtimes (Bun, Node.js, Deno)
-echo "Checking for JavaScript runtime installations..."
-
-# Install Bun
-echo "Checking for Bun installation..."
-if ! command -v bun &> /dev/null; then
-    echo "Bun is not installed. Installing Bun..."
-    curl -fsSL https://bun.sh/install | bash
-    
-    # Add Bun to PATH for current session
-    export PATH="$HOME/.bun/bin:$PATH"
-    
-    # Add Bun to shell profile for future sessions
-    if [ -f ~/.bashrc ]; then
-        echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.bashrc
-    fi
-    if [ -f ~/.zshrc ]; then
-        echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.zshrc
-    fi
-    
-    echo "✓ Bun installed successfully"
-else
-    echo "✓ Bun is already installed"
-fi
-
-# Install Deno
-echo "Checking for Deno installation..."
-if ! command -v deno &> /dev/null; then
-    echo "Deno is not installed. Installing Deno..."
-    curl -fsSL https://deno.land/install.sh | sh
-    
-    # Add Deno to PATH for current session
-    export PATH="$HOME/.deno/bin:$PATH"
-    
-    # Add Deno to shell profile for future sessions
-    if [ -f ~/.bashrc ]; then
-        echo 'export PATH="$HOME/.deno/bin:$PATH"' >> ~/.bashrc
-    fi
-    if [ -f ~/.zshrc ]; then
-        echo 'export PATH="$HOME/.deno/bin:$PATH"' >> ~/.zshrc
-    fi
-    
-    echo "✓ Deno installed successfully"
-else
-    echo "✓ Deno is already installed"
-fi
-
-# Node.js is already covered in the system packages section above
-
-# Install Yarn package manager
-echo "Checking for Yarn installation..."
-if ! command -v yarn &> /dev/null; then
-    echo "Yarn is not installed. Installing Yarn..."
-    
-    # Try to install Yarn via official installer (recommended method)
-    if curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - 2>/dev/null; then
-        echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-        sudo apt update
-        sudo apt install -y yarn
-        echo "✓ Yarn installed via official repository"
-    else
-        # Fallback: Install via npm with sudo
-        echo "Fallback: Installing Yarn via npm (requires sudo)..."
-        sudo npm install -g yarn
-        echo "✓ Yarn installed via npm"
-    fi
-else
-    echo "✓ Yarn is already installed"
-fi
-
-# Verify critical commands are available
-echo "Verifying runtime installations..."
-
-if ! command -v node &> /dev/null; then
-    echo "Error: Node.js is not available"
-    exit 1
-fi
-
-if ! command -v npm &> /dev/null; then
-    echo "Error: npm is not available"
-    exit 1
-fi
-
-if ! command -v yarn &> /dev/null; then
-    echo "Error: Yarn is not available"
-    exit 1
-fi
-
-if ! command -v git &> /dev/null; then
-    echo "Error: git is not available"
-    exit 1
-fi
-
-if ! command -v bun &> /dev/null; then
-    echo "Error: Bun is not available"
-    exit 1
-fi
-
-if ! command -v deno &> /dev/null; then
-    echo "Error: Deno is not available"
-    exit 1
-fi
-
-echo "✓ Node.js version: $(node --version)"
-echo "✓ npm version: $(npm --version)"
-echo "✓ Yarn version: $(yarn --version)"
-echo "✓ git version: $(git --version)"
-echo "✓ Bun version: $(bun --version)"
-echo "✓ Deno version: $(deno --version | head -n1)"
-echo ""
-echo "✓ All JavaScript runtimes and package managers are installed and ready!"
-echo "  - Node.js + npm: Traditional Node.js ecosystem"
-echo "  - Yarn: Alternative package manager for Node.js"
-echo "  - Bun: Fast all-in-one JavaScript runtime and package manager"
-echo "  - Deno: Secure runtime for JavaScript and TypeScript"
-
-# Check if libs/rkllm exists and has required files
-LIBS_DIR="./libs/rkllm"
-REQUIRED_DIRS=("aarch64" "armhf" "include")
-MISSING_DIRS=()
-
-echo "Checking RKLLM library structure..."
-
-if [ ! -d "$LIBS_DIR" ]; then
-    echo "libs/rkllm directory not found"
-    MISSING_DIRS=("${REQUIRED_DIRS[@]}")
-else
-    for dir in "${REQUIRED_DIRS[@]}"; do
-        if [ ! -d "$LIBS_DIR/$dir" ]; then
-            echo "Missing directory: $LIBS_DIR/$dir"
-            MISSING_DIRS+=("$dir")
-        fi
-    done
-fi
-
-# If any required directories are missing, clone and setup
-if [ ${#MISSING_DIRS[@]} -gt 0 ]; then
-    echo "Missing RKLLM library components. Setting up..."
-    
-    # Clone rknn-llm repository if it doesn't exist
-    if [ ! -d "rknn-llm" ]; then
-        echo "Cloning rknn-llm repository..."
-        git clone https://github.com/airockchip/rknn-llm
-    else
-        echo "rknn-llm repository already exists"
-    fi
-    
-    # Create libs/rkllm directory if it doesn't exist
-    mkdir -p "$LIBS_DIR"
-    
-    # Copy librkllm_api contents to libs/rkllm
-    LIBRKLLM_API_DIR="./rknn-llm/rkllm-runtime/Linux/librkllm_api"
-    
-    if [ -d "$LIBRKLLM_API_DIR" ]; then
-        echo "Copying RKLLM API files from $LIBRKLLM_API_DIR to $LIBS_DIR..."
-        cp -r "$LIBRKLLM_API_DIR"/* "$LIBS_DIR/"
-        echo "RKLLM library setup completed"
-    else
-        echo "Error: librkllm_api directory not found in $LIBRKLLM_API_DIR"
-        echo "Please check the rknn-llm repository structure"
-        exit 1
-    fi
-else
-    echo "RKLLM library structure is complete"
-fi
-
-# Verify the setup
-echo "Verifying RKLLM library setup..."
-for dir in "${REQUIRED_DIRS[@]}"; do
-    if [ -d "$LIBS_DIR/$dir" ]; then
-        echo "✓ $LIBS_DIR/$dir exists"
-    else
-        echo "✗ $LIBS_DIR/$dir missing"
-        exit 1
-    fi
-done
-
-# Check for key files
-if [ -f "$LIBS_DIR/include/rkllm.h" ]; then
-    echo "✓ rkllm.h header file found"
-else
-    echo "✗ rkllm.h header file missing"
-    exit 1
-fi
-
-if [ -f "$LIBS_DIR/aarch64/librkllmrt.so" ]; then
-    echo "✓ aarch64 library found"
-else
-    echo "✗ aarch64 library missing"
-fi
-
-if [ -f "$LIBS_DIR/armhf/librkllmrt.so" ]; then
-    echo "✓ armhf library found"
-else
-    echo "✗ armhf library missing"
-fi
-
-# Cleanup: Remove rknn-llm directory after successful setup
-if [ -d "rknn-llm" ]; then
-    echo "Cleaning up: Removing rknn-llm directory..."
-    rm -rf rknn-llm
-    echo "✓ rknn-llm directory removed"
-fi
-
-echo ""
-echo "=== Development Setup Complete ==="
-echo "✅ Dependencies installed and RKLLM libraries are ready!"
-echo "✅ Development environment is configured for RKLLM.js"
-echo ""
-echo "⚠️  REMINDER: This setup is for DEVELOPMENT ONLY!"
-echo "⚠️  For production deployment, use proper package managers and"
-echo "⚠️  containerization instead of running this script."
-echo ""
-echo "Next steps:"
-echo "  1. Restart your terminal or run: source ~/.bashrc"
-echo "  2. Run: bun install  (or npm install / yarn install)"
-echo "  3. Run: bun run build  (or npm run build)"
-echo "  4. Start developing with RKLLM.js!"
-echo ""
-echo "Note: rknn-llm temporary directory has been cleaned up."
