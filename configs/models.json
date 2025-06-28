@@ -1,4 +1,6 @@
 {
+  "_description": "RKLLMJS Model Configuration - Contains example repositories, model files, and suggestions for RKLLM model management",
+  "_version": "1.0.0",
   "EXAMPLE_REPOSITORIES": {
     "QWEN_05B": "limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4",
     "TINYLLAMA": "punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4"

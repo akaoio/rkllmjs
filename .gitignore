@@ -161,6 +161,7 @@ tests/.tmp/
 .test-*/
 **/test-cache/
 **/test-tmp/
+tmp/
 
 # IDE
 .idea/
