@@ -24,6 +24,13 @@ HuggingFace Repository → Download → Local Storage → Model Registry
 Downloads RKLLM model file plus essential technical files:
 
 ```typescript
+// Standard model (recommended)
+await manager.downloadModel(
+  'dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1',
+  'Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm'
+);
+
+// Alternative models
 await manager.downloadModel(
   'limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4',
   'Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm'
@@ -60,6 +67,14 @@ await manager.cleanModels();
 ### Directory Structure
 ```
 models/
+├── dulimov/
+│   └── Qwen2.5-VL-7B-Instruct-rk3588-1.2.1/
+│       ├── Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm
+│       ├── config.json
+│       ├── generation_config.json
+│       ├── meta.json
+│       ├── tokenizer_config.json
+│       └── tokenizer.json
 ├── limcheekin/
 │   └── Qwen2.5-0.5B-Instruct-rk3588-1.1.4/
 │       ├── Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
