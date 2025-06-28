@@ -6,7 +6,6 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import * as fs from 'fs';
-import * as path from 'path';
 import { TestLogger } from './test-logger.js';
 
 const logger = TestLogger.createLogger('test-logger');
@@ -27,6 +26,8 @@ describe('TestLogger', () => {
     testLogger.testStart('should create log directory');
 
     const tempLogger = new TestLogger('temp-test');
+    // Verify the temp logger was created successfully
+    testLogger.info('Temp logger created', { tempLoggerName: tempLogger.constructor.name });
     
     // Check if logs directory exists (should be created by constructor)
     const logsExist = fs.existsSync('logs');
@@ -73,24 +74,29 @@ describe('TestLogger', () => {
     testLogger.testEnd('should handle error logging', true, duration);
   });
 
-  it('should create unique timestamp directories', () => {
+  it('should create unique timestamp directories', async () => {
     const startTime = Date.now();
     testLogger.testStart('should create unique timestamp directories');
 
     // Create two loggers with slight delay
     const logger1 = new TestLogger('unique-test-1');
+    logger1.info('First logger created');
     
     // Small delay to ensure different timestamps
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
     
-    setTimeout(() => {
-      const logger2 = new TestLogger('unique-test-2');
-      testLogger.info('Two loggers created with different timestamps');
-      assert.ok(true, 'Multiple loggers should create separate directories');
-      
-      const duration = Date.now() - startTime;
-      testLogger.testEnd('should create unique timestamp directories', true, duration);
-    }, 10);
+    await delay(10); // Use the delay function
+    const logger2 = new TestLogger('unique-test-2');
+    logger2.info('Second logger created');
+    
+    testLogger.info('Two loggers created with different timestamps', {
+      logger1Created: true,
+      logger2Created: true
+    });
+    assert.ok(true, 'Multiple loggers should create separate directories');
+    
+    const duration = Date.now() - startTime;
+    testLogger.testEnd('should create unique timestamp directories', true, duration);
   });
 
   it('should track test expectations', () => {

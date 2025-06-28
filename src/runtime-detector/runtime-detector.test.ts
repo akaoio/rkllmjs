@@ -6,7 +6,7 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
 import { TestLogger } from '../test-logger/test-logger.js';
-import { RuntimeDetector, type RuntimeType } from './runtime-detector';
+import { RuntimeDetector } from './runtime-detector';
 
 const logger = TestLogger.createLogger('runtime-detector');
 

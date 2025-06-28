@@ -4,7 +4,6 @@
  */
 
 import type { ModelInfo } from '../model-types/model-types.js';
-import { RuntimeDetector } from '../runtime-detector/runtime-detector.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -29,11 +28,9 @@ const CLI_EXAMPLES = {
 
 export class RKLLMModelManager {
   private modelsDir: string;
-  private detector: RuntimeDetector;
 
   constructor(modelsDir: string = './models') {
     this.modelsDir = modelsDir;
-    this.detector = RuntimeDetector.getInstance();
     // Initialize directory creation on construction
     this.ensureModelsDirectory();
   }
