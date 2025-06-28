@@ -79,7 +79,17 @@ export class TestLogger {
     ];
 
     if (entry.data) {
-      parts.push('\nData:', JSON.stringify(entry.data, null, 2));
+      try {
+        const jsonString = JSON.stringify(entry.data, null, 2);
+        // Limit data size to prevent serialization issues
+        if (jsonString.length > 10000) {
+          parts.push('\nData: [Large object truncated for serialization safety]');
+        } else {
+          parts.push('\nData:', jsonString);
+        }
+      } catch (error) {
+        parts.push('\nData: [Unable to serialize - contains circular references or non-serializable data]');
+      }
     }
 
     if (entry.error) {

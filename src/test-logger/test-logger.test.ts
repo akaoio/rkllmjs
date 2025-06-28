@@ -113,10 +113,6 @@ describe('TestLogger', () => {
   });
 });
 
-// Generate summary at the end
-process.on('exit', () => {
-  logger.summary();
-});
-
+// Generate summary at the end - avoid process.on('exit') to prevent Node.js test runner conflicts
 logger.info('Test logger tests completed');
 logger.summary();

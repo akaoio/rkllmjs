@@ -100,9 +100,6 @@ describe('CLIRunner', () => {
   // Note: Command validation tests that involve process.exit are difficult to test
   // in Node.js without complex mocking. These would be better handled in integration tests.
   
-  // Restore console.log after tests
-  process.on('exit', () => {
-    console.log = originalConsoleLog;
-    logger.summary();
-  });
+  // Generate summary at the end - moved to test end instead of process exit
+  // to avoid conflicts with Node.js test runner process management
 });

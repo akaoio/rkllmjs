@@ -126,7 +126,5 @@ describe('ModelMetadata', () => {
   });
 });
 
-// Test run summary
-process.on('exit', () => {
-  logger.summary();
-});
+// Test run summary - moved to avoid conflicts with Node.js test runner
+logger.summary();
