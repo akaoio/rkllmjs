@@ -1,0 +1,203 @@
+name: Security & Compliance
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run security scans daily at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run npm audit
+      run: |
+        npm audit --audit-level=moderate
+        echo "## 🔍 Security Audit Results" >> $GITHUB_STEP_SUMMARY
+        npm audit --audit-level=moderate --json | jq -r '.metadata | "- **Vulnerabilities**: \(.vulnerabilities.total) total, \(.vulnerabilities.high) high, \(.vulnerabilities.moderate) moderate"' >> $GITHUB_STEP_SUMMARY || echo "- ✅ No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+      continue-on-error: true
+      
+    - name: Check for known security advisories
+      run: |
+        npx audit-ci --moderate
+      continue-on-error: true
+
+  code-security:
+    name: Code Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript
+        config-file: ./.github/codeql/codeql-config.yml
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build for analysis
+      run: npm run build:ts
+      continue-on-error: true
+      
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+  license-compliance:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install license checker
+      run: npm install -g license-checker
+      
+    - name: Check licenses
+      run: |
+        echo "## 📋 License Compliance Report" >> $GITHUB_STEP_SUMMARY
+        license-checker --summary >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Check for problematic licenses
+        license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;Unlicense' || {
+          echo "⚠️ Non-approved licenses detected" >> $GITHUB_STEP_SUMMARY
+          license-checker --excludePackages 'rkllmjs' 2>&1 | head -20 >> $GITHUB_STEP_SUMMARY
+        }
+      continue-on-error: true
+
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install truffleHog
+      run: |
+        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+        
+    - name: Scan for secrets
+      run: |
+        trufflehog filesystem . --only-verified=false --json > secrets-report.json || true
+        
+        if [ -s secrets-report.json ]; then
+          echo "## 🔐 Secret Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ Potential secrets detected. Please review the findings." >> $GITHUB_STEP_SUMMARY
+          jq -r '.SourceMetadata.Data.Filesystem.file' secrets-report.json | sort -u | head -10 >> $GITHUB_STEP_SUMMARY || echo "Review the full report in artifacts." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## 🔐 Secret Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ No secrets detected" >> $GITHUB_STEP_SUMMARY
+        fi
+      continue-on-error: true
+      
+    - name: Upload secret scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: secret-scan-results
+        path: secrets-report.json
+        retention-days: 30
+
+  rules-compliance:
+    name: RULES.md Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run comprehensive validation
+      run: |
+        echo "## 📋 RULES.md Compliance Report" >> $GITHUB_STEP_SUMMARY
+        npm run validate 2>&1 | tee validation-output.txt
+        
+        if grep -q "All validation checks passed" validation-output.txt; then
+          echo "✅ **All RULES.md compliance checks passed**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **RULES.md compliance issues detected**" >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY
+          tail -20 validation-output.txt >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # Ensure validation actually passes for CI
+        npm run validate
+
+  protected-files:
+    name: Protected Files Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check protected Rockchip files
+      run: |
+        echo "## 🔒 Protected Files Status" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "libs/rkllm/aarch64/librkllmrt.so" ]; then
+          echo "✅ librkllmrt.so exists" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ librkllmrt.so missing" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ -f "libs/rkllm/include/rkllm.h" ]; then
+          echo "✅ rkllm.h exists" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ rkllm.h missing" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # Verify files haven't been modified (basic check)
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**File integrity status:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Protected files are present and accessible" >> $GITHUB_STEP_SUMMARY

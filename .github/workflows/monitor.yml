@@ -1,0 +1,74 @@
+name: CI/CD Monitoring
+
+on:
+  workflow_run:
+    workflows: ["Test & Quality Checks", "Release & Publish", "Security & Compliance"]
+    types:
+      - completed
+
+jobs:
+  monitor:
+    name: Monitor Workflow Results
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    
+    steps:
+    - name: Download workflow artifacts
+      uses: actions/github-script@v7
+      with:
+        script: |
+          let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+             owner: context.repo.owner,
+             repo: context.repo.repo,
+             run_id: ${{ github.event.workflow_run.id }},
+          });
+          
+          console.log(`Found ${allArtifacts.data.artifacts.length} artifacts`);
+          
+          for (const artifact of allArtifacts.data.artifacts) {
+            console.log(`- ${artifact.name}: ${artifact.size_in_bytes} bytes`);
+          }
+          
+    - name: Report workflow status
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const workflowRun = ${{ toJSON(github.event.workflow_run) }};
+          const conclusion = workflowRun.conclusion;
+          const workflowName = workflowRun.name;
+          const runUrl = workflowRun.html_url;
+          
+          console.log(`Workflow: ${workflowName}`);
+          console.log(`Status: ${conclusion}`);
+          console.log(`URL: ${runUrl}`);
+          
+          // Create issue for failed workflows on main branch
+          if (conclusion === 'failure' && workflowRun.head_branch === 'main') {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 CI/CD Failure: ${workflowName}`,
+              body: `
+              ## CI/CD Pipeline Failure Alert
+              
+              **Workflow**: ${workflowName}
+              **Branch**: ${workflowRun.head_branch}
+              **Commit**: ${workflowRun.head_sha.substring(0, 7)}
+              **Status**: ${conclusion}
+              **Run URL**: ${runUrl}
+              
+              Please investigate and fix the failing workflow.
+              
+              This issue was automatically created by the CI/CD monitoring system.
+              `,
+              labels: ['ci-failure', 'bug', 'high-priority']
+            });
+          }
+          
+    - name: Performance metrics
+      run: |
+        echo "## 📊 CI/CD Performance Metrics" >> $GITHUB_STEP_SUMMARY
+        echo "- **Workflow**: ${{ github.event.workflow_run.name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ${{ github.event.workflow_run.conclusion }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Duration**: ${{ github.event.workflow_run.updated_at }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Run URL**: ${{ github.event.workflow_run.html_url }}" >> $GITHUB_STEP_SUMMARY
