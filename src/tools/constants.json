@@ -1,0 +1,16 @@
+{
+  "EXAMPLE_REPOSITORIES": {
+    "QWEN_05B": "limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4",
+    "TINYLLAMA": "punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4"
+  },
+  "EXAMPLE_MODEL_FILES": {
+    "QWEN_05B": "Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm",
+    "TINYLLAMA": "TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm"
+  },
+  "REPOSITORY_SUGGESTIONS": [
+    "limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4",
+    "punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4",
+    "limcheekin/MiniCPM-2B-dpo-rk3588-rkllm-1.1.4",
+    "limcheekin/internlm2_5-1_8b-chat-rk3588-rkllm-1.1.4"
+  ]
+}

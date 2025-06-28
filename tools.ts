@@ -15,8 +15,23 @@
  *   bun tools.ts pull punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm
  */
 
-import { RKLLMModelManager } from './src/tools/model-manager.js';
-import { CLI_EXAMPLES } from './src/tools/tool-constants.js';
+import { RKLLMModelManager } from './src/tools/manager.js';
+
+const fs = require('fs');
+const path = require('path');
+
+// Load constants from JSON
+const constants = JSON.parse(fs.readFileSync('./src/tools/constants.json', 'utf8'));
+
+// Generate CLI examples from constants
+const CLI_EXAMPLES = {
+  PULL_QWEN: `bun tools.ts pull ${constants.EXAMPLE_REPOSITORIES.QWEN_05B} ${constants.EXAMPLE_MODEL_FILES.QWEN_05B}`,
+  PULL_TINYLLAMA: `bun tools.ts pull ${constants.EXAMPLE_REPOSITORIES.TINYLLAMA} ${constants.EXAMPLE_MODEL_FILES.TINYLLAMA}`,
+  LIST: 'bun tools.ts list',
+  INFO: 'bun tools.ts info [model-name]',
+  REMOVE: 'bun tools.ts remove [model-name]',
+  CLEAN: 'bun tools.ts clean'
+};
 
 // CLI Interface
 async function main() {
