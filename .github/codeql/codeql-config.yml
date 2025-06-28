@@ -1,0 +1,20 @@
+name: "RKLLMJS CodeQL Config"
+
+disable-default-queries: false
+
+queries:
+  - uses: security-and-quality
+
+paths-ignore:
+  - "dist/**"
+  - "build/**"
+  - "node_modules/**"
+  - "docs/**"
+  - "logs/**"
+  - "tmp/**"
+  - "**/*.test.ts"
+  - "**/*.test.js"
+
+paths:
+  - "src/**"
+  - "scripts/**"

@@ -163,6 +163,12 @@ tests/.tmp/
 **/test-tmp/
 tmp/
 
+# CI/CD artifacts
+secrets-report.json
+validation-output.txt
+CHANGELOG.md
+.github/workflows/*.log
+
 # IDE
 .idea/
 *.swp

@@ -317,7 +317,20 @@ Every PR must satisfy ALL conditions:
 ## 📖 Documentation
 
 - [RULES.md](./RULES.md) - **Non-negotiable development rules**
+- [CI/CD Documentation](./.github/CICD_DOCUMENTATION.md) - **GitHub Actions pipeline guide**
 - [libs/rkllm/include/rkllm.h](./libs/rkllm/include/rkllm.h) - Rockchip C API reference
+
+## 🚀 CI/CD Pipeline
+
+This project includes a comprehensive CI/CD pipeline with GitHub Actions:
+
+- **✅ Automated Testing**: Multi-environment testing (Node.js 16, 18, 20 on Ubuntu, macOS, Windows)
+- **🔍 Code Quality**: ESLint, Prettier, TypeScript compilation checks
+- **🔒 Security Scanning**: Dependency vulnerabilities, secret detection, license compliance
+- **📦 Automated Publishing**: npm package publishing on releases
+- **📊 Monitoring**: Pipeline health monitoring with automated issue creation
+
+See [CI/CD Documentation](./.github/CICD_DOCUMENTATION.md) for complete details.
 - Source code documentation in each feature directory
 
 ## 🏷️ License
