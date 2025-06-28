@@ -2,23 +2,28 @@
 
 /**
  * RKLLMJS CLI Runner - Command Line Interface for Model Management
- * Multi-runtime support: Node.js (primary), Bun, Deno
+ * Primary runtime: Node.js, Alternative support: Bun, Deno (experimental)
  * 
  * Usage:
- *   node dist/cli-runner/cli-runner.js pull [repo] [model]    # Node.js (primary)
- *   bun src/cli-runner/cli-runner.ts pull [repo] [model]      # Bun (alternative)
+ *   node dist/cli-runner/cli-runner.js pull [repo] [model]    # Node.js (primary/production)
+ *   npm run cli pull [repo] [model]                          # Node.js via npm script
+ *   bun src/cli-runner/cli-runner.ts pull [repo] [model]      # Bun (alternative/dev)
  *   deno run --allow-all src/cli-runner/cli-runner.ts [...]   # Deno (experimental)
  * 
  * Examples:
- *   node dist/cli-runner/cli-runner.js pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
- *   bun src/cli-runner/cli-runner.ts pull punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm
+ *   npm run cli pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
+ *   node dist/cli-runner/cli-runner.js pull punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm
  */
 
-import { RKLLMModelManager } from '../model-manager/model-manager';
-import { RuntimeDetector } from '../runtime-detector/runtime-detector';
+import { RKLLMModelManager } from '../model-manager/model-manager.js';
+import { RuntimeDetector } from '../runtime-detector/runtime-detector.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 
-const fs = require('fs');
-const path = require('path');
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load model configurations from JSON
 const modelsConfigPath = path.resolve(__dirname, '../../configs/models.json');
@@ -26,21 +31,27 @@ const modelsConfig = JSON.parse(fs.readFileSync(modelsConfigPath, 'utf8'));
 
 // Generate CLI examples from model configurations
 const CLI_EXAMPLES = {
-  PULL_QWEN: `bun cli-runner.ts pull ${modelsConfig.EXAMPLE_REPOSITORIES.QWEN_05B} ${modelsConfig.EXAMPLE_MODEL_FILES.QWEN_05B}`,
-  PULL_TINYLLAMA: `bun cli-runner.ts pull ${modelsConfig.EXAMPLE_REPOSITORIES.TINYLLAMA} ${modelsConfig.EXAMPLE_MODEL_FILES.TINYLLAMA}`,
-  LIST: 'bun cli-runner.ts list',
-  INFO: 'bun cli-runner.ts info [model-name]',
-  REMOVE: 'bun cli-runner.ts remove [model-name]',
-  CLEAN: 'bun cli-runner.ts clean'
+  PULL_QWEN: `node cli-runner.js pull ${modelsConfig.EXAMPLE_REPOSITORIES.QWEN_05B} ${modelsConfig.EXAMPLE_MODEL_FILES.QWEN_05B}`,
+  PULL_TINYLLAMA: `node cli-runner.js pull ${modelsConfig.EXAMPLE_REPOSITORIES.TINYLLAMA} ${modelsConfig.EXAMPLE_MODEL_FILES.TINYLLAMA}`,
+  LIST: 'node cli-runner.js list',
+  INFO: 'node cli-runner.js info [model-name]',
+  REMOVE: 'node cli-runner.js remove [model-name]',
+  CLEAN: 'node cli-runner.js clean'
 };
 
 export class CLIRunner {
-  private manager: RKLLMModelManager;
+  private manager: RKLLMModelManager | null = null;
   private detector: RuntimeDetector;
 
   constructor() {
-    this.manager = new RKLLMModelManager();
     this.detector = RuntimeDetector.getInstance();
+  }
+
+  private getManager(): RKLLMModelManager {
+    if (!this.manager) {
+      this.manager = new RKLLMModelManager();
+    }
+    return this.manager;
   }
 
   async run(args: string[]): Promise<void> {
@@ -93,16 +104,16 @@ export class CLIRunner {
     
     if (!repo || !filename) {
       console.log(`❌ Please specify both repository and model.`);
-      console.log(`Usage: bun cli-runner.ts pull <repo> <model>`);
+      console.log(`Usage: ${this.detector.getCliPrefix()} cli-runner.js pull <repo> <model>`);
       console.log(`Example: ${CLI_EXAMPLES.PULL_QWEN}`);
       process.exit(1);
     }
     
-    await this.manager.pullModel(repo, filename);
+    await this.getManager().pullModel(repo, filename);
   }
 
   private async handleList(): Promise<void> {
-    await this.manager.listModels();
+    await this.getManager().listModels();
   }
 
   private async handleInfo(args: string[]): Promise<void> {
@@ -110,11 +121,11 @@ export class CLIRunner {
     
     if (!modelName) {
       console.log(`❌ Please specify a model.`);
-      console.log(`Usage: bun cli-runner.ts info <model>`);
+      console.log(`Usage: ${this.detector.getCliPrefix()} cli-runner.js info <model>`);
       process.exit(1);
     }
     
-    await this.manager.showModelInfo(modelName);
+    await this.getManager().showModelInfo(modelName);
   }
 
   private async handleRemove(args: string[]): Promise<void> {
@@ -122,21 +133,19 @@ export class CLIRunner {
     
     if (!removeModelName) {
       console.log(`❌ Please specify a model.`);
-      console.log(`Usage: bun cli-runner.ts remove <model>`);
+      console.log(`Usage: ${this.detector.getCliPrefix()} cli-runner.js remove <model>`);
       process.exit(1);
     }
     
-    await this.manager.removeModel(removeModelName);
+    await this.getManager().removeModel(removeModelName);
   }
 
   private async handleClean(): Promise<void> {
-    await this.manager.cleanModels();
+    await this.getManager().cleanModels();
   }
 
   private async handleDebug(): Promise<void> {
     console.log('🔧 Debug Mode: Scanning models directory...');
-    const fs = require('fs');
-    const path = require('path');
     
     const modelsDir = './models';
     console.log(`📂 Models directory: ${modelsDir}`);
@@ -168,16 +177,17 @@ export class CLIRunner {
     }
     
     console.log('\n🔧 Testing manager.listModels()...');
-    await this.manager.listModels();
+    await this.getManager().listModels();
   }
 
   private showHelp(): void {
+    const prefix = this.detector.getCliPrefix();
     console.log(`📖 Usage:`);
-    console.log(`   bun cli-runner.ts pull <repo> <model>       - Download specified RKLLM model + essential technical files`);
-    console.log(`   bun cli-runner.ts list                      - List all downloaded models`);
-    console.log(`   bun cli-runner.ts info <model>              - Show model information`);
-    console.log(`   bun cli-runner.ts remove <model>            - Remove a model`);
-    console.log(`   bun cli-runner.ts clean                     - Clean all models`);
+    console.log(`   ${prefix} cli-runner.js pull <repo> <model>       - Download specified RKLLM model + essential technical files`);
+    console.log(`   ${prefix} cli-runner.js list                      - List all downloaded models`);
+    console.log(`   ${prefix} cli-runner.js info <model>              - Show model information`);
+    console.log(`   ${prefix} cli-runner.js remove <model>            - Remove a model`);
+    console.log(`   ${prefix} cli-runner.js clean                     - Clean all models`);
     console.log(`\n📚 Examples:`);
     console.log(`   # Download RKLLM model with essential technical files:`);
     console.log(`   ${CLI_EXAMPLES.PULL_QWEN}`);
@@ -231,7 +241,8 @@ const isMainModule = (() => {
   
   switch (runtime.type) {
     case 'node':
-      return require.main === module;
+      // In ES modules, use import.meta.url to detect if this is the main module
+      return import.meta.url === `file://${process.argv[1]}`;
     case 'bun':
       return typeof Bun !== 'undefined' && 'main' in import.meta && (import.meta as any).main;
     case 'deno':

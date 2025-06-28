@@ -94,7 +94,7 @@ async function initializeModules() {
   // Load configuration based on runtime
   const runtime = detector.detect();
   if (runtime.type === 'node' || runtime.type === 'bun') {
-    // Use require() for Node.js/Bun
+    // Use ES modules import for Node.js/Bun
   } else if (runtime.type === 'deno') {
     // Use Deno APIs
   }
@@ -120,8 +120,9 @@ const examples = config.EXAMPLE_MODEL_FILES;
 
 ### Runtime-Specific Loading
 ```typescript
-// Node.js/Bun: Use require()
-const config = require('../../configs/models.json');
+// Node.js/Bun: Use ES modules import
+import * as fs from 'fs';
+const config = JSON.parse(fs.readFileSync('../../configs/models.json', 'utf8'));
 
 // Deno: Use direct file reading  
 const configText = await Deno.readTextFile('./configs/models.json');

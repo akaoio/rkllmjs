@@ -95,7 +95,8 @@ async executeCommand(command: string, args: string[]) {
   
   switch (runtime.type) {
     case 'node':
-      return require('child_process').spawn(command, args);
+      const { spawn } = await import('child_process');
+      return spawn(command, args);
       
     case 'bun':
       return Bun.spawn([command, ...args]);
@@ -110,17 +111,20 @@ async executeCommand(command: string, args: string[]) {
 Unified module loading across runtimes:
 
 ```typescript
-getRequire() {
+// Note: In ES modules context, require() is not available
+// Use dynamic imports instead for all runtimes
+
+async getModule(modulePath: string) {
   const runtime = this.detect();
   
   if (runtime.type === 'node' || runtime.type === 'bun') {
-    return require;
+    return await import(modulePath);
   } else if (runtime.type === 'deno') {
-    // Deno doesn't have require, use dynamic imports
-    return null;
+    // Deno uses dynamic imports
+    return await import(modulePath);
   }
   
-  return null;
+  throw new Error(`Module loading not supported in ${runtime.type}`);
 }
 ```
 

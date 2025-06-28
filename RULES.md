@@ -71,6 +71,40 @@
 | **Performance Tests** | `/tests/performance/` | NPU performance benchmarks |
 | **Temporary Dev Tests** | `/tmp/` | Development/debugging (ignored by validator) |
 
+### 🔹 Test Logging Requirements
+
+**MANDATORY**: All tests MUST generate detailed logs for debugging and audit purposes.
+
+#### Log File Structure
+```
+logs/
+├── YYYY-MM-DD_HH-MM-SS/          # Timestamp-based directory
+│   ├── unit-tests/
+│   │   ├── model-types.test.log
+│   │   ├── cli-runner.test.log
+│   │   ├── model-manager.test.log
+│   │   └── runtime-detector.test.log
+│   ├── integration-tests/
+│   │   └── [test-name].test.log
+│   ├── system-tests/
+│   │   └── [test-name].test.log
+│   └── test-summary.log           # Overall test run summary
+```
+
+#### Log Content Requirements
+- **Test Start/End**: Timestamps for each test case
+- **Input Data**: All test inputs and parameters
+- **Expected vs Actual**: Clear comparison of results
+- **Error Details**: Full stack traces and error context
+- **Performance Metrics**: Execution time, memory usage
+- **Environment Info**: Runtime version, OS, dependencies
+
+#### Log Naming Convention
+- Format: `[feature-name].test.log`
+- Timestamp directory: `YYYY-MM-DD_HH-MM-SS` format
+- No spaces or special characters in filenames
+- Consistent across all test types
+
 ### 🔹 Documentation Requirements
 
 **MANDATORY**: Each feature/component directory MUST contain a `README.md` file with:
@@ -98,6 +132,8 @@
 - ❌ Generic naming like `utils.ts`, `helpers.cpp`
 - ❌ Missing README.md for any feature/component directory
 - ❌ Outdated or incomplete documentation
+- ❌ Tests without proper logging and debug output
+- ❌ Non-Node.js dependencies for core functionality
 
 ---
 
@@ -239,10 +275,12 @@ rkllmjs/
 - **Multi-runtime support**: Compatible with Node.js, Bun, and Deno
 
 ### Runtime Strategy
-- **Primary Runtime**: Node.js with npm for stability and ecosystem maturity
-- **Alternative Runtimes**: Bun for performance, Deno for modern features
-- **Runtime Detection**: Automatic runtime detection and adaptation
-- **Consistent API**: Same TypeScript API across all runtimes
+- **Primary Runtime**: Node.js with npm for stability, ecosystem maturity, and production reliability
+- **Testing Framework**: Node.js built-in test runner (`node --test`) for consistency
+- **Development Tools**: Node.js-native tools and libraries only
+- **Alternative Runtimes**: Bun and Deno support for experimental/development use only
+- **Runtime Detection**: Automatic runtime detection with Node.js optimization priority
+- **Consistent API**: Same TypeScript API across all runtimes, optimized for Node.js
 
 ### Build Script Requirements (`build.sh`)
 ```bash
@@ -265,11 +303,13 @@ rkllmjs/
 - `dist/deno/` - Deno specific builds (if needed)
 
 ### Environment Requirements
-- **Primary Runtime**: Node.js >= 16.0.0 (recommended)
-- **Alternative Runtimes**: Bun >= 1.0.0, Deno >= 1.40.0 (experimental)
+- **Primary Runtime**: Node.js >= 18.0.0 (LTS recommended)
 - **Package Manager**: npm (primary), yarn/pnpm (alternative)
+- **Testing**: Node.js built-in test runner with detailed logging
+- **Alternative Runtimes**: Bun >= 1.0.0, Deno >= 1.40.0 (experimental support only)
 - **Architecture**: ARM64 (RK3588) or x64 (development)
 - **Operating System**: Linux-based OS (primary), macOS/Windows (development)
+- **Logging**: Structured logging with timestamp-based directories
 
 ---
 

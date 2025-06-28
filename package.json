@@ -1,6 +1,7 @@
 {
   "name": "rkllmjs",
   "version": "0.1.0",
+  "type": "module",
   "description": "Node.js native module for Rockchip RK3588 NPU - enabling JavaScript/TypeScript to leverage NPU through Rockchip's native library",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,8 +12,9 @@
     "build": "tsc && npm run build:native",
     "build:native": "./scripts/build.sh",
     "build:ts": "tsc",
-    "test": "npm run validate && npm run test:unit",
-    "test:unit": "node --test dist/**/*.test.js",
+    "test": "npm run validate && npm run test:node",
+    "test:unit": "npm run test:node",
+    "test:node": "node --test --import tsx/esm src/**/*.test.ts",
     "test:bun": "bun test",
     "test:deno": "deno test --allow-all",
     "validate": "bash scripts/validate.sh",
@@ -20,7 +22,7 @@
     "cli:bun": "bun src/cli-runner/cli-runner.ts",
     "cli:deno": "deno run --allow-all src/cli-runner/cli-runner.ts",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist build node_modules/.cache",
+    "clean": "rm -rf dist build node_modules/.cache logs",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src/**/*.ts",
     "docs": "typedoc src --out docs",
@@ -51,22 +53,31 @@
     "RULES.md"
   ],
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.3.0",
-    "eslint": "^8.0.0",
+    "@types/node": "^20.19.2",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
     "prettier": "^3.0.0",
-    "typedoc": "^0.25.0"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
+    "typedoc": "^0.25.0",
+    "typescript": "^5.3.0",
+    "vitest": "^3.2.4"
   },
-  "dependencies": {},
   "optionalDependencies": {
     "bun-types": "^1.0.0"
   },
   "runtime": {
     "primary": "node",
-    "supported": ["node", "bun", "deno"],
-    "experimental": ["bun", "deno"]
+    "supported": [
+      "node",
+      "bun",
+      "deno"
+    ],
+    "experimental": [
+      "bun",
+      "deno"
+    ]
   },
   "rkllm": {
     "version": "1.1.4",

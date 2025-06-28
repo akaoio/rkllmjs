@@ -157,11 +157,11 @@ bash scripts/validate.sh
 
 **Node.js (Primary):**
 ```javascript
-// CommonJS (compiled)
-const { RKLLMModelManager } = require('./dist/model-manager/model-manager.js');
+// ES Modules (recommended)
+import { RKLLMModelManager } from './src/model-manager/model-manager.js';
 
-// ES Modules (TypeScript source)
-import { RKLLMModelManager } from './src/model-manager/model-manager';
+// Compiled ES Modules (production)
+import { RKLLMModelManager } from './dist/model-manager/model-manager.js';
 
 const manager = new RKLLMModelManager('./models');
 await manager.pullModel('limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4', 'model.rkllm');

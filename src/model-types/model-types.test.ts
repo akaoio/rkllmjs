@@ -1,12 +1,20 @@
 /**
  * Unit tests for model types
+ * Node.js implementation with structured logging
  */
 
-import { describe, it, expect } from 'bun:test';
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+import { TestLogger } from '../test-logger/test-logger.js';
 import type { ModelInfo, ModelConfig, ModelMetadata } from './model-types.js';
+
+const logger = TestLogger.createLogger('model-types');
 
 describe('ModelInfo', () => {
   it('should have required properties', () => {
+    const startTime = Date.now();
+    logger.testStart('should have required properties');
+    
     const modelInfo: ModelInfo = {
       name: 'test-model',
       path: '/path/to/model',
@@ -14,13 +22,21 @@ describe('ModelInfo', () => {
       created: new Date()
     };
 
-    expect(modelInfo.name).toBe('test-model');
-    expect(modelInfo.path).toBe('/path/to/model');
-    expect(modelInfo.size).toBe(1024);
-    expect(modelInfo.created).toBeInstanceOf(Date);
+    logger.debug('Testing ModelInfo properties', { modelInfo });
+
+    assert.strictEqual(modelInfo.name, 'test-model');
+    assert.strictEqual(modelInfo.path, '/path/to/model');
+    assert.strictEqual(modelInfo.size, 1024);
+    assert.ok(modelInfo.created instanceof Date);
+
+    const duration = Date.now() - startTime;
+    logger.testEnd('should have required properties', true, duration);
   });
 
   it('should support optional properties', () => {
+    const startTime = Date.now();
+    logger.testStart('should support optional properties');
+
     const modelInfo: ModelInfo = {
       name: 'test-model',
       path: '/path/to/model',
@@ -30,13 +46,24 @@ describe('ModelInfo', () => {
       filename: 'model.rkllm'
     };
 
-    expect(modelInfo.repo).toBe('user/repo');
-    expect(modelInfo.filename).toBe('model.rkllm');
+    logger.debug('Testing optional ModelInfo properties', { 
+      repo: modelInfo.repo, 
+      filename: modelInfo.filename 
+    });
+
+    assert.strictEqual(modelInfo.repo, 'user/repo');
+    assert.strictEqual(modelInfo.filename, 'model.rkllm');
+
+    const duration = Date.now() - startTime;
+    logger.testEnd('should support optional properties', true, duration);
   });
 });
 
 describe('ModelConfig', () => {
   it('should support all optional properties', () => {
+    const startTime = Date.now();
+    logger.testStart('should support all optional properties');
+
     const config: ModelConfig = {
       modelType: 'llama',
       vocabSize: 32000,
@@ -46,22 +73,38 @@ describe('ModelConfig', () => {
       maxSequenceLength: 2048
     };
 
-    expect(config.modelType).toBe('llama');
-    expect(config.vocabSize).toBe(32000);
-    expect(config.hiddenSize).toBe(768);
-    expect(config.numLayers).toBe(12);
-    expect(config.numAttentionHeads).toBe(12);
-    expect(config.maxSequenceLength).toBe(2048);
+    logger.debug('Testing ModelConfig properties', { config });
+
+    assert.strictEqual(config.modelType, 'llama');
+    assert.strictEqual(config.vocabSize, 32000);
+    assert.strictEqual(config.hiddenSize, 768);
+    assert.strictEqual(config.numLayers, 12);
+    assert.strictEqual(config.numAttentionHeads, 12);
+    assert.strictEqual(config.maxSequenceLength, 2048);
+
+    const duration = Date.now() - startTime;
+    logger.testEnd('should support all optional properties', true, duration);
   });
 
   it('should allow empty config', () => {
+    const startTime = Date.now();
+    logger.testStart('should allow empty config');
+
     const config: ModelConfig = {};
-    expect(Object.keys(config)).toHaveLength(0);
+    
+    logger.debug('Testing empty ModelConfig', { config });
+    assert.strictEqual(Object.keys(config).length, 0);
+
+    const duration = Date.now() - startTime;
+    logger.testEnd('should allow empty config', true, duration);
   });
 });
 
 describe('ModelMetadata', () => {
   it('should support version information', () => {
+    const startTime = Date.now();
+    logger.testStart('should support version information');
+
     const metadata: ModelMetadata = {
       version: '1.1.4',
       architecture: 'rk3588',
@@ -70,10 +113,20 @@ describe('ModelMetadata', () => {
       hybridRatio: 0.0
     };
 
-    expect(metadata.version).toBe('1.1.4');
-    expect(metadata.architecture).toBe('rk3588');
-    expect(metadata.quantization).toBe('w8a8');
-    expect(metadata.optimization).toBe('opt-0');
-    expect(metadata.hybridRatio).toBe(0.0);
+    logger.debug('Testing ModelMetadata properties', { metadata });
+
+    assert.strictEqual(metadata.version, '1.1.4');
+    assert.strictEqual(metadata.architecture, 'rk3588');
+    assert.strictEqual(metadata.quantization, 'w8a8');
+    assert.strictEqual(metadata.optimization, 'opt-0');
+    assert.strictEqual(metadata.hybridRatio, 0.0);
+
+    const duration = Date.now() - startTime;
+    logger.testEnd('should support version information', true, duration);
   });
+});
+
+// Test run summary
+process.on('exit', () => {
+  logger.summary();
 });

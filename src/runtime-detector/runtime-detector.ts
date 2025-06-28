@@ -88,21 +88,20 @@ export class RuntimeDetector {
   }
 
   /**
-   * Get runtime-specific require/import function
+   * Get runtime-specific module loader (ES modules only)
+   * Note: In ES modules context, use dynamic import() instead of require()
    */
-  getRequire(): ((module: string) => any) | null {
+  async getModule(modulePath: string): Promise<any> {
     const runtime = this.detect();
     
     switch (runtime.type) {
       case 'node':
-        return require;
       case 'bun':
-        return require;
       case 'deno':
-        // Deno doesn't have require, use dynamic import
-        return null;
+        // All runtimes support dynamic imports in ES modules
+        return await import(modulePath);
       default:
-        return null;
+        throw new Error(`Module loading not supported in ${runtime.type} runtime`);
     }
   }
 
@@ -114,9 +113,10 @@ export class RuntimeDetector {
     
     switch (runtime.type) {
       case 'node':
-        return require('fs');
+        // Use ES module import
+        return await import('fs');
       case 'bun':
-        return require('fs');
+        return await import('fs');
       case 'deno':
         // Use Deno's built-in APIs, not external imports
         return {
@@ -172,9 +172,9 @@ export class RuntimeDetector {
     
     switch (runtime.type) {
       case 'node':
-        return require('path');
+        return await import('path');
       case 'bun':
-        return require('path');
+        return await import('path');
       case 'deno':
         // Basic path utilities for Deno
         return {
@@ -208,7 +208,7 @@ export class RuntimeDetector {
     
     switch (runtime.type) {
       case 'node':
-        const { spawn } = require('child_process');
+        const { spawn } = await import('child_process');
         return new Promise((resolve, reject) => {
           const process = spawn(command, args, { stdio: 'pipe' });
           let stdout = '';
