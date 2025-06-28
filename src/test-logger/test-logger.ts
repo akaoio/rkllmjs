@@ -7,6 +7,28 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
+// Global timestamp for entire test session - created once and reused
+// Use environment variable to persist across test processes
+let globalTestSessionTimestamp: string | null = null;
+
+function getTestSessionTimestamp(): string {
+  if (!globalTestSessionTimestamp) {
+    // Check if timestamp already exists in environment
+    if (process.env.RKLLMJS_TEST_SESSION_TIMESTAMP) {
+      globalTestSessionTimestamp = process.env.RKLLMJS_TEST_SESSION_TIMESTAMP;
+    } else {
+      // Create new timestamp and store in environment
+      globalTestSessionTimestamp = new Date().toISOString()
+        .replace(/:/g, '-')
+        .replace(/\./g, '-')
+        .substring(0, 19); // YYYY-MM-DDTHH-MM-SS (includes seconds for uniqueness)
+      
+      process.env.RKLLMJS_TEST_SESSION_TIMESTAMP = globalTestSessionTimestamp;
+    }
+  }
+  return globalTestSessionTimestamp;
+}
+
 export interface TestLogEntry {
   timestamp: string;
   level: 'INFO' | 'ERROR' | 'WARN' | 'DEBUG';
@@ -26,11 +48,8 @@ export class TestLogger {
     this.testName = testName;
     this.startTime = Date.now();
     
-    // Create timestamp-based directory
-    const timestamp = new Date().toISOString()
-      .replace(/:/g, '-')
-      .replace(/\./g, '-')
-      .substring(0, 19); // YYYY-MM-DDTHH-MM-SS
+    // Use global timestamp for entire test session (consistent across all tests)
+    const timestamp = getTestSessionTimestamp();
     
     this.logDir = path.join('logs', timestamp, 'unit-tests');
     this.logFile = path.join(this.logDir, `${testName}.test.log`);

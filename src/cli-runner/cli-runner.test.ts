@@ -88,12 +88,37 @@ describe('CLIRunner', () => {
       logger.testEnd('should show help for empty command', true, duration);
     });
 
-    it.skip('should handle list command', async () => {
-      // Skipped: requires complex model manager initialization
+    it('should handle list command', async () => {
+      const startTime = Date.now();
+      logger.testStart('should handle list command');
+      
+      await runner.run(['list']);
+      logger.debug('Console output captured for list command', { outputCount: logOutput.length });
+      
+      // Should call the model manager's listModels method
+      // The output may vary depending on models present, but should not throw
+      assert.ok(logOutput.length > 0, 'Should produce console output for list command');
+      
+      const duration = Date.now() - startTime;
+      logger.testEnd('should handle list command', true, duration);
     });
 
-    it.skip('should handle debug command', async () => {
-      // Skipped: requires complex model manager initialization
+    it('should handle debug command', async () => {
+      const startTime = Date.now();
+      logger.testStart('should handle debug command');
+      
+      await runner.run(['debug']);
+      logger.debug('Console output captured for debug command', { outputCount: logOutput.length });
+      
+      // Debug command should output scanning information
+      const hasDebugOutput = logOutput.some(line => line.includes('🔧 Debug Mode'));
+      assert.ok(hasDebugOutput, 'Should display debug mode information');
+      
+      const hasModelsDir = logOutput.some(line => line.includes('📂 Models directory'));
+      assert.ok(hasModelsDir, 'Should display models directory information');
+      
+      const duration = Date.now() - startTime;
+      logger.testEnd('should handle debug command', true, duration);
     });
   });
 
