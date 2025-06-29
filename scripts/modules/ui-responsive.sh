@@ -5,26 +5,37 @@
 
 # Terminal size detection
 detect_terminal_size() {
+    # Get actual terminal size (no forced minimums for true responsiveness)
     TERM_COLS=$(tput cols 2>/dev/null || echo "80")
     TERM_LINES=$(tput lines 2>/dev/null || echo "24")
     
-    # Ensure minimum values
-    [[ $TERM_COLS -lt 80 ]] && TERM_COLS=80
-    [[ $TERM_LINES -lt 24 ]] && TERM_LINES=24
+    # Validate we got reasonable values (not negative or zero)
+    [[ $TERM_COLS -lt 1 ]] && TERM_COLS=80
+    [[ $TERM_LINES -lt 1 ]] && TERM_LINES=24
     
     export TERM_COLS TERM_LINES
 }
 
 # Calculate optimal dialog dimensions based on terminal size
 calculate_dialog_size() {
-    local min_width=${1:-60}
-    local min_height=${2:-15}
+    local min_width=${1:-40}
+    local min_height=${2:-8}
     local max_width=${3:-120}
     local max_height=${4:-40}
     
-    # Calculate 80% of terminal size, but within min/max bounds
-    local calc_width=$((TERM_COLS * 80 / 100))
-    local calc_height=$((TERM_LINES * 70 / 100))
+    # Calculate percentage of terminal size based on terminal size
+    local width_percent=80
+    local height_percent=70
+    
+    # For very small terminals, use more of the available space
+    if [[ $TERM_COLS -lt 80 ]]; then
+        width_percent=90
+        height_percent=80
+    fi
+    
+    # Calculate dimensions
+    local calc_width=$((TERM_COLS * width_percent / 100))
+    local calc_height=$((TERM_LINES * height_percent / 100))
     
     # Apply constraints
     [[ $calc_width -lt $min_width ]] && calc_width=$min_width
@@ -32,9 +43,15 @@ calculate_dialog_size() {
     [[ $calc_height -lt $min_height ]] && calc_height=$min_height  
     [[ $calc_height -gt $max_height ]] && calc_height=$max_height
     
-    # Ensure dialog fits in terminal
-    [[ $calc_width -gt $TERM_COLS ]] && calc_width=$((TERM_COLS - 4))
-    [[ $calc_height -gt $TERM_LINES ]] && calc_height=$((TERM_LINES - 4))
+    # Ensure dialog fits in terminal with padding
+    local padding_h=4
+    local padding_v=2
+    [[ $calc_width -gt $((TERM_COLS - padding_h)) ]] && calc_width=$((TERM_COLS - padding_h))
+    [[ $calc_height -gt $((TERM_LINES - padding_v)) ]] && calc_height=$((TERM_LINES - padding_v))
+    
+    # Final safety check - minimum usable sizes
+    [[ $calc_width -lt 40 ]] && calc_width=40
+    [[ $calc_height -lt 8 ]] && calc_height=8
     
     export DIALOG_WIDTH=$calc_width
     export DIALOG_HEIGHT=$calc_height
@@ -42,7 +59,13 @@ calculate_dialog_size() {
 
 # Check if terminal is too small for interactive dialogs
 is_terminal_too_small() {
-    [[ $TERM_COLS -lt 80 || $TERM_LINES -lt 24 ]]
+    # More practical thresholds for actual usability
+    [[ $TERM_COLS -lt 60 || $TERM_LINES -lt 15 ]]
+}
+
+# Check if terminal can handle complex dialogs (like checklists)
+is_terminal_minimal() {
+    [[ $TERM_COLS -lt 80 || $TERM_LINES -lt 20 ]]
 }
 
 # Show a responsive message with text wrapping
@@ -88,18 +111,62 @@ show_responsive_checklist() {
         return 1
     fi
     
-    # Calculate appropriate dialog size
-    calculate_dialog_size 60 15 120 40
+    # Calculate appropriate dialog size with responsive parameters
+    if is_terminal_too_small; then
+        # Very small terminal - use minimal dialog size
+        calculate_dialog_size 40 8 $((TERM_COLS - 2)) $((TERM_LINES - 2))
+    elif is_terminal_minimal; then
+        # Small but usable terminal
+        calculate_dialog_size 50 12 $((TERM_COLS - 4)) $((TERM_LINES - 3))
+    else
+        # Standard terminal size
+        calculate_dialog_size 60 15 120 40
+    fi
     
     # Adjust for number of items
     local items_count=$((${#items[@]} / 3))  # Each item has 3 parts: tag, item, status
-    local needed_height=$((items_count + 10))
+    local needed_height=$((items_count + 8))  # Reduced padding for small terminals
     [[ $needed_height -gt $DIALOG_HEIGHT ]] && DIALOG_HEIGHT=$needed_height
     
-    # Handle very small terminals
+    # Handle very small terminals with text-based fallback
     if is_terminal_too_small; then
-        show_responsive_message "Small Terminal" "Terminal too small for interactive dialog. Using fallback mode." "warning"
-        return 2  # Signal fallback needed
+        show_responsive_message "Small Terminal" "Terminal is small (${TERM_COLS}x${TERM_LINES}). Using text-based selection." "warning"
+        
+        # Text-based fallback for very small terminals
+        echo "Available options:"
+        local i=0
+        local selections=()
+        while [[ $i -lt ${#items[@]} ]]; do
+            local tag="${items[$i]}"
+            local item="${items[$((i+1))]}"
+            local status="${items[$((i+2))]}"
+            echo "  $((i/3 + 1)). $item"
+            [[ "$status" == "ON" ]] && selections+=("$tag")
+            i=$((i+3))
+        done
+        
+        echo "Enter numbers (space-separated) to toggle selection, or press Enter to continue:"
+        read -r user_input
+        
+        # Process user input
+        if [[ -n "$user_input" ]]; then
+            for num in $user_input; do
+                if [[ "$num" =~ ^[0-9]+$ ]] && [[ $num -ge 1 ]] && [[ $num -le $((items_count)) ]]; then
+                    local idx=$(((num-1)*3))
+                    local tag="${items[$idx]}"
+                    # Toggle selection
+                    if [[ " ${selections[*]} " =~ " $tag " ]]; then
+                        selections=("${selections[@]/$tag}")
+                    else
+                        selections+=("$tag")
+                    fi
+                fi
+            done
+        fi
+        
+        # Return selected items
+        printf '%s\n' "${selections[@]}"
+        return 0
     fi
     
     # Create the dialog command
@@ -240,6 +307,66 @@ init_responsive_ui() {
     if [[ "${DEBUG:-}" == "true" ]]; then
         show_responsive_message "Terminal Info" "Size: ${TERM_COLS}x${TERM_LINES}, Dialog: $dialog_available" "info"
     fi
+}
+
+# Test responsive behavior with different terminal sizes
+test_responsive_behavior() {
+    echo "🧪 Testing Responsive UI Behavior"
+    echo "================================="
+    
+    # Show current terminal info
+    detect_terminal_size
+    echo "Current terminal: ${TERM_COLS}x${TERM_LINES}"
+    
+    # Test dialog size calculation
+    calculate_dialog_size
+    echo "Dialog size: ${DIALOG_WIDTH}x${DIALOG_HEIGHT}"
+    
+    # Test terminal classification
+    if is_terminal_too_small; then
+        echo "Classification: TOO SMALL (text fallback mode)"
+    elif is_terminal_minimal; then
+        echo "Classification: MINIMAL (compact dialogs)"
+    else
+        echo "Classification: STANDARD (full dialogs)"
+    fi
+    
+    # Test with simulated sizes
+    echo ""
+    echo "Testing simulated terminal sizes:"
+    
+    local test_sizes=(
+        "120x40:Large terminal"
+        "80x24:Standard terminal" 
+        "70x20:Small terminal"
+        "50x15:Minimal terminal"
+        "40x10:Very small terminal"
+    )
+    
+    for test_case in "${test_sizes[@]}"; do
+        local size="${test_case%:*}"
+        local desc="${test_case#*:}"
+        local cols="${size%x*}"
+        local lines="${size#*x}"
+        
+        # Simulate terminal size
+        TERM_COLS=$cols TERM_LINES=$lines
+        calculate_dialog_size
+        
+        local classification="STANDARD"
+        if [[ $cols -lt 60 || $lines -lt 15 ]]; then
+            classification="TOO SMALL"
+        elif [[ $cols -lt 80 || $lines -lt 20 ]]; then
+            classification="MINIMAL"
+        fi
+        
+        printf "  %-18s (%s) → Dialog: %dx%d [%s]\n" \
+            "$desc" "$size" "$DIALOG_WIDTH" "$DIALOG_HEIGHT" "$classification"
+    done
+    
+    # Restore actual terminal size
+    detect_terminal_size
+    calculate_dialog_size
 }
 
 # Initialize the UI system when module is loaded

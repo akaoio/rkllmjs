@@ -367,6 +367,11 @@ handle_arguments() {
             scripts/test-modules.sh
             exit $?
             ;;
+        --responsive-demo)
+            echo "Demonstrating responsive UI behavior..."
+            test_responsive_behavior
+            exit 0
+            ;;
         --non-interactive)
             log_info "Non-interactive mode - installing Node.js only"
             RUNTIME_SELECTION[nodejs]=true
@@ -392,6 +397,7 @@ show_help() {
     echo "  -h, --help              Show this help message"
     echo "  -v, --version           Show version information"
     echo "      --test              Test the module system"
+    echo "      --responsive-demo   Demonstrate responsive UI behavior"
     echo "      --non-interactive   Install Node.js only (no prompts)"
     echo
     echo "Interactive mode (default):"
