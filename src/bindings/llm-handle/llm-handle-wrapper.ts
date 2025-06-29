@@ -13,26 +13,33 @@ import {
   LLMCallState,
   RKLLMInputType,
   RKLLMInferMode,
-  CPU_CORES as CPU_MASKS,
   type RKLLMExtendParam as CanonicalRKLLMExtendParam,
   type RKLLMParam as CanonicalRKLLMParam,
   type RKLLMInput as CanonicalRKLLMInput,
   type RKLLMLoraAdapter as CanonicalRKLLMLoraAdapter,
-  type RKLLMEmbedInput as CanonicalRKLLMEmbedInput,
-  type RKLLMTokenInput as CanonicalRKLLMTokenInput,
-  type RKLLMMultiModelInput as CanonicalRKLLMMultiModelInput,
   type RKLLMLoraParam as CanonicalRKLLMLoraParam,
   type RKLLMPromptCacheParam as CanonicalRKLLMPromptCacheParam,
   type RKLLMCrossAttnParam as CanonicalRKLLMCrossAttnParam,
   type RKLLMInferParam as CanonicalRKLLMInferParam,
-  type RKLLMResultLastHiddenLayer as CanonicalRKLLMResultLastHiddenLayer,
-  type RKLLMResultLogits as CanonicalRKLLMResultLogits,
-  type RKLLMPerfStat as CanonicalRKLLMPerfStat,
   type RKLLMResult as CanonicalRKLLMResult,
 } from '../../rkllm-types/rkllm-types.js';
 
-// Re-export canonical types for backward compatibility
-export { LLMCallState, RKLLMInputType, RKLLMInferMode, CPU_MASKS };
+// Re-export canonical types for public API
+export { 
+  LLMCallState, 
+  RKLLMInputType, 
+  RKLLMInferMode, 
+  CPU_CORES,
+  type RKLLMExtendParam,
+  type RKLLMParam,
+  type RKLLMInput,
+  type RKLLMLoraAdapter,
+  type RKLLMLoraParam,
+  type RKLLMPromptCacheParam,
+  type RKLLMCrossAttnParam,
+  type RKLLMInferParam,
+  type RKLLMResult,
+} from '../../rkllm-types/rkllm-types.js';
 
 // ============================================================================
 // Type Conversions: Canonical (camelCase) ↔ C API (snake_case)
@@ -258,6 +265,51 @@ export function toC_RKLLMInferParam(canonical: CanonicalRKLLMInferParam): C_RKLL
 }
 
 // ============================================================================
+// Reverse Conversion Functions: C API (snake_case) → Canonical (camelCase)
+// ============================================================================
+
+/**
+ * Convert C API RKLLMParam to canonical format
+ */
+export function fromC_RKLLMParam(cParam: C_RKLLMParam): CanonicalRKLLMParam {
+  return {
+    modelPath: cParam.model_path,
+    maxContextLen: cParam.max_context_len,
+    maxNewTokens: cParam.max_new_tokens,
+    topK: cParam.top_k,
+    nKeep: cParam.n_keep,
+    topP: cParam.top_p,
+    temperature: cParam.temperature,
+    repeatPenalty: cParam.repeat_penalty,
+    frequencyPenalty: cParam.frequency_penalty,
+    presencePenalty: cParam.presence_penalty,
+    mirostat: cParam.mirostat,
+    mirostatTau: cParam.mirostat_tau,
+    mirostatEta: cParam.mirostat_eta,
+    skipSpecialToken: cParam.skip_special_token,
+    isAsync: cParam.is_async,
+    ...(cParam.img_start !== undefined && { imgStart: cParam.img_start }),
+    ...(cParam.img_end !== undefined && { imgEnd: cParam.img_end }),
+    ...(cParam.img_content !== undefined && { imgContent: cParam.img_content }),
+    extendParam: fromC_RKLLMExtendParam(cParam.extend_param),
+  };
+}
+
+/**
+ * Convert C API RKLLMExtendParam to canonical format
+ */
+export function fromC_RKLLMExtendParam(cParam: C_RKLLMExtendParam): CanonicalRKLLMExtendParam {
+  return {
+    baseDomainId: cParam.base_domain_id,
+    embedFlash: cParam.embed_flash !== 0,
+    enabledCpusNum: cParam.enabled_cpus_num,
+    enabledCpusMask: cParam.enabled_cpus_mask,
+    nBatch: cParam.n_batch,
+    useCrossAttn: cParam.use_cross_attn !== 0,
+  };
+}
+
+// ============================================================================
 // C API Specific Interfaces (conversion targets only)
 // ============================================================================
 
@@ -330,7 +382,7 @@ export interface LLMHandle {
 }
 
 // Result callback type with proper typing
-export type LLMResultCallback = (result: RKLLMResult, userdata: any, state: LLMCallState) => number;
+export type LLMResultCallback = (result: CanonicalRKLLMResult, userdata: any, state: LLMCallState) => number;
 
 /**
  * @class LLMHandleWrapper
@@ -366,12 +418,13 @@ export class LLMHandleWrapper {
    * @returns Promise<RKLLMParam> Default parameters object
    * @throws Error if native function fails
    */
-  public static async createDefaultParam(): Promise<RKLLMParam> {
+  public static async createDefaultParam(): Promise<CanonicalRKLLMParam> {
     this.loadNativeBinding();
     
     try {
       const result = this.nativeBinding.createDefaultParam();
-      return result as RKLLMParam;
+      // Convert from C format (snake_case) to canonical format (camelCase)
+      return fromC_RKLLMParam(result as C_RKLLMParam);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to create default parameters: ${errorMessage}`);
@@ -386,18 +439,20 @@ export class LLMHandleWrapper {
    * @throws Error if initialization fails
    */
   public static async init(
-    param: RKLLMParam, 
+    param: CanonicalRKLLMParam, 
     callback?: LLMResultCallback
   ): Promise<LLMHandle> {
     this.loadNativeBinding();
 
     // Validate required parameters
-    if (!param.model_path) {
-      throw new Error('model_path is required');
+    if (!param.modelPath) {
+      throw new Error('modelPath is required');
     }
 
     try {
-      const result = this.nativeBinding.init(param, callback);
+      // Convert canonical to C format for native binding
+      const cParam = toC_RKLLMParam(param);
+      const result = this.nativeBinding.init(cParam, callback);
       return result as LLMHandle;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -436,7 +491,7 @@ export class LLMHandleWrapper {
    * @returns Promise<number> Status code (0 for success)
    * @throws Error if loading fails
    */
-  public static async loadLora(handle: LLMHandle, lora_adapter: RKLLMLoraAdapter): Promise<number> {
+  public static async loadLora(handle: LLMHandle, lora_adapter: CanonicalRKLLMLoraAdapter): Promise<number> {
     this.loadNativeBinding();
 
     if (!handle || !handle._handle) {
@@ -512,8 +567,8 @@ export class LLMHandleWrapper {
    */
   public static async run(
     handle: LLMHandle, 
-    input: RKLLMInput, 
-    infer_params: RKLLMInferParam, 
+    input: CanonicalRKLLMInput, 
+    infer_params: CanonicalRKLLMInferParam, 
     userdata?: any
   ): Promise<number> {
     this.loadNativeBinding();
@@ -542,8 +597,8 @@ export class LLMHandleWrapper {
    */
   public static async runAsync(
     handle: LLMHandle, 
-    input: RKLLMInput, 
-    infer_params: RKLLMInferParam, 
+    input: CanonicalRKLLMInput, 
+    infer_params: CanonicalRKLLMInferParam, 
     userdata?: any
   ): Promise<number> {
     this.loadNativeBinding();
@@ -730,7 +785,7 @@ export class LLMHandleWrapper {
    */
   public static async setCrossAttnParams(
     handle: LLMHandle, 
-    cross_attn_params: RKLLMCrossAttnParam
+    cross_attn_params: CanonicalRKLLMCrossAttnParam
   ): Promise<number> {
     this.loadNativeBinding();
 
@@ -754,12 +809,13 @@ export class LLMHandleWrapper {
    * @returns RKLLMParam Default parameters object
    * @throws Error if native function fails
    */
-  public static createDefaultParamSync(): RKLLMParam {
+  public static createDefaultParamSync(): CanonicalRKLLMParam {
     this.loadNativeBinding();
-    
+
     try {
       const result = this.nativeBinding.createDefaultParam();
-      return result as RKLLMParam;
+      // Convert from C format (snake_case) to canonical format (camelCase)
+      return fromC_RKLLMParam(result as C_RKLLMParam);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to create default parameters: ${errorMessage}`);
@@ -774,18 +830,20 @@ export class LLMHandleWrapper {
    * @throws Error if initialization fails
    */
   public static initSync(
-    param: RKLLMParam, 
+    param: CanonicalRKLLMParam, 
     callback?: LLMResultCallback
   ): LLMHandle {
     this.loadNativeBinding();
 
     // Validate required parameters
-    if (!param.model_path) {
-      throw new Error('model_path is required');
+    if (!param.modelPath) {
+      throw new Error('modelPath is required');
     }
 
     try {
-      const result = this.nativeBinding.init(param, callback);
+      // Convert canonical to C format for native binding
+      const cParam = toC_RKLLMParam(param);
+      const result = this.nativeBinding.init(cParam, callback);
       return result as LLMHandle;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
