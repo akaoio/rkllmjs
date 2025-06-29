@@ -6,19 +6,39 @@ Provides a high-level, Promise-based TypeScript wrapper for the RKLLM (Rockchip 
 
 ## Architecture
 
-The RKLLM Client serves as the primary interface between TypeScript applications and the native RKLLM library:
+The RKLLM Client serves as the high-level interface that integrates with the native C++ bindings infrastructure from PR #34:
 
 ```
-Application Layer
-├── RKLLMClient (High-level API)
-│   ├── Promise-based methods
-│   ├── Event-driven architecture  
-│   ├── Automatic resource management
-│   └── Error handling & validation
-├── RKLLM Types (Type definitions)
-└── C++ N-API Bindings (Native layer)
-    └── librkllmrt.so (Rockchip library)
+┌─────────────────────────────┐
+│   Application Layer         │
+├─────────────────────────────┤
+│   RKLLMClient (this)        │ ← High-level Promise-based API
+│   - Event-driven inference  │   with automatic resource management
+│   - Streaming & abort       │   and comprehensive error handling
+│   - Configuration mgmt      │
+├─────────────────────────────┤  
+│   LLMHandleWrapper (PR #34) │ ← Native binding TypeScript wrapper
+│   - Type-safe bindings      │   for core LLM operations
+│   - Parameter conversion    │
+├─────────────────────────────┤
+│   C++ N-API Bindings       │ ← Native bridge layer (PR #34)
+│   - rkllm_init/destroy     │   with memory management  
+│   - Parameter handling     │   and error propagation
+├─────────────────────────────┤
+│   RKLLM C API              │ ← Rockchip library
+│   - librkllmrt.so          │   (NPU-accelerated inference)
+└─────────────────────────────┘
 ```
+
+### Integration with PR #34
+
+This client seamlessly integrates with the C++ N-API bindings from PR #34:
+
+- **Native Bindings Available**: Uses actual `rkllm_init`, `rkllm_destroy`, and `rkllm_createDefaultParam` functions
+- **Graceful Fallback**: Falls back to mock implementation when native bindings unavailable  
+- **Type Compatibility**: Parameter conversion between high-level config and native `RKLLMParam`
+- **Handle Management**: Proper lifecycle management of native LLM handles
+- **Development Friendly**: Full functionality with mocks for development without RK3588 hardware
 
 ### Key Features
 

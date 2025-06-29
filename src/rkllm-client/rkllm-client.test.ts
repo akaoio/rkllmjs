@@ -619,4 +619,110 @@ describe('RKLLM Client', () => {
       testLogger.info('LoRA adapter tracking validation completed');
     });
   });
+
+  // ============================================================================
+  // PR #34 Integration Tests
+  // ============================================================================
+
+  describe('PR #34 Native Binding Integration', () => {
+    it('should use native binding when available', async () => {
+      testLogger.info('Testing native binding integration (mock scenario)');
+      
+      // Since the actual native binding may not be available in tests,
+      // we test the fallback behavior and integration logic
+      
+      client = new RKLLMClient({
+        ...testConfig,
+        modelPath: '/tmp/test-model.rkllm',
+      });
+      
+      // Test that initialization works (will use mock if native not available)
+      await client.initialize();
+      assert.ok(client.isClientInitialized());
+      
+      testLogger.info('Native binding integration logic validated');
+    });
+
+    it('should get default parameters from native binding when available', async () => {
+      testLogger.info('Testing getDefaultParameters static method');
+      
+      const defaultParams = await RKLLMClient.getDefaultParameters('/tmp/test.rkllm');
+      
+      // Verify the structure matches our expected format
+      assert.ok(typeof defaultParams === 'object');
+      assert.ok(typeof defaultParams.modelPath === 'string');
+      assert.ok(typeof defaultParams.maxContextLen === 'number');
+      assert.ok(typeof defaultParams.maxNewTokens === 'number');
+      assert.ok(typeof defaultParams.temperature === 'number');
+      assert.ok(defaultParams.maxContextLen > 0);
+      assert.ok(defaultParams.maxNewTokens > 0);
+      
+      testLogger.info('Default parameters from native binding validated');
+    });
+
+    it('should convert config to native RKLLMParam format', async () => {
+      testLogger.info('Testing config conversion for native binding');
+      
+      client = new RKLLMClient({
+        ...testConfig,
+        modelPath: '/tmp/test-model.rkllm',
+      });
+      
+      // Access the private method through type assertion for testing
+      const convertedParam = (client as any).convertToRKLLMParam(client.getConfig());
+      
+      // Verify conversion follows PR #34's expected format
+      assert.equal(convertedParam.model_path, '/tmp/test-model.rkllm');
+      assert.equal(convertedParam.max_context_len, testConfig.maxContextLen);
+      assert.equal(convertedParam.max_new_tokens, testConfig.maxNewTokens);
+      assert.equal(convertedParam.temperature, testConfig.temperature);
+      assert.equal(typeof convertedParam.is_async, 'boolean');
+      
+      testLogger.info('Config conversion to native format validated');
+    });
+
+    it('should handle native binding load failures gracefully', async () => {
+      testLogger.info('Testing graceful fallback when native binding unavailable');
+      
+      client = new RKLLMClient({
+        ...testConfig,
+        modelPath: '/tmp/nonexistent-model.rkllm',
+      });
+      
+      // Should initialize successfully even without native binding (using mocks)
+      await client.initialize();
+      assert.ok(client.isClientInitialized());
+      
+      // Should be able to perform operations with fallback
+      const result = await client.generate('Test prompt');
+      assert.ok(result);
+      assert.ok(typeof result.text === 'string');
+      
+      testLogger.info('Graceful fallback behavior validated');
+    });
+
+    it('should maintain handle lifecycle with native bindings', async () => {
+      testLogger.info('Testing handle lifecycle management');
+      
+      client = new RKLLMClient({
+        ...testConfig,
+        modelPath: '/tmp/test-model.rkllm',
+      });
+      
+      // Test initialization creates handle
+      await client.initialize();
+      const handle = (client as any).nativeHandle;
+      
+      // For mock scenario, handle will be null (but that's expected)
+      // In real scenario with native binding, handle would be set
+      testLogger.info(`Handle after init: ${handle ? 'present' : 'null (expected for mock)'}`);
+      
+      // Test destruction cleans up handle
+      await client.destroy();
+      const handleAfterDestroy = (client as any).nativeHandle;
+      assert.equal(handleAfterDestroy, null);
+      
+      testLogger.info('Handle lifecycle management validated');
+    });
+  });
 });

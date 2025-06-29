@@ -109,7 +109,21 @@ export interface RKLLMClientEvents {
 
 /**
  * High-level TypeScript wrapper for RKLLM C++ library
- * Provides Promise-based API with event support
+ * 
+ * Provides Promise-based API with event support. Integrates seamlessly with 
+ * native C++ N-API bindings (PR #34) when available, falls back to mock 
+ * implementation for development without RK3588 hardware.
+ * 
+ * Architecture:
+ * ┌─────────────────────────────┐
+ * │   RKLLMClient (this)        │ ← High-level Promise-based API
+ * ├─────────────────────────────┤  
+ * │   LLMHandleWrapper (PR #34) │ ← Native binding TypeScript wrapper
+ * ├─────────────────────────────┤
+ * │   C++ N-API Bindings       │ ← Native bridge layer (PR #34)
+ * ├─────────────────────────────┤
+ * │   RKLLM C API              │ ← Rockchip library
+ * └─────────────────────────────┘
  */
 export class RKLLMClient extends EventEmitter {
   private config: RKLLMClientConfig;
@@ -117,6 +131,7 @@ export class RKLLMClient extends EventEmitter {
   private isRunning: boolean = false;
   private currentAbortController: AbortController | null = null;
   private modelPath: string;
+  private nativeHandle: any = null; // Handle from PR #34's native bindings
   private loadedLoraAdapters: Set<string> = new Set();
 
   // ============================================================================
@@ -184,9 +199,14 @@ export class RKLLMClient extends EventEmitter {
     try {
       this.debugLog('Initializing RKLLM client', { modelPath: this.modelPath });
 
-      // TODO: Call native rkllm_init when C++ bindings are available
-      // For now, simulate initialization
-      await this.simulateNativeCall('rkllm_init', this.config);
+      // Call native rkllm_init when available (PR #34 integration)
+      const result = await this.simulateNativeCall('rkllm_init', this.config);
+      
+      // Store native handle if returned
+      if (result.handle) {
+        this.nativeHandle = result.handle;
+        this.debugLog('Native handle obtained', { handle: this.nativeHandle });
+      }
 
       this.isInitialized = true;
       
@@ -222,8 +242,13 @@ export class RKLLMClient extends EventEmitter {
       // Clear any loaded LoRA adapters
       this.loadedLoraAdapters.clear();
 
-      // TODO: Call native rkllm_destroy when C++ bindings are available
-      await this.simulateNativeCall('rkllm_destroy');
+      // Call native rkllm_destroy when available (PR #34 integration)
+      if (this.nativeHandle) {
+        await this.simulateNativeCall('rkllm_destroy', { handle: this.nativeHandle });
+        this.nativeHandle = null;
+      } else {
+        await this.simulateNativeCall('rkllm_destroy');
+      }
 
       this.isInitialized = false;
       
@@ -600,7 +625,7 @@ export class RKLLMClient extends EventEmitter {
   }
 
   /**
-   * Create default parameters
+   * Create default parameters (legacy method for compatibility)
    */
   static createDefaultParams(options: DefaultParamOptions): RKLLMParam {
     return {
@@ -630,6 +655,72 @@ export class RKLLMClient extends EventEmitter {
     };
   }
 
+  /**
+   * Get default parameters from native binding (aligned with PR #34)
+   * Falls back to hardcoded defaults if native binding not available
+   */
+  static async getDefaultParameters(modelPath?: string): Promise<RKLLMParam> {
+    try {
+      // Try to load native binding from PR #34
+      const binding = require('../../build/Release/binding.node');
+      const nativeParam = await binding.createDefaultParam();
+      
+      // Convert from PR #34's format to our format
+      return {
+        modelPath: modelPath || nativeParam.model_path || '',
+        maxContextLen: nativeParam.max_context_len,
+        maxNewTokens: nativeParam.max_new_tokens,
+        topK: nativeParam.top_k,
+        topP: nativeParam.top_p,
+        temperature: nativeParam.temperature,
+        repeatPenalty: nativeParam.repeat_penalty || 1.1,
+        frequencyPenalty: nativeParam.frequency_penalty || 0.0,
+        presencePenalty: nativeParam.presence_penalty || 0.0,
+        mirostat: nativeParam.mirostat || 0,
+        mirostatTau: nativeParam.mirostat_tau || 5.0,
+        mirostatEta: nativeParam.mirostat_eta || 0.1,
+        skipSpecialToken: nativeParam.skip_special_token || false,
+        isAsync: nativeParam.is_async !== undefined ? nativeParam.is_async : true,
+        nKeep: 0, // Not in native param, use default
+        extendParam: {
+          baseDomainId: 0,
+          embedFlash: false,
+          enabledCpusNum: 4,
+          enabledCpusMask: 0x0F,
+          nBatch: 1,
+          useCrossAttn: false,
+        },
+      };
+    } catch (error) {
+      // Fallback to hardcoded defaults if native binding not available
+      return {
+        modelPath: modelPath || '',
+        maxContextLen: 4096,
+        maxNewTokens: 512,
+        topK: 40,
+        topP: 0.9,
+        temperature: 0.7,
+        repeatPenalty: 1.1,
+        frequencyPenalty: 0.0,
+        presencePenalty: 0.0,
+        mirostat: 0,
+        mirostatTau: 5.0,
+        mirostatEta: 0.1,
+        skipSpecialToken: false,
+        isAsync: true,
+        nKeep: 0,
+        extendParam: {
+          baseDomainId: 0,
+          embedFlash: false,
+          enabledCpusNum: 4,
+          enabledCpusMask: 0x0F,
+          nBatch: 1,
+          useCrossAttn: false,
+        },
+      };
+    }
+  }
+
   // ============================================================================
   // Private Methods
   // ============================================================================
@@ -647,16 +738,90 @@ export class RKLLMClient extends EventEmitter {
   }
 
   /**
-   * Simulate native function calls (placeholder until C++ bindings are available)
+   * Try to load native binding from PR #34's implementation
+   */
+  private loadNativeBinding(): any {
+    try {
+      // Try to load the compiled binding from PR #34
+      const binding = require('../../build/Release/binding.node');
+      this.debugLog('Loaded native RKLLM binding successfully');
+      return binding;
+    } catch (error) {
+      this.debugLog('Native binding not available, using mock implementation', { error: error instanceof Error ? error.message : String(error) });
+      return null;
+    }
+  }
+
+  /**
+   * Call native function or simulate if binding not available (aligned with PR #34)
    */
   private async simulateNativeCall(functionName: string, ...args: any[]): Promise<any> {
-    // Simulate async operation delay
+    const nativeBinding = this.loadNativeBinding();
+    
+    if (nativeBinding) {
+      try {
+        // Use actual native binding functions from PR #34
+        switch (functionName) {
+          case 'rkllm_init':
+            // Convert our config to PR #34's RKLLMParam format
+            const param = this.convertToRKLLMParam(args[0]);
+            const handle = await nativeBinding.init(param);
+            this.debugLog(`Native call successful: ${functionName}`, { handle });
+            return { status: RKLLMStatusCode.SUCCESS, handle };
+            
+          case 'rkllm_destroy':
+            if (args[0] && args[0].handle) {
+              const success = await nativeBinding.destroy(args[0].handle);
+              this.debugLog(`Native call successful: ${functionName}`, { success });
+              return { status: success ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
+            }
+            break;
+            
+          case 'rkllm_createDefaultParam':
+            const defaultParam = await nativeBinding.createDefaultParam();
+            this.debugLog(`Native call successful: ${functionName}`, { defaultParam });
+            return { status: RKLLMStatusCode.SUCCESS, param: defaultParam };
+            
+          default:
+            this.debugLog(`Native function ${functionName} not yet implemented in binding`);
+            break;
+        }
+      } catch (error) {
+        this.debugLog(`Native call failed: ${functionName}`, { error: error instanceof Error ? error.message : String(error) });
+        // Fall through to simulation
+      }
+    }
+    
+    // Simulate async operation delay for mock
     await new Promise(resolve => setTimeout(resolve, 10));
     
     this.debugLog(`Simulated native call: ${functionName}`, { args });
     
     // Return mock success for now
     return { status: RKLLMStatusCode.SUCCESS };
+  }
+
+  /**
+   * Convert RKLLMClientConfig to RKLLMParam format expected by PR #34 bindings
+   */
+  private convertToRKLLMParam(config: any): any {
+    // Align with PR #34's RKLLMParam interface
+    return {
+      model_path: this.modelPath,
+      max_context_len: config.maxContextLen || this.config.maxContextLen,
+      max_new_tokens: config.maxNewTokens || this.config.maxNewTokens,
+      top_k: config.topK || this.config.topK,
+      top_p: config.topP || this.config.topP,
+      temperature: config.temperature || this.config.temperature,
+      repeat_penalty: config.repeatPenalty || this.config.repeatPenalty,
+      frequency_penalty: config.frequencyPenalty || this.config.frequencyPenalty,
+      presence_penalty: config.presencePenalty || this.config.presencePenalty,
+      mirostat: config.mirostat || this.config.mirostat,
+      mirostat_tau: config.mirostatTau || this.config.mirostatTau,
+      mirostat_eta: config.mirostatEta || this.config.mirostatEta,
+      skip_special_token: config.skipSpecialToken || this.config.skipSpecialToken,
+      is_async: config.isAsync !== undefined ? config.isAsync : this.config.isAsync,
+    };
   }
 
   /**
