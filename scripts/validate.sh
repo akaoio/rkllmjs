@@ -152,7 +152,117 @@ if [ -d "configs" ]; then
 fi
 
 echo ""
-echo "�🔒 Checking protected Rockchip assets..."
+echo "🔍 Checking for duplicate type definitions..."
+
+# Check for duplicate enum definitions
+ENUM_DUPLICATES=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | xargs grep -l "export enum" | while read file; do
+    grep "export enum" "$file" | sed "s/.*export enum \([A-Za-z0-9_]*\).*/\1/" | while read enum_name; do
+        echo "$enum_name:$file"
+    done
+done | sort | uniq -d)
+
+if [ -n "$ENUM_DUPLICATES" ]; then
+    echo "$ENUM_DUPLICATES" | while read dup; do
+        enum_name=$(echo "$dup" | cut -d: -f1)
+        report_error "Duplicate enum definition found: $enum_name"
+    done
+else
+    report_success "No duplicate enum definitions found"
+fi
+
+# Check for duplicate interface definitions
+INTERFACE_DUPLICATES=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | xargs grep -l "export interface" | while read file; do
+    grep "export interface" "$file" | sed "s/.*export interface \([A-Za-z0-9_]*\).*/\1/" | while read interface_name; do
+        echo "$interface_name:$file"
+    done
+done | sort | uniq -d)
+
+if [ -n "$INTERFACE_DUPLICATES" ]; then
+    echo "$INTERFACE_DUPLICATES" | while read dup; do
+        interface_name=$(echo "$dup" | cut -d: -f1)
+        report_error "Duplicate interface definition found: $interface_name"
+    done
+else
+    report_success "No duplicate interface definitions found"
+fi
+
+echo ""
+echo "🎯 Checking naming convention consistency..."
+
+# Check for consistent enum naming (should be PascalCase)
+ENUM_NAMING_ISSUES=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" -exec grep -H "export enum" {} \; 2>/dev/null | grep -v "export enum [A-Z][A-Za-z0-9]*" || true)
+
+if [ -n "$ENUM_NAMING_ISSUES" ]; then
+    echo "$ENUM_NAMING_ISSUES" | while read issue; do
+        report_warning "Enum naming convention issue: $issue (should be PascalCase)"
+    done
+else
+    report_success "Enum naming conventions are consistent"
+fi
+
+# Check for consistent interface naming (should be PascalCase)  
+INTERFACE_NAMING_ISSUES=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" -exec grep -H "export interface" {} \; 2>/dev/null | grep -v "export interface [A-Z][A-Za-z0-9]*" || true)
+
+if [ -n "$INTERFACE_NAMING_ISSUES" ]; then
+    echo "$INTERFACE_NAMING_ISSUES" | while read issue; do
+        report_warning "Interface naming convention issue: $issue (should be PascalCase)"
+    done
+else
+    report_success "Interface naming conventions are consistent"
+fi
+
+echo ""
+echo "🏗️ Checking architectural compliance..."
+
+# Check that core types are only defined in rkllm-types (check for specific core type names)
+CORE_TYPE_VIOLATIONS=$(find src -name "*.ts" -not -path "src/rkllm-types/*" -not -path "src/bindings/*" -not -name "*.test.ts" -not -name "*.d.ts" -exec grep -l "export enum \(LLMCallState\|RKLLMInputType\|RKLLMInferMode\)\|export interface \(RKLLMParam\|RKLLMInput\|RKLLMResult\|RKLLMExtendParam\) " {} \; 2>/dev/null || true)
+
+if [ -n "$CORE_TYPE_VIOLATIONS" ]; then
+    echo "$CORE_TYPE_VIOLATIONS" | while read violation; do
+        report_error "Core RKLLM types defined outside rkllm-types module: $violation"
+    done
+else
+    report_success "Core types properly centralized in rkllm-types module"
+fi
+
+# Check that testing utilities are only in testing module
+TESTING_VIOLATIONS=$(find src -name "*.ts" -not -path "src/testing/*" -not -name "*.test.ts" -not -name "*.d.ts" -exec grep -l "class.*Logger\|function.*test\|TEST_.*CONFIG" {} \; 2>/dev/null || true)
+
+if [ -n "$TESTING_VIOLATIONS" ]; then
+    echo "$TESTING_VIOLATIONS" | while read violation; do
+        report_warning "Testing utilities found outside testing module: $violation"
+    done
+else
+    report_success "Testing utilities properly centralized in testing module"
+fi
+
+echo ""
+echo "📋 Checking import consistency..."
+
+# Check for imports from deprecated paths (but allow internal module imports)
+DEPRECATED_IMPORTS=$(find src -name "*.ts" -not -path "src/testing/*" -exec grep -H "from.*test-logger\|from.*rkllm-client/test-utils" {} \; 2>/dev/null || true)
+
+if [ -n "$DEPRECATED_IMPORTS" ]; then
+    echo "$DEPRECATED_IMPORTS" | while read import_issue; do
+        report_error "Deprecated import path found: $import_issue (should use src/testing)"
+    done
+else
+    report_success "No deprecated import paths found"
+fi
+
+# Check for relative imports going up more than one level
+DEEP_RELATIVE_IMPORTS=$(find src -name "*.ts" -exec grep -H "from.*\.\./\.\./\.\." {} \; 2>/dev/null || true)
+
+if [ -n "$DEEP_RELATIVE_IMPORTS" ]; then
+    echo "$DEEP_RELATIVE_IMPORTS" | while read import_issue; do
+        report_warning "Deep relative import found: $import_issue (consider absolute imports)"
+    done
+else
+    report_success "No problematic deep relative imports found"
+fi
+
+echo ""
+echo "🔒 Checking protected Rockchip assets..."
 
 # Check that protected files are not modified (this is a placeholder - you'd implement actual checks)
 PROTECTED_FILES=(
