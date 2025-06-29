@@ -76,8 +76,8 @@ deno --version
 # Build TypeScript first
 npm run build
 
-# Use Node.js CLI (stable)
-npm run cli pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
+# Use Node.js CLI (stable) - Standard model
+npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm
 
 # List downloaded models
 npm run cli list
@@ -91,8 +91,8 @@ npm run cli remove Qwen2.5
 
 **Bun (Alternative - Fast):**
 ```bash
-# Use Bun CLI (experimental)
-npm run cli:bun pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
+# Use Bun CLI (experimental) - Standard model
+npm run cli:bun pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm
 
 # Direct Bun execution
 bun src/cli-runner/cli-runner.ts list
@@ -100,8 +100,8 @@ bun src/cli-runner/cli-runner.ts list
 
 **Deno (Experimental - Modern):**
 ```bash
-# Use Deno CLI (experimental)
-npm run cli:deno pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
+# Use Deno CLI (experimental) - Standard model
+npm run cli:deno pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm
 
 # Direct Deno execution
 deno run --allow-all src/cli-runner/cli-runner.ts list
@@ -164,7 +164,7 @@ import { RKLLMModelManager } from './src/model-manager/model-manager.js';
 import { RKLLMModelManager } from './dist/model-manager/model-manager.js';
 
 const manager = new RKLLMModelManager('./models');
-await manager.pullModel('limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4', 'model.rkllm');
+await manager.pullModel('dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1', 'Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm');
 ```
 
 **Bun (Alternative):**
@@ -174,7 +174,7 @@ import { RKLLMModelManager } from './src/model-manager/model-manager';
 const manager = new RKLLMModelManager('./models');
 
 // Download model with essential config files
-await manager.pullModel('limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4', 'model.rkllm');
+await manager.pullModel('dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1', 'Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm');
 
 // List all models  
 const models = await manager.listModels();

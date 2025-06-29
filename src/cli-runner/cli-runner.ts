@@ -11,7 +11,7 @@
  *   deno run --allow-all src/cli-runner/cli-runner.ts [...]   # Deno (experimental)
  * 
  * Examples:
- *   npm run cli pull limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4 Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
+ *   npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm
  *   node dist/cli-runner/cli-runner.js pull punchnox/Tinnyllama-1.1B-rk3588-rkllm-1.1.4 TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm
  */
 
@@ -31,6 +31,7 @@ const modelsConfig = JSON.parse(fs.readFileSync(modelsConfigPath, 'utf8'));
 
 // Generate CLI examples from model configurations
 const CLI_EXAMPLES = {
+  PULL_STANDARD: `node cli-runner.js pull ${modelsConfig.STANDARD_MODEL.REPOSITORY} ${modelsConfig.STANDARD_MODEL.MODEL_FILE}`,
   PULL_QWEN: `node cli-runner.js pull ${modelsConfig.EXAMPLE_REPOSITORIES.QWEN_05B} ${modelsConfig.EXAMPLE_MODEL_FILES.QWEN_05B}`,
   PULL_TINYLLAMA: `node cli-runner.js pull ${modelsConfig.EXAMPLE_REPOSITORIES.TINYLLAMA} ${modelsConfig.EXAMPLE_MODEL_FILES.TINYLLAMA}`,
   LIST: 'node cli-runner.js list',
@@ -105,7 +106,7 @@ export class CLIRunner {
     if (!repo || !filename) {
       console.log(`❌ Please specify both repository and model.`);
       console.log(`Usage: ${this.detector.getCliPrefix()} cli-runner.js pull <repo> <model>`);
-      console.log(`Example: ${CLI_EXAMPLES.PULL_QWEN}`);
+      console.log(`Example: ${CLI_EXAMPLES.PULL_STANDARD}`);
       process.exit(1);
     }
     
@@ -190,6 +191,7 @@ export class CLIRunner {
     console.log(`   ${prefix} cli-runner.js clean                     - Clean all models`);
     console.log(`\n📚 Examples:`);
     console.log(`   # Download RKLLM model with essential technical files:`);
+    console.log(`   ${CLI_EXAMPLES.PULL_STANDARD}`);
     console.log(`   ${CLI_EXAMPLES.PULL_QWEN}`);
     console.log(`   ${CLI_EXAMPLES.PULL_TINYLLAMA}`);
     console.log(`\n   # Management:`);

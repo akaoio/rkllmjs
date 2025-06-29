@@ -18,6 +18,7 @@ const constants = JSON.parse(fs.readFileSync(modelsConfigPath, 'utf8'));
 
 // CLI examples constants (for help messages)
 const CLI_EXAMPLES = {
+  PULL_STANDARD: `node cli-runner.js pull ${constants.STANDARD_MODEL.REPOSITORY} ${constants.STANDARD_MODEL.MODEL_FILE}`,
   PULL_QWEN: `node cli-runner.js pull ${constants.EXAMPLE_REPOSITORIES.QWEN_05B} ${constants.EXAMPLE_MODEL_FILES.QWEN_05B}`,
   PULL_TINYLLAMA: `node cli-runner.js pull ${constants.EXAMPLE_REPOSITORIES.TINYLLAMA} ${constants.EXAMPLE_MODEL_FILES.TINYLLAMA}`,
   LIST: 'node cli-runner.js list',
@@ -89,7 +90,7 @@ export class RKLLMModelManager {
       
       if (models.length === 0) {
         console.log('📦 No RKLLM models found.');
-        console.log(`💡 Download models using: ${CLI_EXAMPLES.PULL_QWEN}`);
+        console.log(`💡 Download models using: ${CLI_EXAMPLES.PULL_STANDARD}`);
       } else {
         console.log(`🤖 RKLLMJS Model Manager\n`);
         console.log(`📦 Found ${models.length} model(s):\n`);
