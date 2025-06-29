@@ -73,11 +73,21 @@ check_required_tools() {
         missing_tools+=("git")
     fi
     
+    if ! command -v unzip &> /dev/null; then
+        missing_tools+=("unzip")
+    fi
+    
     # Check for whiptail/dialog for interactive prompts
     if ! command -v whiptail &> /dev/null && ! command -v dialog &> /dev/null; then
         case $OS in
             "ubuntu")
                 missing_tools+=("whiptail")
+                ;;
+            "rhel")
+                missing_tools+=("dialog")
+                ;;
+            "arch")
+                missing_tools+=("dialog")
                 ;;
             "macos")
                 missing_tools+=("dialog")
