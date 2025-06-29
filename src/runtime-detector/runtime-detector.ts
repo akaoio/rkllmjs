@@ -44,7 +44,7 @@ export class RuntimeDetector {
         hasFileSystem: true,
         hasProcess: true,
         hasSubprocess: true,
-        supportsNativeModules: true
+        supportsNativeModules: true,
       };
       return this._runtimeInfo;
     }
@@ -57,7 +57,7 @@ export class RuntimeDetector {
         hasFileSystem: true,
         hasProcess: true,
         hasSubprocess: true,
-        supportsNativeModules: false // Deno uses FFI instead
+        supportsNativeModules: false, // Deno uses FFI instead
       };
       return this._runtimeInfo;
     }
@@ -70,7 +70,7 @@ export class RuntimeDetector {
         hasFileSystem: true,
         hasProcess: true,
         hasSubprocess: true,
-        supportsNativeModules: true
+        supportsNativeModules: true,
       };
       return this._runtimeInfo;
     }
@@ -82,7 +82,7 @@ export class RuntimeDetector {
       hasFileSystem: false,
       hasProcess: false,
       hasSubprocess: false,
-      supportsNativeModules: false
+      supportsNativeModules: false,
     };
     return this._runtimeInfo;
   }
@@ -93,7 +93,7 @@ export class RuntimeDetector {
    */
   async getModule(modulePath: string): Promise<any> {
     const runtime = this.detect();
-    
+
     switch (runtime.type) {
       case 'node':
       case 'bun':
@@ -110,7 +110,7 @@ export class RuntimeDetector {
    */
   async getFileSystem(): Promise<any> {
     const runtime = this.detect();
-    
+
     switch (runtime.type) {
       case 'node':
         // Use ES module import
@@ -131,7 +131,8 @@ export class RuntimeDetector {
               return false;
             }
           },
-          readFileSync: async (path: string, _encoding: string = 'utf8') => {
+          readFileSync: async (path: string, encoding: string = 'utf8') => {
+            void encoding; // Silence unused parameter warning
             if (typeof Deno !== 'undefined' && Deno.readTextFile) {
               return await Deno.readTextFile(path);
             }
@@ -139,7 +140,10 @@ export class RuntimeDetector {
           },
           writeFileSync: async (path: string, data: string | Uint8Array) => {
             if (typeof Deno !== 'undefined' && Deno.writeFile) {
-              await Deno.writeFile(path, typeof data === 'string' ? new TextEncoder().encode(data) : data);
+              await Deno.writeFile(
+                path,
+                typeof data === 'string' ? new TextEncoder().encode(data) : data
+              );
             }
           },
           statSync: (path: string) => {
@@ -148,7 +152,8 @@ export class RuntimeDetector {
             }
             throw new Error('Deno not available');
           },
-          readdirSync: async (path: string, _options?: any) => {
+          readdirSync: async (path: string, options?: any) => {
+            void options; // Silence unused parameter warning
             if (typeof Deno !== 'undefined') {
               const entries = [];
               for await (const entry of Deno.readDir(path)) {
@@ -157,7 +162,7 @@ export class RuntimeDetector {
               return entries;
             }
             throw new Error('Deno not available');
-          }
+          },
         };
       default:
         throw new Error(`File system not available in ${runtime.type} runtime`);
@@ -169,7 +174,7 @@ export class RuntimeDetector {
    */
   async getPath(): Promise<any> {
     const runtime = this.detect();
-    
+
     switch (runtime.type) {
       case 'node':
         return await import('path');
@@ -193,7 +198,7 @@ export class RuntimeDetector {
               return name.slice(0, -ext.length);
             }
             return name;
-          }
+          },
         };
       default:
         throw new Error(`Path module not available in ${runtime.type} runtime`);
@@ -203,55 +208,61 @@ export class RuntimeDetector {
   /**
    * Execute command in runtime-specific way
    */
-  async executeCommand(command: string, args: string[] = []): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  async executeCommand(
+    command: string,
+    args: string[] = []
+  ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const runtime = this.detect();
-    
+
     switch (runtime.type) {
-      case 'node':
+      case 'node': {
         const { spawn } = await import('child_process');
         return new Promise((resolve, reject) => {
           const process = spawn(command, args, { stdio: 'pipe' });
           let stdout = '';
           let stderr = '';
-          
+
           process.stdout.on('data', (data: Buffer) => {
             stdout += data.toString();
           });
-          
+
           process.stderr.on('data', (data: Buffer) => {
             stderr += data.toString();
           });
-          
+
           process.on('close', (code: number) => {
             resolve({ stdout, stderr, exitCode: code });
           });
-          
+
           process.on('error', reject);
         });
-        
-      case 'bun':
+      }
+
+      case 'bun': {
         if (typeof Bun !== 'undefined') {
           const result = Bun.spawnSync([command, ...args]);
           return {
             stdout: result.stdout?.toString() || '',
             stderr: result.stderr?.toString() || '',
-            exitCode: result.exitCode
+            exitCode: result.exitCode,
           };
         }
         throw new Error('Bun not available');
-        
-      case 'deno':
+      }
+
+      case 'deno': {
         if (typeof Deno !== 'undefined') {
           const denoProcess = new Deno.Command(command, { args });
           const denoResult = await denoProcess.output();
           return {
             stdout: new TextDecoder().decode(denoResult.stdout),
             stderr: new TextDecoder().decode(denoResult.stderr),
-            exitCode: denoResult.code
+            exitCode: denoResult.code,
           };
         }
         throw new Error('Deno not available');
-        
+      }
+
       default:
         throw new Error(`Command execution not supported in ${runtime.type} runtime`);
     }
@@ -277,7 +288,7 @@ export class RuntimeDetector {
    */
   getCliPrefix(): string {
     const runtime = this.detect();
-    
+
     switch (runtime.type) {
       case 'node':
         return 'node';

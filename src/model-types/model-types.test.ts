@@ -14,12 +14,12 @@ describe('ModelInfo', () => {
   it('should have required properties', () => {
     const startTime = Date.now();
     logger.testStart('should have required properties');
-    
+
     const modelInfo: ModelInfo = {
       name: 'test-model',
       path: '/path/to/model',
       size: 1024,
-      created: new Date()
+      created: new Date(),
     };
 
     logger.debug('Testing ModelInfo properties', { modelInfo });
@@ -43,12 +43,12 @@ describe('ModelInfo', () => {
       size: 1024,
       created: new Date(),
       repo: 'user/repo',
-      filename: 'model.rkllm'
+      filename: 'model.rkllm',
     };
 
-    logger.debug('Testing optional ModelInfo properties', { 
-      repo: modelInfo.repo, 
-      filename: modelInfo.filename 
+    logger.debug('Testing optional ModelInfo properties', {
+      repo: modelInfo.repo,
+      filename: modelInfo.filename,
     });
 
     assert.strictEqual(modelInfo.repo, 'user/repo');
@@ -70,7 +70,7 @@ describe('ModelConfig', () => {
       hiddenSize: 768,
       numLayers: 12,
       numAttentionHeads: 12,
-      maxSequenceLength: 2048
+      maxSequenceLength: 2048,
     };
 
     logger.debug('Testing ModelConfig properties', { config });
@@ -91,7 +91,7 @@ describe('ModelConfig', () => {
     logger.testStart('should allow empty config');
 
     const config: ModelConfig = {};
-    
+
     logger.debug('Testing empty ModelConfig', { config });
     assert.strictEqual(Object.keys(config).length, 0);
 
@@ -110,7 +110,7 @@ describe('ModelMetadata', () => {
       architecture: 'rk3588',
       quantization: 'w8a8',
       optimization: 'opt-0',
-      hybridRatio: 0.0
+      hybridRatio: 0.0,
     };
 
     logger.debug('Testing ModelMetadata properties', { metadata });
