@@ -18,11 +18,12 @@ function getTestSessionTimestamp(): string {
       globalTestSessionTimestamp = process.env.RKLLMJS_TEST_SESSION_TIMESTAMP;
     } else {
       // Create new timestamp and store in environment
-      globalTestSessionTimestamp = new Date().toISOString()
+      globalTestSessionTimestamp = new Date()
+        .toISOString()
         .replace(/:/g, '-')
         .replace(/\./g, '-')
         .substring(0, 19); // YYYY-MM-DDTHH-MM-SS (includes seconds for uniqueness)
-      
+
       process.env.RKLLMJS_TEST_SESSION_TIMESTAMP = globalTestSessionTimestamp;
     }
   }
@@ -47,13 +48,13 @@ export class TestLogger {
   constructor(testName: string) {
     this.testName = testName;
     this.startTime = Date.now();
-    
+
     // Use global timestamp for entire test session (consistent across all tests)
     const timestamp = getTestSessionTimestamp();
-    
+
     this.logDir = path.join('logs', timestamp, 'unit-tests');
     this.logFile = path.join(this.logDir, `${testName}.test.log`);
-    
+
     this.ensureLogDirectory();
     this.writeTestHeader();
   }
@@ -75,7 +76,7 @@ export class TestLogger {
       `Platform: ${os.platform()} ${os.arch()}`,
       `Working Directory: ${process.cwd()}`,
       `=====================================`,
-      ''
+      '',
     ].join('\n');
 
     this.writeToFile(header);
@@ -83,7 +84,7 @@ export class TestLogger {
 
   private writeToFile(content: string): void {
     try {
-      fs.appendFileSync(this.logFile, content + '\n', 'utf8');
+      fs.appendFileSync(this.logFile, `${content}\n`, 'utf8');
     } catch (error) {
       console.error('Failed to write to log file:', error);
     }
@@ -94,7 +95,7 @@ export class TestLogger {
       `[${entry.timestamp}]`,
       `[${entry.level}]`,
       `[${entry.testName}]`,
-      entry.message
+      entry.message,
     ];
 
     if (entry.data) {
@@ -107,7 +108,9 @@ export class TestLogger {
           parts.push('\nData:', jsonString);
         }
       } catch (error) {
-        parts.push('\nData: [Unable to serialize - contains circular references or non-serializable data]');
+        parts.push(
+          '\nData: [Unable to serialize - contains circular references or non-serializable data]'
+        );
       }
     }
 
@@ -124,7 +127,7 @@ export class TestLogger {
       level: 'INFO',
       testName: this.testName,
       message,
-      data
+      data,
     };
 
     this.writeToFile(this.formatLogEntry(entry));
@@ -137,7 +140,7 @@ export class TestLogger {
       testName: this.testName,
       message,
       ...(error && { error }),
-      ...(data && { data })
+      ...(data && { data }),
     };
 
     this.writeToFile(this.formatLogEntry(entry));
@@ -150,7 +153,7 @@ export class TestLogger {
       level: 'WARN',
       testName: this.testName,
       message,
-      data
+      data,
     };
 
     this.writeToFile(this.formatLogEntry(entry));
@@ -162,7 +165,7 @@ export class TestLogger {
       level: 'DEBUG',
       testName: this.testName,
       message,
-      data
+      data,
     };
 
     this.writeToFile(this.formatLogEntry(entry));
@@ -182,7 +185,7 @@ export class TestLogger {
     this.debug(`Expectation ${passed ? 'PASSED' : 'FAILED'}`, {
       expected,
       actual,
-      passed
+      passed,
     });
   }
 
@@ -195,7 +198,7 @@ export class TestLogger {
       `Duration: ${duration}ms`,
       `Ended: ${new Date().toISOString()}`,
       `Log File: ${this.logFile}`,
-      `=====================================`
+      `=====================================`,
     ].join('\n');
 
     this.writeToFile(footer);

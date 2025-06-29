@@ -2,11 +2,9 @@
   "targets": [
     {
       "target_name": "binding",
-      "cflags!": [ "-fno-exceptions" ],
-      "cflags_cc!": [ "-fno-exceptions" ],
       "sources": [
-        "src/native/binding.cc",
-        "src/native/rkllm-wrapper.cc"
+        "src/bindings/binding.cpp",
+        "src/bindings/llm-handle/llm-handle.cpp"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
@@ -15,7 +13,11 @@
       "dependencies": [
         "<!(node -p \"require('node-addon-api').gyp\")"
       ],
-      "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],
+      "cflags!": ["-fno-exceptions"],
+      "cflags_cc!": ["-fno-exceptions"],
+      "defines": [
+        "NAPI_DISABLE_CPP_EXCEPTIONS"
+      ],
       "conditions": [
         ["target_arch=='arm64'", {
           "libraries": [
@@ -26,6 +28,9 @@
           "cflags_cc": [
             "-std=c++17",
             "-fPIC"
+          ],
+          "ldflags": [
+            "-Wl,-rpath,<(module_root_dir)/libs/rkllm/aarch64"
           ]
         }],
         ["target_arch!='arm64'", {
@@ -34,6 +39,9 @@
             "-std=c++17",
             "-fPIC"
           ]
+        }],
+        ["OS=='linux'", {
+          "cflags": ["-fPIC"]
         }]
       ]
     }

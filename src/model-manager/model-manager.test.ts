@@ -18,24 +18,24 @@ describe('RKLLMModelManager', () => {
 
   beforeEach(() => {
     logger.testStart('beforeEach setup');
-    
+
     // Clean up test directory
     if (fs.existsSync(TEST_MODELS_DIR)) {
       fs.rmSync(TEST_MODELS_DIR, { recursive: true, force: true });
     }
     manager = new RKLLMModelManager(TEST_MODELS_DIR);
-    
+
     logger.info('Test setup completed', { testDir: TEST_MODELS_DIR });
   });
 
   afterEach(() => {
     logger.testStart('afterEach cleanup');
-    
+
     // Clean up test directory
     if (fs.existsSync(TEST_MODELS_DIR)) {
       fs.rmSync(TEST_MODELS_DIR, { recursive: true, force: true });
     }
-    
+
     logger.info('Test cleanup completed');
   });
 
@@ -43,12 +43,12 @@ describe('RKLLMModelManager', () => {
     it('should create models directory if it does not exist', () => {
       const startTime = Date.now();
       logger.testStart('should create models directory if it does not exist');
-      
+
       const dirExists = fs.existsSync(TEST_MODELS_DIR);
       logger.debug('Directory existence check', { dirExists, path: TEST_MODELS_DIR });
-      
+
       assert.strictEqual(dirExists, true);
-      
+
       const duration = Date.now() - startTime;
       logger.testEnd('should create models directory if it does not exist', true, duration);
     });
@@ -56,12 +56,14 @@ describe('RKLLMModelManager', () => {
     it('should use default models directory', () => {
       const startTime = Date.now();
       logger.testStart('should use default models directory');
-      
+
       const defaultManager = new RKLLMModelManager();
-      logger.debug('Default manager created', { isInstance: defaultManager instanceof RKLLMModelManager });
-      
+      logger.debug('Default manager created', {
+        isInstance: defaultManager instanceof RKLLMModelManager,
+      });
+
       assert.ok(defaultManager instanceof RKLLMModelManager);
-      
+
       const duration = Date.now() - startTime;
       logger.testEnd('should use default models directory', true, duration);
     });
@@ -71,12 +73,12 @@ describe('RKLLMModelManager', () => {
     it('should return empty array when no models exist', async () => {
       const startTime = Date.now();
       logger.testStart('should return empty array when no models exist');
-      
+
       const models = await manager.listModels();
       logger.debug('Models found', { count: models.length, models });
-      
+
       assert.deepStrictEqual(models, []);
-      
+
       const duration = Date.now() - startTime;
       logger.testEnd('should return empty array when no models exist', true, duration);
     });
@@ -84,7 +86,7 @@ describe('RKLLMModelManager', () => {
     it('should find models in subdirectories', async () => {
       const startTime = Date.now();
       logger.testStart('should find models in subdirectories');
-      
+
       // Create test model structure
       const testRepo = 'test/repo';
       const testModelDir = path.join(TEST_MODELS_DIR, testRepo);
@@ -92,11 +94,11 @@ describe('RKLLMModelManager', () => {
       fs.writeFileSync(path.join(testModelDir, 'test-model.rkllm'), 'fake model data');
 
       const models = await manager.listModels();
-      logger.debug('Models found after creating test structure', { 
-        count: models.length, 
+      logger.debug('Models found after creating test structure', {
+        count: models.length,
         models,
         testRepo,
-        testModelDir 
+        testModelDir,
       });
 
       assert.strictEqual(models.length, 1);
@@ -104,7 +106,7 @@ describe('RKLLMModelManager', () => {
       assert.strictEqual(models[0]?.name, 'test-model');
       assert.strictEqual(models[0]?.repo, testRepo);
       assert.strictEqual(models[0]?.filename, 'test-model.rkllm');
-      
+
       const duration = Date.now() - startTime;
       logger.testEnd('should find models in subdirectories', true, duration);
     });
@@ -114,12 +116,12 @@ describe('RKLLMModelManager', () => {
     it('should handle non-existent model gracefully', async () => {
       const startTime = Date.now();
       logger.testStart('should handle non-existent model gracefully');
-      
+
       const result = await manager.showModelInfo('non-existent');
       logger.debug('showModelInfo result for non-existent model', { result });
-      
+
       assert.strictEqual(result, undefined);
-      
+
       const duration = Date.now() - startTime;
       logger.testEnd('should handle non-existent model gracefully', true, duration);
     });
@@ -129,12 +131,12 @@ describe('RKLLMModelManager', () => {
     it('should handle non-existent model gracefully', async () => {
       const startTime = Date.now();
       logger.testStart('should handle non-existent model gracefully');
-      
+
       const result = await manager.removeModel('non-existent');
       logger.debug('removeModel result for non-existent model', { result });
-      
+
       assert.strictEqual(result, undefined);
-      
+
       const duration = Date.now() - startTime;
       logger.testEnd('should handle non-existent model gracefully', true, duration);
     });
@@ -144,12 +146,12 @@ describe('RKLLMModelManager', () => {
     it('should clean models directory', async () => {
       const startTime = Date.now();
       logger.testStart('should clean models directory');
-      
+
       const result = await manager.cleanModels();
       logger.debug('cleanModels result', { result });
-      
+
       assert.strictEqual(result, undefined);
-      
+
       const duration = Date.now() - startTime;
       logger.testEnd('should clean models directory', true, duration);
     });
@@ -159,17 +161,17 @@ describe('RKLLMModelManager', () => {
     it('should handle empty models directory', async () => {
       const startTime = Date.now();
       logger.testStart('should handle empty models directory');
-      
+
       // Remove the test directory to simulate empty state
       if (fs.existsSync(TEST_MODELS_DIR)) {
         fs.rmSync(TEST_MODELS_DIR, { recursive: true, force: true });
       }
-      
+
       const models = await manager.listModels();
       logger.debug('Models found in empty directory', { count: models.length });
-      
+
       assert.strictEqual(models.length, 0);
-      
+
       const duration = Date.now() - startTime;
       logger.testEnd('should handle empty models directory', true, duration);
     });
@@ -177,7 +179,7 @@ describe('RKLLMModelManager', () => {
     // Note: pullModel test is commented out as it would involve external dependencies
     // This should be moved to integration tests
   });
-  
+
   // Test run summary - moved to avoid conflicts with Node.js test runner
   logger.summary();
 });

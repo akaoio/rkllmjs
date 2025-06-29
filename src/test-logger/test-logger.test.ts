@@ -28,13 +28,13 @@ describe('TestLogger', () => {
     const tempLogger = new TestLogger('temp-test');
     // Verify the temp logger was created successfully
     testLogger.info('Temp logger created', { tempLoggerName: tempLogger.constructor.name });
-    
+
     // Check if logs directory exists (should be created by constructor)
     const logsExist = fs.existsSync('logs');
     testLogger.info('Checking logs directory existence', { logsExist });
-    
+
     assert.strictEqual(logsExist, true, 'Logs directory should be created');
-    
+
     const duration = Date.now() - startTime;
     testLogger.testEnd('should create log directory', true, duration);
   });
@@ -47,12 +47,12 @@ describe('TestLogger', () => {
     tempLogger.info('Test info message', { key: 'value' });
     tempLogger.warn('Test warning message');
     tempLogger.debug('Test debug message');
-    
+
     testLogger.info('Log entries written successfully');
-    
+
     // Just verify no errors thrown - actual file checking would be complex
     assert.ok(true, 'Log writing should not throw errors');
-    
+
     const duration = Date.now() - startTime;
     testLogger.testEnd('should write log entries with correct format', true, duration);
   });
@@ -63,13 +63,13 @@ describe('TestLogger', () => {
 
     const tempLogger = new TestLogger('error-test');
     const testError = new Error('Test error for logging');
-    
+
     // Should not throw when logging error
     tempLogger.error('Test error occurred', testError, { context: 'unit test' });
-    
+
     testLogger.info('Error logging completed without throwing');
     assert.ok(true, 'Error logging should not throw');
-    
+
     const duration = Date.now() - startTime;
     testLogger.testEnd('should handle error logging', true, duration);
   });
@@ -81,20 +81,20 @@ describe('TestLogger', () => {
     // Create two loggers with slight delay
     const logger1 = new TestLogger('unique-test-1');
     logger1.info('First logger created');
-    
+
     // Small delay to ensure different timestamps
-    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-    
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
     await delay(10); // Use the delay function
     const logger2 = new TestLogger('unique-test-2');
     logger2.info('Second logger created');
-    
+
     testLogger.info('Two loggers created with different timestamps', {
       logger1Created: true,
-      logger2Created: true
+      logger2Created: true,
     });
     assert.ok(true, 'Multiple loggers should create separate directories');
-    
+
     const duration = Date.now() - startTime;
     testLogger.testEnd('should create unique timestamp directories', true, duration);
   });
@@ -104,16 +104,16 @@ describe('TestLogger', () => {
     testLogger.testStart('should track test expectations');
 
     const tempLogger = new TestLogger('expectation-test');
-    
+
     // Test passing expectation
     tempLogger.expectation('expected', 'expected', true);
-    
+
     // Test failing expectation
     tempLogger.expectation('expected', 'actual', false);
-    
+
     testLogger.info('Expectations logged successfully');
     assert.ok(true, 'Expectation tracking should work correctly');
-    
+
     const duration = Date.now() - startTime;
     testLogger.testEnd('should track test expectations', true, duration);
   });

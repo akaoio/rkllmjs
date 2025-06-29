@@ -8,7 +8,7 @@ on:
 
 jobs:
   monitor:
-    name: Monitor Workflow Results
+    name: Monitor Workflow Results (RK3588 Target)
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
     
@@ -23,7 +23,7 @@ jobs:
              run_id: ${{ github.event.workflow_run.id }},
           });
           
-          console.log(`Found ${allArtifacts.data.artifacts.length} artifacts`);
+          console.log(`Found ${allArtifacts.data.artifacts.length} artifacts for RK3588 target`);
           
           for (const artifact of allArtifacts.data.artifacts) {
             console.log(`- ${artifact.name}: ${artifact.size_in_bytes} bytes`);
@@ -42,14 +42,14 @@ jobs:
           console.log(`Status: ${conclusion}`);
           console.log(`URL: ${runUrl}`);
           
-          // Create issue for failed workflows on main branch
+          // Create issue for failed workflows on main branch with RK3588 context
           if (conclusion === 'failure' && workflowRun.head_branch === 'main') {
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `🚨 CI/CD Failure: ${workflowName}`,
+              title: `🚨 CI/CD Failure: ${workflowName} (RK3588 Target)`,
               body: `
-              ## CI/CD Pipeline Failure Alert
+              ## CI/CD Pipeline Failure Alert (Orange Pi 5 Plus)
               
               **Workflow**: ${workflowName}
               **Branch**: ${workflowRun.head_branch}
@@ -57,18 +57,25 @@ jobs:
               **Status**: ${conclusion}
               **Run URL**: ${runUrl}
               
-              Please investigate and fix the failing workflow.
+              **Target Platform**: Orange Pi 5 Plus with RK3588 NPU
+              **Architecture**: ARM64 (aarch64)
+              **OS Support**: Armbian Bookworm, Ubuntu (Orange Pi 5 optimized)
+              
+              Please investigate and fix the failing workflow. This may affect RK3588 NPU functionality.
               
               This issue was automatically created by the CI/CD monitoring system.
               `,
-              labels: ['ci-failure', 'bug', 'high-priority']
+              labels: ['ci-failure', 'bug', 'high-priority', 'rk3588', 'orange-pi-5']
             });
           }
           
     - name: Performance metrics
       run: |
-        echo "## 📊 CI/CD Performance Metrics" >> $GITHUB_STEP_SUMMARY
+        echo "## 📊 CI/CD Performance Metrics (RK3588 Target)" >> $GITHUB_STEP_SUMMARY
         echo "- **Workflow**: ${{ github.event.workflow_run.name }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ github.event.workflow_run.conclusion }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Duration**: ${{ github.event.workflow_run.updated_at }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Run URL**: ${{ github.event.workflow_run.html_url }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Target Platform**: Orange Pi 5 Plus with RK3588 NPU" >> $GITHUB_STEP_SUMMARY
+        echo "**Architecture**: ARM64 (aarch64)" >> $GITHUB_STEP_SUMMARY
