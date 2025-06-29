@@ -5,6 +5,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import * as path from 'path';
+import { glob } from 'glob';
 import { TestLogger } from './test-logger.js';
 
 describe('TestLogger', () => {
@@ -13,7 +14,7 @@ describe('TestLogger', () => {
     assert.ok(logger instanceof TestLogger);
   });
 
-  test('should write log entries to file', () => {
+  test('should write log entries to file', async () => {
     const testName = 'test-logger-file-write';
     const logger = new TestLogger(testName);
     
@@ -23,8 +24,7 @@ describe('TestLogger', () => {
     
     // Log files should be created
     const logPattern = path.join('logs', '*', 'unit-tests', `${testName}.test.log`);
-    const glob = require('glob');
-    const logFiles = glob.sync(logPattern);
+    const logFiles = await glob(logPattern);
     
     assert.ok(logFiles.length > 0, 'Log file should be created');
   });

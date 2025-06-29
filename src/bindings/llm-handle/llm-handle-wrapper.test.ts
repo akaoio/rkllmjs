@@ -11,7 +11,7 @@
 
 import { test, describe } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { TestLogger } from '../../testing/index.js';
+import { TestLogger, getTestModelPath } from '../../testing/index.js';
 
 // Import the wrapper and all types
 import LLMHandleWrapper, { 
@@ -44,9 +44,9 @@ describe('LLMHandleWrapper Production Tests', () => {
         
         // Verify all required fields are present
         const requiredFields = [
-          'model_path', 'max_context_len', 'max_new_tokens', 'top_k', 'n_keep', 
-          'top_p', 'temperature', 'repeat_penalty', 'frequency_penalty', 'presence_penalty',
-          'mirostat', 'mirostat_tau', 'mirostat_eta', 'skip_special_token', 'is_async', 'extend_param'
+          'modelPath', 'maxContextLen', 'maxNewTokens', 'topK', 'nKeep', 
+          'topP', 'temperature', 'repeatPenalty', 'frequencyPenalty', 'presencePenalty',
+          'mirostat', 'mirostatTau', 'mirostatEta', 'skipSpecialToken', 'isAsync', 'extendParam'
         ];
         
         for (const field of requiredFields) {
@@ -55,29 +55,29 @@ describe('LLMHandleWrapper Production Tests', () => {
         }
         
         // Verify realistic default values
-        logger.expectation('max_context_len > 0', asyncResult.max_context_len > 0, true);
-        assert.ok(asyncResult.max_context_len > 0);
+        logger.expectation('maxContextLen > 0', asyncResult.maxContextLen > 0, true);
+        assert.ok(asyncResult.maxContextLen > 0);
         
-        logger.expectation('max_new_tokens > 0', asyncResult.max_new_tokens > 0, true);
-        assert.ok(asyncResult.max_new_tokens > 0);
+        logger.expectation('maxNewTokens > 0', asyncResult.maxNewTokens > 0, true);
+        assert.ok(asyncResult.maxNewTokens > 0);
         
         logger.expectation('temperature >= 0', asyncResult.temperature >= 0, true);
         assert.ok(asyncResult.temperature >= 0);
         
-        logger.expectation('top_k > 0', asyncResult.top_k > 0, true);
-        assert.ok(asyncResult.top_k > 0);
+        logger.expectation('topK > 0', asyncResult.topK > 0, true);
+        assert.ok(asyncResult.topK > 0);
         
-        logger.expectation('top_p between 0 and 1', asyncResult.top_p > 0 && asyncResult.top_p <= 1, true);
-        assert.ok(asyncResult.top_p > 0 && asyncResult.top_p <= 1);
+        logger.expectation('topP between 0 and 1', asyncResult.topP > 0 && asyncResult.topP <= 1, true);
+        assert.ok(asyncResult.topP > 0 && asyncResult.topP <= 1);
         
-        // Verify extend_param structure
-        logger.expectation('extend_param is object', typeof asyncResult.extend_param === 'object', true);
-        assert.ok(typeof asyncResult.extend_param === 'object');
+        // Verify extendParam structure
+        logger.expectation('extendParam is object', typeof asyncResult.extendParam === 'object', true);
+        assert.ok(typeof asyncResult.extendParam === 'object');
         
-        const extendFields = ['base_domain_id', 'embed_flash', 'enabled_cpus_num', 'enabled_cpus_mask', 'n_batch', 'use_cross_attn'];
+        const extendFields = ['baseDomainId', 'embedFlash', 'enabledCpusNum', 'enabledCpusMask', 'nBatch', 'useCrossAttn'];
         for (const field of extendFields) {
-          logger.expectation(`extend_param.${field} exists`, asyncResult.extend_param.hasOwnProperty(field), true);
-          assert.ok(asyncResult.extend_param.hasOwnProperty(field), `Missing extend_param field: ${field}`);
+          logger.expectation(`extendParam.${field} exists`, asyncResult.extendParam.hasOwnProperty(field), true);
+          assert.ok(asyncResult.extendParam.hasOwnProperty(field), `Missing extendParam field: ${field}`);
         }
         
         logger.testEnd('createDefaultParam comprehensive test', true);
@@ -126,33 +126,35 @@ describe('LLMHandleWrapper Production Tests', () => {
       logger.testStart('complete LLM lifecycle');
       
       try {
-        // Create real parameters for a hypothetical model
+        // Create real parameters using actual downloaded model
+        const realModelPath = getTestModelPath();
         const testParam: RKLLMParam = {
-          model_path: '/opt/rkllm/models/test-model.rkllm', // Real path structure
-          max_context_len: 2048,
-          max_new_tokens: 512,
-          top_k: 40,
-          n_keep: 0,
-          top_p: 0.9,
+          modelPath: realModelPath, // Use real downloaded model
+          maxContextLen: 2048,
+          maxNewTokens: 512,
+          topK: 40,
+          nKeep: 0,
+          topP: 0.9,
           temperature: 0.7,
-          repeat_penalty: 1.1,
-          frequency_penalty: 0.0,
-          presence_penalty: 0.0,
+          repeatPenalty: 1.1,
+          frequencyPenalty: 0.0,
+          presencePenalty: 0.0,
           mirostat: 0,
-          mirostat_tau: 5.0,
-          mirostat_eta: 0.1,
-          skip_special_token: false,
-          is_async: false,
-          extend_param: {
-            base_domain_id: 0,
-            embed_flash: 0,
-            enabled_cpus_num: 4,
-            enabled_cpus_mask: 0x0F, // First 4 CPUs
-            n_batch: 1,
-            use_cross_attn: 0,
-            reserved: new Uint8Array(104)
+          mirostatTau: 5.0,
+          mirostatEta: 0.1,
+          skipSpecialToken: false,
+          isAsync: false,
+          extendParam: {
+            baseDomainId: 0,
+            embedFlash: false,
+            enabledCpusNum: 4,
+            enabledCpusMask: 0x0F, // First 4 CPUs
+            nBatch: 1,
+            useCrossAttn: false,
           }
         };
+
+        logger.info('Using real model for test', { modelPath: realModelPath });
 
         // Test initialization - this will fail in development but would work on target hardware
         try {
@@ -168,11 +170,12 @@ describe('LLMHandleWrapper Production Tests', () => {
           
           logger.testEnd('complete LLM lifecycle', true);
         } catch (initError) {
-          // Expected failure in development environment
+          // Expected failure in development environment or when model not available
           if (initError instanceof Error) {
             if (initError.message.includes('Failed to load native binding') ||
-                initError.message.includes('Failed to initialize LLM')) {
-              logger.info('LLM initialization failed - expected in development environment');
+                initError.message.includes('Failed to initialize LLM') ||
+                initError.message.includes('Test model not found')) {
+              logger.info('LLM initialization failed - expected in development environment or no model available');
               logger.testEnd('complete LLM lifecycle', true);
             } else {
               throw initError;
@@ -180,8 +183,13 @@ describe('LLMHandleWrapper Production Tests', () => {
           }
         }
       } catch (error) {
-        logger.error('complete LLM lifecycle test failed', error instanceof Error ? error : new Error(String(error)));
-        throw error;
+        if (error instanceof Error && error.message.includes('Test model not found')) {
+          logger.info('Test skipped - no real model available for testing');
+          logger.testEnd('complete LLM lifecycle', true);
+        } else {
+          logger.error('complete LLM lifecycle test failed', error instanceof Error ? error : new Error(String(error)));
+          throw error;
+        }
       }
     });
 
@@ -189,31 +197,30 @@ describe('LLMHandleWrapper Production Tests', () => {
       logger.testStart('parameter validation');
       
       try {
-        // Test missing model_path
+        // Test missing modelPath
         const invalidParam: RKLLMParam = {
-          model_path: '', // Invalid empty path
-          max_context_len: 2048,
-          max_new_tokens: 512,
-          top_k: 40,
-          n_keep: 0,
-          top_p: 0.9,
+          modelPath: '', // Invalid empty path
+          maxContextLen: 2048,
+          maxNewTokens: 512,
+          topK: 40,
+          nKeep: 0,
+          topP: 0.9,
           temperature: 0.7,
-          repeat_penalty: 1.1,
-          frequency_penalty: 0.0,
-          presence_penalty: 0.0,
+          repeatPenalty: 1.1,
+          frequencyPenalty: 0.0,
+          presencePenalty: 0.0,
           mirostat: 0,
-          mirostat_tau: 5.0,
-          mirostat_eta: 0.1,
-          skip_special_token: false,
-          is_async: false,
-          extend_param: {
-            base_domain_id: 0,
-            embed_flash: 0,
-            enabled_cpus_num: 1,
-            enabled_cpus_mask: 0x01,
-            n_batch: 1,
-            use_cross_attn: 0,
-            reserved: new Uint8Array(104)
+          mirostatTau: 5.0,
+          mirostatEta: 0.1,
+          skipSpecialToken: false,
+          isAsync: false,
+          extendParam: {
+            baseDomainId: 0,
+            embedFlash: false,
+            enabledCpusNum: 1,
+            enabledCpusMask: 0x01,
+            nBatch: 1,
+            useCrossAttn: false,
           }
         };
 
@@ -222,11 +229,11 @@ describe('LLMHandleWrapper Production Tests', () => {
             await LLMHandleWrapper.init(invalidParam);
           },
           {
-            message: /model_path is required/
+            message: /modelPath is required/
           }
         );
         
-        logger.expectation('empty model_path rejected', 'rejected', true);
+        logger.expectation('empty modelPath rejected', 'rejected', true);
         logger.testEnd('parameter validation', true);
       } catch (error) {
         if (error instanceof Error && error.message.includes('Failed to load native binding')) {
@@ -245,8 +252,8 @@ describe('LLMHandleWrapper Production Tests', () => {
       
       try {
         const loraAdapter: RKLLMLoraAdapter = {
-          lora_adapter_path: '/opt/rkllm/adapters/test-lora.bin',
-          lora_adapter_name: 'test_adapter_v1',
+          loraAdapterPath: '/opt/rkllm/adapters/test-lora.bin',
+          loraAdapterName: 'test_adapter_v1',
           scale: 1.0
         };
 
@@ -283,14 +290,14 @@ describe('LLMHandleWrapper Production Tests', () => {
       try {
         const input: RKLLMInput = {
           role: 'user',
-          enable_thinking: false,
-          input_type: RKLLMInputType.PROMPT,
-          prompt_input: 'What is the capital of France?'
+          enableThinking: false,
+          inputType: RKLLMInputType.PROMPT,
+          promptInput: 'What is the capital of France?'
         };
 
         const inferParams: RKLLMInferParam = {
           mode: RKLLMInferMode.GENERATE,
-          keep_history: 1
+          keepHistory: true
         };
 
         const mockHandle: LLMHandle = { _handle: null };
@@ -323,43 +330,43 @@ describe('LLMHandleWrapper Production Tests', () => {
       try {
         const multimodalInput: RKLLMInput = {
           role: 'user',
-          enable_thinking: false,
-          input_type: RKLLMInputType.MULTIMODAL,
-          multimodal_input: {
+          enableThinking: false,
+          inputType: RKLLMInputType.MULTIMODAL,
+          multimodalInput: {
             prompt: 'Describe this image',
-            image_embed: new Float32Array([0.1, 0.2, 0.3, 0.4]), // Sample embedding
-            n_image_tokens: 4,
-            n_image: 1,
-            image_width: 224,
-            image_height: 224
+            imageEmbed: new Float32Array([0.1, 0.2, 0.3, 0.4]), // Sample embedding
+            nImageTokens: 4,
+            nImage: 1,
+            imageWidth: 224,
+            imageHeight: 224
           }
         };
 
         const tokenInput: RKLLMInput = {
-          input_type: RKLLMInputType.TOKEN,
-          token_input: {
-            input_ids: new Int32Array([1, 2, 3, 4, 5]),
-            n_tokens: 5
+          inputType: RKLLMInputType.TOKEN,
+          tokenInput: {
+            inputIds: new Int32Array([1, 2, 3, 4, 5]),
+            nTokens: 5
           }
         };
 
         const embedInput: RKLLMInput = {
-          input_type: RKLLMInputType.EMBED,
-          embed_input: {
+          inputType: RKLLMInputType.EMBED,
+          embedInput: {
             embed: new Float32Array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6]),
-            n_tokens: 2  // 2 tokens with 3-dimensional embeddings
+            nTokens: 2  // 2 tokens with 3-dimensional embeddings
           }
         };
 
         // Verify input structure
-        logger.expectation(multimodalInput.input_type, RKLLMInputType.MULTIMODAL, multimodalInput.input_type === RKLLMInputType.MULTIMODAL);
-        assert.strictEqual(multimodalInput.input_type, RKLLMInputType.MULTIMODAL);
+        logger.expectation(multimodalInput.inputType, RKLLMInputType.MULTIMODAL, multimodalInput.inputType === RKLLMInputType.MULTIMODAL);
+        assert.strictEqual(multimodalInput.inputType, RKLLMInputType.MULTIMODAL);
         
-        logger.expectation(tokenInput.input_type, RKLLMInputType.TOKEN, tokenInput.input_type === RKLLMInputType.TOKEN);
-        assert.strictEqual(tokenInput.input_type, RKLLMInputType.TOKEN);
+        logger.expectation(tokenInput.inputType, RKLLMInputType.TOKEN, tokenInput.inputType === RKLLMInputType.TOKEN);
+        assert.strictEqual(tokenInput.inputType, RKLLMInputType.TOKEN);
         
-        logger.expectation(embedInput.input_type, RKLLMInputType.EMBED, embedInput.input_type === RKLLMInputType.EMBED);
-        assert.strictEqual(embedInput.input_type, RKLLMInputType.EMBED);
+        logger.expectation(embedInput.inputType, RKLLMInputType.EMBED, embedInput.inputType === RKLLMInputType.EMBED);
+        assert.strictEqual(embedInput.inputType, RKLLMInputType.EMBED);
         
         logger.testEnd('multimodal input support', true);
       } catch (error) {
@@ -455,11 +462,11 @@ describe('LLMHandleWrapper Production Tests', () => {
       
       try {
         const crossAttnParams: RKLLMCrossAttnParam = {
-          encoder_k_cache: new Float32Array([0.1, 0.2, 0.3, 0.4]),
-          encoder_v_cache: new Float32Array([0.5, 0.6, 0.7, 0.8]),
-          encoder_mask: new Float32Array([1.0, 1.0, 0.0, 0.0]),
-          encoder_pos: new Int32Array([0, 1, 2, 3]),
-          num_tokens: 4
+          encoderKCache: new Float32Array([0.1, 0.2, 0.3, 0.4]),
+          encoderVCache: new Float32Array([0.5, 0.6, 0.7, 0.8]),
+          encoderMask: new Float32Array([1.0, 1.0, 0.0, 0.0]),
+          encoderPos: new Int32Array([0, 1, 2, 3]),
+          numTokens: 4
         };
 
         const mockHandle: LLMHandle = { _handle: null };
@@ -527,29 +534,28 @@ describe('LLMHandleWrapper Production Tests', () => {
       try {
         // Test that failed operations don't leak resources
         const invalidParam: RKLLMParam = {
-          model_path: '/nonexistent/path/model.rkllm',
-          max_context_len: -1, // Invalid value
-          max_new_tokens: -1,  // Invalid value
-          top_k: 40,
-          n_keep: 0,
-          top_p: 0.9,
+          modelPath: '/nonexistent/path/model.rkllm',
+          maxContextLen: -1, // Invalid value
+          maxNewTokens: -1,  // Invalid value
+          topK: 40,
+          nKeep: 0,
+          topP: 0.9,
           temperature: 0.7,
-          repeat_penalty: 1.1,
-          frequency_penalty: 0.0,
-          presence_penalty: 0.0,
+          repeatPenalty: 1.1,
+          frequencyPenalty: 0.0,
+          presencePenalty: 0.0,
           mirostat: 0,
-          mirostat_tau: 5.0,
-          mirostat_eta: 0.1,
-          skip_special_token: false,
-          is_async: false,
-          extend_param: {
-            base_domain_id: 0,
-            embed_flash: 0,
-            enabled_cpus_num: 1,
-            enabled_cpus_mask: 0x01,
-            n_batch: 1,
-            use_cross_attn: 0,
-            reserved: new Uint8Array(104)
+          mirostatTau: 5.0,
+          mirostatEta: 0.1,
+          skipSpecialToken: false,
+          isAsync: false,
+          extendParam: {
+            baseDomainId: 0,
+            embedFlash: false,
+            enabledCpusNum: 1,
+            enabledCpusMask: 0x01,
+            nBatch: 1,
+            useCrossAttn: false,
           }
         };
 

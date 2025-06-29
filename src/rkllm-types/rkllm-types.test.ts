@@ -5,7 +5,7 @@
 
 import { describe, it } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { TestLogger } from '../testing/index.js';
+import { TestLogger, getTestModelPath } from '../testing/index.js';
 import {
   // Enums and Constants
   CPU_CORES,
@@ -134,20 +134,22 @@ describe('RKLLM Types', () => {
     it('should accept valid main parameters', () => {
       testLogger.info('Testing RKLLMParam interface');
       
-      const param: RKLLMParam = {
-        modelPath: '/path/to/model.rkllm',
-        maxContextLen: 4096,
-        maxNewTokens: 512,
-        topK: 40,
-        nKeep: 0,
-        topP: 0.9,
-        temperature: 0.7,
-        repeatPenalty: 1.1,
-        frequencyPenalty: 0.0,
-        presencePenalty: 0.0,
-        mirostat: 0,
-        mirostatTau: 5.0,
-        mirostatEta: 0.1,
+      try {
+        const realModelPath = getTestModelPath();
+        const param: RKLLMParam = {
+          modelPath: realModelPath,
+          maxContextLen: 4096,
+          maxNewTokens: 512,
+          topK: 40,
+          nKeep: 0,
+          topP: 0.9,
+          temperature: 0.7,
+          repeatPenalty: 1.1,
+          frequencyPenalty: 0.0,
+          presencePenalty: 0.0,
+          mirostat: 0,
+          mirostatTau: 5.0,
+          mirostatEta: 0.1,
         skipSpecialToken: false,
         isAsync: false,
         extendParam: {
@@ -160,12 +162,46 @@ describe('RKLLM Types', () => {
         },
       };
       
-      assert.equal(param.modelPath, '/path/to/model.rkllm');
+      assert.ok(param.modelPath.endsWith('.rkllm'));
       assert.equal(param.maxContextLen, 4096);
       assert.equal(param.maxNewTokens, 512);
       assert.equal(param.temperature, 0.7);
       
-      testLogger.info('RKLLMParam validation completed');
+      testLogger.info('RKLLMParam validation completed with real model', { modelPath: realModelPath });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Test model not found')) {
+        testLogger.info('Skipping test - no real model available');
+        // Fallback test with dummy path for interface validation
+        const param: RKLLMParam = {
+          modelPath: './models/dummy.rkllm',
+          maxContextLen: 4096,
+          maxNewTokens: 512,
+          topK: 40,
+          nKeep: 0,
+          topP: 0.9,
+          temperature: 0.7,
+          repeatPenalty: 1.1,
+          frequencyPenalty: 0.0,
+          presencePenalty: 0.0,
+          mirostat: 0,
+          mirostatTau: 5.0,
+          mirostatEta: 0.1,
+          skipSpecialToken: false,
+          isAsync: false,
+          extendParam: {
+            baseDomainId: 0,
+            embedFlash: false,
+            enabledCpusNum: 4,
+            enabledCpusMask: 0x0F,
+            nBatch: 1,
+            useCrossAttn: false,
+          },
+        };
+        assert.ok(param.modelPath.endsWith('.rkllm'));
+      } else {
+        throw error;
+      }
+    }
     });
   });
 
@@ -302,19 +338,38 @@ describe('RKLLM Types', () => {
     it('should accept DefaultParamOptions', () => {
       testLogger.info('Testing DefaultParamOptions type');
       
-      const options: DefaultParamOptions = {
-        modelPath: '/path/to/model.rkllm',
-        maxContextLen: 4096,
-        maxNewTokens: 512,
-        temperature: 0.7,
-        topP: 0.9,
-        topK: 40,
-      };
-      
-      assert.equal(options.modelPath, '/path/to/model.rkllm');
-      assert.equal(options.maxContextLen, 4096);
-      
-      testLogger.info('DefaultParamOptions validation completed');
+      try {
+        const realModelPath = getTestModelPath();
+        const options: DefaultParamOptions = {
+          modelPath: realModelPath,
+          maxContextLen: 4096,
+          maxNewTokens: 512,
+          temperature: 0.7,
+          topP: 0.9,
+          topK: 40,
+        };
+        
+        assert.ok(options.modelPath.endsWith('.rkllm'));
+        assert.equal(options.maxContextLen, 4096);
+        
+        testLogger.info('DefaultParamOptions validation completed with real model', { modelPath: realModelPath });
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('Test model not found')) {
+          testLogger.info('Skipping test - no real model available');
+          // Fallback test
+          const options: DefaultParamOptions = {
+            modelPath: './models/dummy.rkllm',
+            maxContextLen: 4096,
+            maxNewTokens: 512,
+            temperature: 0.7,
+            topP: 0.9,
+            topK: 40,
+          };
+          assert.ok(options.modelPath.endsWith('.rkllm'));
+        } else {
+          throw error;
+        }
+      }
     });
 
     it('should accept ChatTemplateConfig', () => {

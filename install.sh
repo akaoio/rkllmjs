@@ -86,6 +86,9 @@ main() {
     # Configure environments
     configure_runtime_environments
     
+    # Download standard model
+    download_standard_model
+    
     # Show completion summary
     show_completion_summary
 }
@@ -351,6 +354,35 @@ show_completion_summary() {
     echo "⚠️  REMINDER: This setup is for DEVELOPMENT ONLY!"
 }
 
+# Download standard model using CLI
+download_standard_model() {
+    log_step "Setting up standard RKLLM model"
+    
+    # Build the project first
+    log_info "Building project for model download..."
+    if ! npm install; then
+        log_warning "npm install failed - skipping model download"
+        return 0
+    fi
+    
+    if ! npm run build; then
+        log_warning "Build failed - skipping model download"
+        return 0
+    fi
+    
+    # Download the standard model
+    log_info "📥 Downloading standard model (dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1)..."
+    log_info "   Model file: Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm"
+    
+    # Use the CLI to pull the model
+    if npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm; then
+        log_success "✅ Standard model setup completed"
+    else
+        log_warning "Model download failed - you can download it later using:"
+        echo "  npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm"
+    fi
+}
+
 # Handle script arguments
 handle_arguments() {
     case "${1:-}" in
@@ -404,6 +436,7 @@ show_help() {
     echo "  • Responsive UI that adapts to terminal size"
     echo "  • Interactive runtime selection"
     echo "  • Progress feedback and error handling"
+    echo "  • Downloads standard RKLLM model automatically"
     echo
     echo "Supported runtimes:"
     echo "  • Node.js (required)"

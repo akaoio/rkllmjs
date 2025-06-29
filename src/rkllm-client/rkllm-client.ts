@@ -31,9 +31,7 @@ import {
   LLMHandleWrapper,
   type RKLLMParam as MainRKLLMParam,
   type RKLLMInput as MainRKLLMInput,
-  type LLMHandle,
-  toC_RKLLMParam,
-  toC_RKLLMInput
+  type LLMHandle
 } from '../bindings/llm-handle/llm-handle-wrapper.js';
 
 // ============================================================================
@@ -231,8 +229,16 @@ export class RKLLMClient extends EventEmitter {
       this.debugLog('RKLLM client initialized successfully');
 
     } catch (error) {
+      // Check if the error is specifically about native bindings not being available
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      let errorCode = RKLLMStatusCode.ERROR_MODEL_LOAD_FAILED;
+      
+      if (errorMessage.includes('Failed to load native binding')) {
+        errorCode = RKLLMStatusCode.ERROR_NATIVE_BINDING_NOT_AVAILABLE;
+      }
+      
       const rkllmError = error instanceof RKLLMError ? error : 
-        new RKLLMError('Initialization failed', RKLLMStatusCode.ERROR_MODEL_LOAD_FAILED, error instanceof Error ? error.message : String(error));
+        new RKLLMError('Initialization failed', errorCode, errorMessage);
       
       this.emit('error', rkllmError);
       throw rkllmError;
@@ -503,12 +509,8 @@ export class RKLLMClient extends EventEmitter {
 
       // Convert to main branch's LoRA adapter format and call LLMHandleWrapper
       if (this.llmHandle) {
-        const mainAdapter = {
-          lora_adapter_path: adapter.loraAdapterPath,
-          lora_adapter_name: adapter.loraAdapterName,
-          scale: adapter.scale || 1.0
-        };
-        await LLMHandleWrapper.loadLora(this.llmHandle, mainAdapter);
+        // Use the adapter directly as it's already in canonical format
+        await LLMHandleWrapper.loadLora(this.llmHandle, adapter);
       }
 
       this.loadedLoraAdapters.add(adapter.loraAdapterName);
@@ -707,40 +709,40 @@ export class RKLLMClient extends EventEmitter {
       
       // Convert from main branch's format to our format
       const result: RKLLMParam = {
-        modelPath: modelPath || mainParam.model_path || '',
-        maxContextLen: mainParam.max_context_len,
-        maxNewTokens: mainParam.max_new_tokens,
-        topK: mainParam.top_k,
-        topP: mainParam.top_p,
+        modelPath: modelPath || mainParam.modelPath || '',
+        maxContextLen: mainParam.maxContextLen,
+        maxNewTokens: mainParam.maxNewTokens,
+        topK: mainParam.topK,
+        topP: mainParam.topP,
         temperature: mainParam.temperature,
-        repeatPenalty: mainParam.repeat_penalty || 1.1,
-        frequencyPenalty: mainParam.frequency_penalty || 0.0,
-        presencePenalty: mainParam.presence_penalty || 0.0,
+        repeatPenalty: mainParam.repeatPenalty || 1.1,
+        frequencyPenalty: mainParam.frequencyPenalty || 0.0,
+        presencePenalty: mainParam.presencePenalty || 0.0,
         mirostat: mainParam.mirostat || 0,
-        mirostatTau: mainParam.mirostat_tau || 5.0,
-        mirostatEta: mainParam.mirostat_eta || 0.1,
-        skipSpecialToken: mainParam.skip_special_token || false,
-        isAsync: mainParam.is_async !== undefined ? mainParam.is_async : true,
+        mirostatTau: mainParam.mirostatTau || 5.0,
+        mirostatEta: mainParam.mirostatEta || 0.1,
+        skipSpecialToken: mainParam.skipSpecialToken || false,
+        isAsync: mainParam.isAsync !== undefined ? mainParam.isAsync : true,
         nKeep: 0, // Not in main param, use default
         extendParam: {
-          baseDomainId: mainParam.extend_param.base_domain_id,
-          embedFlash: mainParam.extend_param.embed_flash !== 0,
-          enabledCpusNum: mainParam.extend_param.enabled_cpus_num,
-          enabledCpusMask: mainParam.extend_param.enabled_cpus_mask,
-          nBatch: mainParam.extend_param.n_batch,
-          useCrossAttn: mainParam.extend_param.use_cross_attn !== 0,
+          baseDomainId: mainParam.extendParam.baseDomainId,
+          embedFlash: mainParam.extendParam.embedFlash,
+          enabledCpusNum: mainParam.extendParam.enabledCpusNum,
+          enabledCpusMask: mainParam.extendParam.enabledCpusMask,
+          nBatch: mainParam.extendParam.nBatch,
+          useCrossAttn: mainParam.extendParam.useCrossAttn,
         },
       };
 
       // Only assign optional fields if they exist
-      if (mainParam.img_start !== undefined) {
-        result.imgStart = mainParam.img_start;
+      if (mainParam.imgStart !== undefined) {
+        result.imgStart = mainParam.imgStart;
       }
-      if (mainParam.img_end !== undefined) {
-        result.imgEnd = mainParam.img_end;
+      if (mainParam.imgEnd !== undefined) {
+        result.imgEnd = mainParam.imgEnd;
       }
-      if (mainParam.img_content !== undefined) {
-        result.imgContent = mainParam.img_content;
+      if (mainParam.imgContent !== undefined) {
+        result.imgContent = mainParam.imgContent;
       }
 
       return result;
@@ -891,31 +893,29 @@ export class RKLLMClient extends EventEmitter {
       canonical.imgContent = config.imgContent;
     }
 
-    // Use the conversion function to handle optional fields properly
-    return toC_RKLLMParam(canonical);
+    // Use the canonical format directly (no conversion needed)
+    return canonical;
   }
 
   /**
    * Convert client input to main branch's RKLLMInput format
    */
   private convertToMainInput(input: RKLLMInput): MainRKLLMInput {
-    // Use the conversion function to handle optional fields properly
-    return toC_RKLLMInput(input);
+    // Use the canonical format directly (no conversion needed)
+    return input;
   }
 
   /**
    * Convert client infer params to main branch's format
    */
-  private convertToMainInferParams(inferParams: RKLLMInferParam): import('../bindings/llm-handle/llm-handle-wrapper.js').RKLLMInferParam {
-    const result: import('../bindings/llm-handle/llm-handle-wrapper.js').RKLLMInferParam = {
+  private convertToMainInferParams(inferParams: RKLLMInferParam): RKLLMInferParam {
+    const result: RKLLMInferParam = {
       mode: inferParams.mode, // Enums are now unified, no conversion needed
-      keep_history: inferParams.keepHistory ? 1 : 0
+      keepHistory: inferParams.keepHistory
     };
 
     if (inferParams.loraParams) {
-      result.lora_params = [{
-        lora_adapter_name: inferParams.loraParams.loraAdapterName
-      }];
+      result.loraParams = inferParams.loraParams;
     }
 
     return result;
