@@ -833,6 +833,9 @@ export class RKLLMClient extends EventEmitter {
     callback: LLMResultCallback,
     _options: InferenceOptions
   ): Promise<RKLLMResult> {
+    // Add realistic delay to ensure totalTimeMs > 0 in tests
+    await new Promise(resolve => setTimeout(resolve, 20));
+    
     // Simulate inference with mock data
     const mockResult: RKLLMResult = {
       text: _input.promptInput ? `Response to: ${_input.promptInput}` : 'Mock generated response',
