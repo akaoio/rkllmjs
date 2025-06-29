@@ -1,6 +1,8 @@
 # Testing Infrastructure
 
-Unified testing infrastructure for RKLLMJS with comprehensive logging and production-ready utilities.
+## Purpose
+
+Unified testing infrastructure for RKLLMJS with comprehensive logging and production-ready utilities. Provides structured test debugging, audit trails, and hardware validation for real NPU testing on RK3588 devices.
 
 ## Components
 

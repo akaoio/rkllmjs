@@ -26,7 +26,7 @@ import LLMHandleWrapper, {
 } from './llm-handle-wrapper';
 
 describe('LLMHandleWrapper Production Tests', () => {
-  const logger = new TestLogger('llm-handle-wrapper');
+  const logger = TestLogger.createLogger('llm-handle-wrapper');
 
   describe('createDefaultParam', () => {
     test('should create complete default parameters with all required fields', async () => {

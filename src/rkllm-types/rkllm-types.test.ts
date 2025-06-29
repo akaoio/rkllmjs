@@ -29,7 +29,7 @@ import {
 } from './rkllm-types.js';
 
 // Initialize test logger
-const testLogger = new TestLogger('rkllm-types');
+const testLogger = TestLogger.createLogger('rkllm-types');
 
 describe('RKLLM Types', () => {
   // ============================================================================

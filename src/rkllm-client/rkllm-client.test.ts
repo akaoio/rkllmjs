@@ -26,7 +26,7 @@ import {
 } from '../testing/index.js';
 
 // Initialize test logger
-const testLogger = new TestLogger('rkllm-client-production');
+const testLogger = TestLogger.createLogger('rkllm-client-production');
 
 describe('RKLLM Client - Production Tests', () => {
   let client: RKLLMClient;

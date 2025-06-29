@@ -262,6 +262,95 @@ else
 fi
 
 echo ""
+echo "🔧 Checking function signature consistency..."
+
+# Check for duplicate function signatures across modules
+DUPLICATE_FUNCTIONS=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | xargs grep -h "export function\|export async function" | sort | uniq -d)
+
+if [ -n "$DUPLICATE_FUNCTIONS" ]; then
+    echo "$DUPLICATE_FUNCTIONS" | while read dup_function; do
+        report_warning "Potentially duplicate function signature: $dup_function"
+    done
+else
+    report_success "No duplicate function signatures found"
+fi
+
+echo ""
+echo "🎨 Checking usage pattern consistency..."
+
+# Check for inconsistent TestLogger usage patterns
+INCONSISTENT_LOGGER_USAGE=$(find src -name "*.test.ts" -exec grep -H "new TestLogger\|TestLogger\.createLogger" {} \; | grep -v "src/testing/")
+
+if [ -n "$INCONSISTENT_LOGGER_USAGE" ]; then
+    NEW_USAGE=$(echo "$INCONSISTENT_LOGGER_USAGE" | grep "new TestLogger" | wc -l)
+    FACTORY_USAGE=$(echo "$INCONSISTENT_LOGGER_USAGE" | grep "createLogger" | wc -l)
+    
+    if [ $NEW_USAGE -gt 0 ] && [ $FACTORY_USAGE -gt 0 ]; then
+        report_warning "Inconsistent TestLogger usage patterns found - mix of 'new TestLogger()' ($NEW_USAGE) and 'TestLogger.createLogger()' ($FACTORY_USAGE)"
+        report_warning "Consider standardizing on one pattern for consistency"
+    else
+        report_success "Consistent TestLogger usage patterns"
+    fi
+else
+    report_success "Consistent TestLogger usage patterns"
+fi
+
+echo ""
+echo "📐 Checking interface similarity (advanced duplication detection)..."
+
+# Extract interface names and their property counts to detect similar structures
+INTERFACE_ANALYSIS=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" -exec grep -A 20 "export interface" {} \; | awk '
+    /export interface/ {
+        interface_name = $3
+        gsub(/\{/, "", interface_name)
+        property_count = 0
+    }
+    /^[[:space:]]*[a-zA-Z].*:/ {
+        property_count++
+    }
+    /^}/ {
+        if (interface_name) {
+            print interface_name ":" property_count
+            interface_name = ""
+        }
+    }
+' | sort)
+
+# Check for interfaces with identical property counts (potential duplicates)
+SIMILAR_INTERFACES=$(echo "$INTERFACE_ANALYSIS" | cut -d: -f2 | sort | uniq -d)
+
+if [ -n "$SIMILAR_INTERFACES" ]; then
+    echo "$SIMILAR_INTERFACES" | while read prop_count; do
+        MATCHING_INTERFACES=$(echo "$INTERFACE_ANALYSIS" | grep ":$prop_count$" | cut -d: -f1 | tr '\n' ' ')
+        if [ $(echo $MATCHING_INTERFACES | wc -w) -gt 1 ]; then
+            report_warning "Interfaces with similar structure ($prop_count properties): $MATCHING_INTERFACES"
+        fi
+    done
+else
+    report_success "No obviously similar interface structures detected"
+fi
+
+echo ""
+echo "📄 Checking documentation consistency..."
+
+# Check for consistent README structure across modules
+README_ISSUES=0
+find src -name "README.md" | while read readme_file; do
+    if ! grep -q "## Purpose" "$readme_file"; then
+        report_warning "Missing '## Purpose' section in $readme_file"
+        README_ISSUES=$((README_ISSUES + 1))
+    fi
+    if ! grep -q "## " "$readme_file"; then
+        report_warning "No section headers found in $readme_file"
+        README_ISSUES=$((README_ISSUES + 1))
+    fi
+done
+
+if [ $README_ISSUES -eq 0 ]; then
+    report_success "Documentation follows consistent structure"
+fi
+
+echo ""
 echo "🔒 Checking protected Rockchip assets..."
 
 # Check that protected files are not modified (this is a placeholder - you'd implement actual checks)
