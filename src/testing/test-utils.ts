@@ -1,6 +1,6 @@
 /**
- * Test utilities for production RKLLM tests
- * No mocks - only real native bindings
+ * Production Test Utilities for RKLLM Testing
+ * Consolidated utilities for real hardware and native bindings testing
  */
 
 /**
@@ -18,7 +18,7 @@ export function areNativeBindingsAvailable(): boolean {
 /**
  * Skip test if native bindings are not available
  */
-export function requireNativeBindings(testContext: any): boolean {
+export function requireNativeBindings(testContext?: any): boolean {
   if (!areNativeBindingsAvailable()) {
     console.log('⚠️  Skipping test - native RKLLM bindings not available');
     console.log('   Build native bindings first: npm run build:native');

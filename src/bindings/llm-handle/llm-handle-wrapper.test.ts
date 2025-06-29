@@ -11,7 +11,7 @@
 
 import { test, describe } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { TestLogger } from '../../test-logger/test-logger';
+import { TestLogger } from '../../testing/index.js';
 
 // Import the wrapper and all types
 import LLMHandleWrapper, { 

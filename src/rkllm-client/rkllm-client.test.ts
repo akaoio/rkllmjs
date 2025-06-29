@@ -6,7 +6,7 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { TestLogger } from '../test-logger/test-logger.js';
+import { TestLogger } from '../testing/index.js';
 import {
   RKLLMClient,
   type RKLLMClientConfig,
@@ -23,7 +23,7 @@ import {
   isCompatibleHardware,
   PRODUCTION_TEST_CONFIG,
   PRODUCTION_TEST_PROMPTS,
-} from './test-utils.js';
+} from '../testing/index.js';
 
 // Initialize test logger
 const testLogger = new TestLogger('rkllm-client-production');

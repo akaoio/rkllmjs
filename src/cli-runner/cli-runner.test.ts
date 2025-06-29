@@ -4,7 +4,7 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { TestLogger } from '../test-logger/test-logger.js';
+import { TestLogger } from '../testing/index.js';
 import { CLIRunner } from './cli-runner.js';
 
 const logger = TestLogger.createLogger('cli-runner');

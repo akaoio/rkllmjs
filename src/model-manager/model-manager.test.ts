@@ -5,7 +5,7 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { TestLogger } from '../test-logger/test-logger.js';
+import { TestLogger } from '../testing/index.js';
 import { RKLLMModelManager } from './model-manager.js';
 import * as fs from 'fs';
 import * as path from 'path';
