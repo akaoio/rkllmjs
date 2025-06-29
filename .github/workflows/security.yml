@@ -31,8 +31,10 @@ jobs:
     - name: Run npm audit
       run: |
         npm audit --audit-level=moderate
-        echo "## 🔍 Security Audit Results" >> $GITHUB_STEP_SUMMARY
+        echo "## 🔍 Security Audit Results (RK3588 Target)" >> $GITHUB_STEP_SUMMARY
         npm audit --audit-level=moderate --json | jq -r '.metadata | "- **Vulnerabilities**: \(.vulnerabilities.total) total, \(.vulnerabilities.high) high, \(.vulnerabilities.moderate) moderate"' >> $GITHUB_STEP_SUMMARY || echo "- ✅ No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Platform**: Orange Pi 5 Plus with RK3588 NPU" >> $GITHUB_STEP_SUMMARY
       continue-on-error: true
       
     - name: Check for known security advisories
@@ -67,7 +69,6 @@ jobs:
       
     - name: Build for analysis
       run: npm run build:ts
-      continue-on-error: true
       
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
@@ -94,7 +95,7 @@ jobs:
       
     - name: Check licenses
       run: |
-        echo "## 📋 License Compliance Report" >> $GITHUB_STEP_SUMMARY
+        echo "## 📋 License Compliance Report (RK3588 Target)" >> $GITHUB_STEP_SUMMARY
         license-checker --summary >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
@@ -103,6 +104,9 @@ jobs:
           echo "⚠️ Non-approved licenses detected" >> $GITHUB_STEP_SUMMARY
           license-checker --excludePackages 'rkllmjs' 2>&1 | head -20 >> $GITHUB_STEP_SUMMARY
         }
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Target Platform**: Orange Pi 5 Plus (Armbian/Ubuntu)" >> $GITHUB_STEP_SUMMARY
       continue-on-error: true
 
   secret-scan:
@@ -158,7 +162,7 @@ jobs:
       
     - name: Run comprehensive validation
       run: |
-        echo "## 📋 RULES.md Compliance Report" >> $GITHUB_STEP_SUMMARY
+        echo "## 📋 RULES.md Compliance Report (RK3588 Target)" >> $GITHUB_STEP_SUMMARY
         npm run validate 2>&1 | tee validation-output.txt
         
         if grep -q "All validation checks passed" validation-output.txt; then
@@ -170,34 +174,50 @@ jobs:
           echo "```" >> $GITHUB_STEP_SUMMARY
         fi
         
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Target Platform**: Orange Pi 5 Plus with RK3588 NPU" >> $GITHUB_STEP_SUMMARY
+        echo "**OS Support**: Armbian Bookworm, Ubuntu (Orange Pi 5 optimized)" >> $GITHUB_STEP_SUMMARY
+        
         # Ensure validation actually passes for CI
         npm run validate
 
-  protected-files:
-    name: Protected Files Check
+  rk3588-assets:
+    name: RK3588 Assets Verification
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Check protected Rockchip files
+    - name: Check RK3588 specific files
       run: |
-        echo "## 🔒 Protected Files Status" >> $GITHUB_STEP_SUMMARY
+        echo "## 🎯 RK3588 NPU Assets Status" >> $GITHUB_STEP_SUMMARY
         
+        # Check RK3588 library
         if [ -f "libs/rkllm/aarch64/librkllmrt.so" ]; then
-          echo "✅ librkllmrt.so exists" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **librkllmrt.so (RK3588 NPU library)** - Present" >> $GITHUB_STEP_SUMMARY
+          file_size=$(stat -c%s "libs/rkllm/aarch64/librkllmrt.so" 2>/dev/null || echo "unknown")
+          echo "  - Size: $file_size bytes" >> $GITHUB_STEP_SUMMARY
         else
-          echo "❌ librkllmrt.so missing" >> $GITHUB_STEP_SUMMARY
+          echo "❌ **librkllmrt.so** - Missing" >> $GITHUB_STEP_SUMMARY
         fi
         
+        # Check headers
         if [ -f "libs/rkllm/include/rkllm.h" ]; then
-          echo "✅ rkllm.h exists" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **rkllm.h (API headers)** - Present" >> $GITHUB_STEP_SUMMARY
+          header_lines=$(wc -l < "libs/rkllm/include/rkllm.h" 2>/dev/null || echo "unknown")
+          echo "  - Lines: $header_lines" >> $GITHUB_STEP_SUMMARY
         else
-          echo "❌ rkllm.h missing" >> $GITHUB_STEP_SUMMARY
+          echo "❌ **rkllm.h** - Missing" >> $GITHUB_STEP_SUMMARY
         fi
         
-        # Verify files haven't been modified (basic check)
+        # Check directory structure
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**File integrity status:**" >> $GITHUB_STEP_SUMMARY
-        echo "- Protected files are present and accessible" >> $GITHUB_STEP_SUMMARY
+        echo "**RK3588 Library Structure:**" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        ls -la libs/rkllm/ 2>/dev/null || echo "Directory not found"
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Target Platform**: Orange Pi 5 Plus with RK3588 NPU" >> $GITHUB_STEP_SUMMARY
+        echo "**Architecture**: ARM64 (aarch64)" >> $GITHUB_STEP_SUMMARY
