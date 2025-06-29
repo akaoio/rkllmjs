@@ -8,6 +8,8 @@
  * - Destroying LLM instances
  */
 
+import { createRequire } from 'module';
+
 // Import canonical types from rkllm-types (single source of truth)
 import {
   LLMCallState,
@@ -394,6 +396,7 @@ export type LLMResultCallback = (result: CanonicalRKLLMResult, userdata: any, st
  */
 export class LLMHandleWrapper {
   private static nativeBinding: any = null;
+  private static require = createRequire(import.meta.url);
 
   /**
    * @brief Initialize the native binding
@@ -403,7 +406,7 @@ export class LLMHandleWrapper {
     if (this.nativeBinding === null) {
       try {
         // This will be the compiled .node file
-        this.nativeBinding = require('../../../build/Release/binding.node');
+        this.nativeBinding = this.require('../../../build/Release/binding.node');
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         throw new Error(`Failed to load native binding: ${errorMessage}`);

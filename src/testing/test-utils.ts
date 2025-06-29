@@ -3,11 +3,19 @@
  * Consolidated utilities for real hardware and native bindings testing
  */
 
+import fs from 'fs';
+import os from 'os';
+import { createRequire } from 'module';
+
+// Create require function for ES modules
+const require = createRequire(import.meta.url);
+
 /**
  * Check if native RKLLM bindings are available
  */
 export function areNativeBindingsAvailable(): boolean {
   try {
+    // Use createRequire for native bindings in ES modules
     require('../../build/Release/binding.node');
     return true;
   } catch {
@@ -41,7 +49,6 @@ export function getTestModelPath(): string {
   const modelPath = process.env.RKLLM_TEST_MODEL_PATH || '/path/to/test-model.rkllm';
   
   // Check if model file exists
-  const fs = require('fs');
   if (!fs.existsSync(modelPath)) {
     throw new Error(
       `Test model not found at: ${modelPath}\n` +
@@ -57,7 +64,6 @@ export function getTestModelPath(): string {
  */
 export function isCompatibleHardware(): boolean {
   // Check if we're on ARM64 Linux (RK3588)
-  const os = require('os');
   const arch = os.arch();
   const platform = os.platform();
   
@@ -67,7 +73,6 @@ export function isCompatibleHardware(): boolean {
   }
   
   // Check if NPU is available (basic check)
-  const fs = require('fs');
   if (!fs.existsSync('/dev/dri') && !fs.existsSync('/sys/class/devfreq')) {
     console.log('⚠️  NPU device nodes not found - may not be on RK3588');
     return false;

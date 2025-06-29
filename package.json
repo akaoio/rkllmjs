@@ -57,6 +57,7 @@
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
+    "glob": "^11.0.3",
     "node-addon-api": "^8.4.0",
     "node-gyp": "^11.2.0",
     "prettier": "^3.0.0",

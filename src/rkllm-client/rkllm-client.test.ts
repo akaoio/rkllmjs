@@ -111,7 +111,7 @@ describe('RKLLM Client - Production Tests', () => {
       
       try {
         // Missing modelPath should throw
-        client = new RKLLMClient({} as any);
+        client = new RKLLMClient({ autoInit: false } as any);
         assert.fail('Expected error for missing modelPath');
       } catch (error) {
         assert.ok(error instanceof Error);
