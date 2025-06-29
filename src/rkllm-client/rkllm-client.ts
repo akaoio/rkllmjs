@@ -926,7 +926,10 @@ export class RKLLMClient extends EventEmitter {
 
     return {
       mode: mainMode,
-      lora_adapter_name: inferParams.loraParams?.loraAdapterName
+      lora_params: inferParams.loraParams ? [{
+        lora_adapter_name: inferParams.loraParams.loraAdapterName
+      }] : undefined,
+      keep_history: inferParams.keepHistory ? 1 : 0
     };
   }
 }
