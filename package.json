@@ -54,6 +54,7 @@
   ],
   "devDependencies": {
     "@types/node": "^20.19.2",
+    "@types/node-fetch": "^2.6.11",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
@@ -68,7 +69,8 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "node-addon-api": "^8.0.0"
+    "node-addon-api": "^8.0.0",
+    "node-fetch": "^3.3.2"
   },
   "optionalDependencies": {
     "bun-types": "^1.0.0"

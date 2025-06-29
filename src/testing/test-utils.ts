@@ -45,18 +45,49 @@ export function requireNativeBindings(testContext?: any): boolean {
  * Get a valid test model path (requires actual model file)
  */
 export function getTestModelPath(): string {
-  // In production, this should point to an actual RKLLM model file
-  const modelPath = process.env.RKLLM_TEST_MODEL_PATH || '/path/to/test-model.rkllm';
-  
-  // Check if model file exists
-  if (!fs.existsSync(modelPath)) {
-    throw new Error(
-      `Test model not found at: ${modelPath}\n` +
-      'Set RKLLM_TEST_MODEL_PATH environment variable to point to a valid RKLLM model file.'
-    );
+  // First check environment variable
+  const envModelPath = process.env.RKLLM_TEST_MODEL_PATH;
+  if (envModelPath && fs.existsSync(envModelPath)) {
+    return envModelPath;
   }
   
-  return modelPath;
+  // Auto-discover models in the models directory
+  const modelsDir = './models';
+  if (fs.existsSync(modelsDir)) {
+    const findModelFiles = (dir: string): string[] => {
+      const files: string[] = [];
+      const items = fs.readdirSync(dir, { withFileTypes: true });
+      
+      for (const item of items) {
+        const fullPath = `${dir}/${item.name}`;
+        if (item.isDirectory()) {
+          files.push(...findModelFiles(fullPath));
+        } else if (item.name.endsWith('.rkllm')) {
+          files.push(fullPath);
+        }
+      }
+      return files;
+    };
+    
+    const modelFiles = findModelFiles(modelsDir);
+    if (modelFiles.length > 0) {
+      // Use the first available model
+      const modelPath = modelFiles[0]!; // Non-null assertion since we checked length > 0
+      console.log(`📁 Using test model: ${modelPath}`);
+      return modelPath;
+    }
+  }
+  
+  // Fallback - throw error with helpful message
+  throw new Error(
+    `Test model not found!\n` +
+    `Tried:\n` +
+    `  1. Environment variable RKLLM_TEST_MODEL_PATH\n` +
+    `  2. Auto-discovery in ./models directory\n\n` +
+    `Solutions:\n` +
+    `  1. Set RKLLM_TEST_MODEL_PATH to point to a valid RKLLM model file\n` +
+    `  2. Download a model using: npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm`
+  );
 }
 
 /**

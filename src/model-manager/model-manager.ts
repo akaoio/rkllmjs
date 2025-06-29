@@ -120,22 +120,99 @@ export class RKLLMModelManager {
     const repoDir = path.join(this.modelsDir, repo);
     fs.mkdirSync(repoDir, { recursive: true });
 
-    // Simulate download (replace with actual Hugging Face API integration)
     const modelPath = path.join(repoDir, filename);
 
     try {
-      // This is a placeholder - actual implementation would use Hugging Face API
       console.log(`📂 Repository directory: ${repoDir}`);
       console.log(`💾 Target path: ${modelPath}`);
-      console.log(`⚠️  Note: Actual download implementation pending`);
 
-      // Create a placeholder file for demonstration
-      fs.writeFileSync(modelPath, `# Placeholder for ${filename}\n# Downloaded from ${repo}`);
+      // Check if model already exists
+      if (fs.existsSync(modelPath)) {
+        console.log(`✅ Model already exists at: ${modelPath}`);
+        const stats = fs.statSync(modelPath);
+        console.log(`📏 Size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+        return;
+      }
 
-      console.log(`✅ Model pulled successfully!`);
+      // Construct Hugging Face download URL
+      const downloadUrl = `https://huggingface.co/${repo}/resolve/main/${filename}`;
+      console.log(`🌐 Download URL: ${downloadUrl}`);
+
+      // Import fetch for Node.js compatibility
+      let fetchFn: typeof fetch;
+      try {
+        // Try using built-in fetch (Node.js 18+)
+        fetchFn = globalThis.fetch;
+        if (!fetchFn) {
+          throw new Error('fetch not available');
+        }
+      } catch {
+        // Fallback to node-fetch if needed
+        const nodeFetch = await import('node-fetch');
+        fetchFn = nodeFetch.default as any;
+      }
+
+      console.log(`⬇️  Starting download...`);
+      const response = await fetch(downloadUrl);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Get file size from headers if available
+      const contentLength = response.headers.get('content-length');
+      const totalSize = contentLength ? parseInt(contentLength, 10) : null;
+
+      if (totalSize) {
+        console.log(`📊 Total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+      }
+
+      // Stream download to file
+      const writer = fs.createWriteStream(modelPath);
+      let downloadedSize = 0;
+
+      if (response.body) {
+        const reader = response.body.getReader();
+        
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) break;
+            
+            writer.write(value);
+            downloadedSize += value.length;
+            
+            if (totalSize) {
+              const progress = (downloadedSize / totalSize * 100).toFixed(1);
+              process.stdout.write(`\r📈 Progress: ${progress}% (${(downloadedSize / 1024 / 1024).toFixed(2)} MB)`);
+            } else {
+              process.stdout.write(`\r📈 Downloaded: ${(downloadedSize / 1024 / 1024).toFixed(2)} MB`);
+            }
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      }
+
+      writer.end();
+      console.log(`\n✅ Model downloaded successfully!`);
       console.log(`📁 Saved to: ${modelPath}`);
+      console.log(`📏 Final size: ${(downloadedSize / 1024 / 1024).toFixed(2)} MB`);
+
     } catch (error) {
-      console.error(`❌ Failed to pull model:`, error);
+      console.error(`\n❌ Failed to pull model:`, error);
+      
+      // Clean up incomplete download
+      if (fs.existsSync(modelPath)) {
+        try {
+          fs.unlinkSync(modelPath);
+          console.log(`🧹 Cleaned up incomplete download`);
+        } catch (cleanupError) {
+          console.error(`⚠️  Failed to clean up incomplete file:`, cleanupError);
+        }
+      }
+      
       throw error;
     }
   }

@@ -145,6 +145,7 @@ models/
 build/
 prebuilds/
 *.node
+.npmrc
 
 # C++ build artifacts
 *.o
