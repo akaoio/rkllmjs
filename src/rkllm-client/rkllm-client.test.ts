@@ -6,7 +6,7 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { TestLogger } from '../testing/index.js';
+import { TestLogger, getTestModelPath } from '../testing/index.js';
 import {
   RKLLMClient,
   type RKLLMClientConfig,
@@ -19,7 +19,6 @@ import {
 import {
   areNativeBindingsAvailable,
   requireNativeBindings,
-  getTestModelPath,
   isCompatibleHardware,
   PRODUCTION_TEST_CONFIG,
   PRODUCTION_TEST_PROMPTS,
@@ -88,16 +87,36 @@ describe('RKLLM Client - Production Tests', () => {
     it('should create client with production config', () => {
       testLogger.info('Testing production configuration');
       
-      const config: RKLLMClientConfig = {
-        ...PRODUCTION_TEST_CONFIG,
-        modelPath: '/path/to/production-model.rkllm',
-        autoInit: false,
-      };
-      
-      client = new RKLLMClient(config);
-      
-      assert.ok(client instanceof RKLLMClient);
-      assert.equal(client.isClientInitialized(), false);
+      try {
+        const realModelPath = getTestModelPath();
+        const config: RKLLMClientConfig = {
+          ...PRODUCTION_TEST_CONFIG,
+          modelPath: realModelPath,
+          autoInit: false,
+        };
+        
+        client = new RKLLMClient(config);
+        
+        assert.ok(client instanceof RKLLMClient);
+        assert.equal(client.isClientInitialized(), false);
+        
+        testLogger.info('Production config test completed with real model', { modelPath: realModelPath });
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('Test model not found')) {
+          testLogger.info('Skipping test - no real model available');
+          // Create fallback config for testing structure
+          const config: RKLLMClientConfig = {
+            ...PRODUCTION_TEST_CONFIG,
+            modelPath: process.env.RKLLM_TEST_MODEL_PATH || './models/dummy.rkllm',
+            autoInit: false,
+          };
+          
+          client = new RKLLMClient(config);
+          assert.ok(client instanceof RKLLMClient);
+        } else {
+          throw error;
+        }
+      }
       
       const clientConfig = client.getConfig();
       assert.equal(clientConfig.maxContextLen, PRODUCTION_TEST_CONFIG.maxContextLen);

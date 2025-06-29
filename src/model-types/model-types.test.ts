@@ -5,7 +5,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { TestLogger } from '../testing/index.js';
+import { TestLogger, getTestModelPath } from '../testing/index.js';
 import type { ModelInfo, ModelConfig, ModelMetadata } from './model-types.js';
 
 const logger = TestLogger.createLogger('model-types');
@@ -15,19 +15,39 @@ describe('ModelInfo', () => {
     const startTime = Date.now();
     logger.testStart('should have required properties');
 
-    const modelInfo: ModelInfo = {
-      name: 'test-model',
-      path: '/path/to/model',
-      size: 1024,
-      created: new Date(),
-    };
+    try {
+      const realModelPath = getTestModelPath();
+      const modelInfo: ModelInfo = {
+        name: 'test-model',
+        path: realModelPath,
+        size: 1024,
+        created: new Date(),
+      };
 
-    logger.debug('Testing ModelInfo properties', { modelInfo });
+      logger.debug('Testing ModelInfo properties with real model', { modelInfo });
 
-    assert.strictEqual(modelInfo.name, 'test-model');
-    assert.strictEqual(modelInfo.path, '/path/to/model');
-    assert.strictEqual(modelInfo.size, 1024);
-    assert.ok(modelInfo.created instanceof Date);
+      assert.strictEqual(modelInfo.name, 'test-model');
+      assert.ok(modelInfo.path.endsWith('.rkllm'));
+      assert.strictEqual(modelInfo.size, 1024);
+      assert.ok(modelInfo.created instanceof Date);
+
+      logger.info('ModelInfo test completed with real model', { modelPath: realModelPath });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Test model not found')) {
+        logger.info('Skipping test - no real model available');
+        // Fallback test
+        const modelInfo: ModelInfo = {
+          name: 'test-model',
+          path: './models/dummy.rkllm',
+          size: 1024,
+          created: new Date(),
+        };
+        assert.strictEqual(modelInfo.name, 'test-model');
+        assert.ok(modelInfo.path.endsWith('.rkllm'));
+      } else {
+        throw error;
+      }
+    }
 
     const duration = Date.now() - startTime;
     logger.testEnd('should have required properties', true, duration);

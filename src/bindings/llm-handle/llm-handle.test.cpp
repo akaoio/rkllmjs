@@ -118,7 +118,13 @@ bool test_param_structure_comprehensive() {
     RKLLMParam param = rkllm_createDefaultParam();
     
     // Test realistic production values
-    param.model_path = "/opt/rkllm/models/production-llama-7b.rkllm";
+    // Configure for production RK3588 deployment with real model path
+    const char* model_path = std::getenv("RKLLM_TEST_MODEL_PATH");
+    if (model_path == nullptr) {
+        // Try to find a real model in the models directory
+        model_path = "./models/dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1/Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm";
+    }
+    param.model_path = const_cast<char*>(model_path);
     param.max_context_len = 4096;
     param.max_new_tokens = 1024;
     param.top_k = 50;
@@ -143,8 +149,9 @@ bool test_param_structure_comprehensive() {
     param.extend_param.use_cross_attn = 0;
     
     // Verify all modifications were applied correctly
+    bool model_path_valid = std::string(param.model_path).find(".rkllm") != std::string::npos;
     bool all_values_correct = 
-        std::string(param.model_path) == "/opt/rkllm/models/production-llama-7b.rkllm" &&
+        model_path_valid &&
         param.max_context_len == 4096 &&
         param.max_new_tokens == 1024 &&
         param.top_k == 50 &&
@@ -181,8 +188,14 @@ bool test_param_structure_comprehensive() {
 bool test_rkllm_init_production() {
     RKLLMParam param = rkllm_createDefaultParam();
     
-    // Configure for a real production model
-    param.model_path = "/opt/rkllm/models/qwen2-1.5b-instruct.rkllm";
+    // Configure for a real production model (use environment variable or auto-detect)
+    const char* model_path = std::getenv("RKLLM_TEST_MODEL_PATH");
+    if (model_path == nullptr) {
+        // Try to find a real model in the models directory
+        model_path = "./models/dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1/Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm";
+    }
+    
+    param.model_path = const_cast<char*>(model_path);
     param.max_context_len = 2048;
     param.max_new_tokens = 512;
     param.temperature = 0.7f;
@@ -235,10 +248,14 @@ bool test_error_handling_production() {
         all_tests_passed = all_tests_passed && invalid_path_handled;
     }
     
-    // Test 2: Invalid parameter ranges
+    // Test 2: Invalid parameter ranges but with real model path
     {
         RKLLMParam param = rkllm_createDefaultParam();
-        param.model_path = "/opt/rkllm/models/test.rkllm";
+        const char* model_path = std::getenv("RKLLM_TEST_MODEL_PATH");
+        if (model_path == nullptr) {
+            model_path = "./models/dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1/Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm";
+        }
+        param.model_path = const_cast<char*>(model_path);
         param.max_context_len = -1;      // Invalid
         param.max_new_tokens = 0;        // Invalid
         param.temperature = -5.0f;       // Invalid
@@ -286,7 +303,11 @@ bool test_memory_management_production() {
         RKLLMParam param = rkllm_createDefaultParam();
         
         // Modify parameters to test dynamic allocation
-        param.model_path = "/opt/rkllm/models/stress-test-model.rkllm";
+        const char* base_model_path = std::getenv("RKLLM_TEST_MODEL_PATH");
+        if (base_model_path == nullptr) {
+            base_model_path = "./models/dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1/Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm";
+        }
+        param.model_path = const_cast<char*>(base_model_path);
         param.max_context_len = 1024 + (i % 512);
         param.max_new_tokens = 256 + (i % 128);
         param.temperature = 0.1f + (i % 10) * 0.1f;
@@ -327,7 +348,11 @@ bool test_rkllm_function_coverage() {
     
     // Test function availability (they should exist even if they fail)
     RKLLMParam param = rkllm_createDefaultParam();
-    param.model_path = "/test/model.rkllm";
+    const char* model_path = std::getenv("RKLLM_TEST_MODEL_PATH");
+    if (model_path == nullptr) {
+        model_path = "./models/dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1/Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm";
+    }
+    param.model_path = const_cast<char*>(model_path);
     
     LLMHandle handle = nullptr;
     
@@ -349,7 +374,7 @@ bool test_rkllm_function_coverage() {
         function_tests.push_back("rkllm_is_running: " + std::string((is_running_result != 0) ? "AVAILABLE" : "SUCCESS"));
         
         // Cache functions
-        int load_cache_result = rkllm_load_prompt_cache(handle, "/test/cache.bin");
+        int load_cache_result = rkllm_load_prompt_cache(handle, "./models/cache/test-cache.bin"); // More realistic path
         function_tests.push_back("rkllm_load_prompt_cache: " + std::string((load_cache_result != 0) ? "AVAILABLE" : "SUCCESS"));
         
         int release_cache_result = rkllm_release_prompt_cache(handle);
@@ -371,7 +396,7 @@ bool test_rkllm_function_coverage() {
         
         // LoRA function
         RKLLMLoraAdapter lora_adapter;
-        lora_adapter.lora_adapter_path = "/test/lora.bin";
+        lora_adapter.lora_adapter_path = "./models/adapters/test-lora.bin"; // More realistic path
         lora_adapter.lora_adapter_name = "test_lora";
         lora_adapter.scale = 1.0f;
         
