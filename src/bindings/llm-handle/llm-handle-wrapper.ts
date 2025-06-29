@@ -17,6 +17,10 @@ import {
   type RKLLMExtendParam as CanonicalRKLLMExtendParam,
   type RKLLMParam as CanonicalRKLLMParam,
   type RKLLMInput as CanonicalRKLLMInput,
+  type RKLLMLoraAdapter as CanonicalRKLLMLoraAdapter,
+  type RKLLMEmbedInput as CanonicalRKLLMEmbedInput,
+  type RKLLMTokenInput as CanonicalRKLLMTokenInput,
+  type RKLLMMultiModelInput as CanonicalRKLLMMultiModelInput,
 } from '../../rkllm-types/rkllm-types.js';
 
 // Re-export canonical types for backward compatibility
@@ -29,10 +33,13 @@ export { LLMCallState, RKLLMInputType, RKLLMInferMode, CPU_MASKS };
 /**
  * Convert canonical camelCase types to C API snake_case format
  * This is the only place where type conversion happens - single source of truth
+ * 
+ * Note: These are conversion target interfaces (snake_case) used only for C API interop.
+ * The canonical types (camelCase) in rkllm-types/ are the single source of truth.
  */
 
-// C API compatible interfaces (snake_case naming)
-export interface RKLLMExtendParam {
+// C API compatible interfaces (snake_case naming) - Used only for conversion targets
+export interface C_RKLLMExtendParam {
   base_domain_id: number;
   embed_flash: number;
   enabled_cpus_num: number;
@@ -42,7 +49,7 @@ export interface RKLLMExtendParam {
   reserved: Uint8Array;  // 104 bytes reserved
 }
 
-export interface RKLLMParam {
+export interface C_RKLLMParam {
   model_path: string;
   max_context_len: number;
   max_new_tokens: number;
@@ -61,26 +68,26 @@ export interface RKLLMParam {
   img_start?: string;
   img_end?: string;
   img_content?: string;
-  extend_param: RKLLMExtendParam;
+  extend_param: C_RKLLMExtendParam;
 }
 
-export interface RKLLMLoraAdapter {
+export interface C_RKLLMLoraAdapter {
   lora_adapter_path: string;
   lora_adapter_name: string;
   scale: number;
 }
 
-export interface RKLLMEmbedInput {
+export interface C_RKLLMEmbedInput {
   embed: Float32Array;
   n_tokens: number;
 }
 
-export interface RKLLMTokenInput {
+export interface C_RKLLMTokenInput {
   input_ids: Int32Array;
   n_tokens: number;
 }
 
-export interface RKLLMMultiModelInput {
+export interface C_RKLLMMultiModelInput {
   prompt: string;
   image_embed: Float32Array;
   n_image_tokens: number;
@@ -89,20 +96,24 @@ export interface RKLLMMultiModelInput {
   image_height: number;
 }
 
-export interface RKLLMInput {
+export interface C_RKLLMInput {
   role?: string;
   enable_thinking?: boolean;
   input_type: RKLLMInputType;
   prompt_input?: string;
-  embed_input?: RKLLMEmbedInput;
-  token_input?: RKLLMTokenInput;
-  multimodal_input?: RKLLMMultiModelInput;
+  embed_input?: C_RKLLMEmbedInput;
+  token_input?: C_RKLLMTokenInput;
+  multimodal_input?: C_RKLLMMultiModelInput;
 }
+
+// ============================================================================
+// Conversion Functions: Canonical Types → C API Types
+// ============================================================================
 
 /**
  * Convert canonical TypeScript types to C API format
  */
-export function toC_RKLLMExtendParam(canonical: CanonicalRKLLMExtendParam): RKLLMExtendParam {
+export function toC_RKLLMExtendParam(canonical: CanonicalRKLLMExtendParam): C_RKLLMExtendParam {
   return {
     base_domain_id: canonical.baseDomainId,
     embed_flash: canonical.embedFlash ? 1 : 0,
@@ -114,8 +125,8 @@ export function toC_RKLLMExtendParam(canonical: CanonicalRKLLMExtendParam): RKLL
   };
 }
 
-export function toC_RKLLMParam(canonical: CanonicalRKLLMParam): RKLLMParam {
-  const result: RKLLMParam = {
+export function toC_RKLLMParam(canonical: CanonicalRKLLMParam): C_RKLLMParam {
+  const result: C_RKLLMParam = {
     model_path: canonical.modelPath,
     max_context_len: canonical.maxContextLen,
     max_new_tokens: canonical.maxNewTokens,
@@ -147,8 +158,8 @@ export function toC_RKLLMParam(canonical: CanonicalRKLLMParam): RKLLMParam {
   return result;
 }
 
-export function toC_RKLLMInput(canonical: CanonicalRKLLMInput): RKLLMInput {
-  const result: RKLLMInput = {
+export function toC_RKLLMInput(canonical: CanonicalRKLLMInput): C_RKLLMInput {
+  const result: C_RKLLMInput = {
     input_type: canonical.inputType,
   };
 
@@ -188,6 +199,14 @@ export function toC_RKLLMInput(canonical: CanonicalRKLLMInput): RKLLMInput {
   }
 
   return result;
+}
+
+export function toC_RKLLMLoraAdapter(canonical: CanonicalRKLLMLoraAdapter): C_RKLLMLoraAdapter {
+  return {
+    lora_adapter_path: canonical.loraAdapterPath,
+    lora_adapter_name: canonical.loraAdapterName,
+    scale: canonical.scale,
+  };
 }
 
 // ============================================================================
