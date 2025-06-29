@@ -38,7 +38,20 @@ export function requireNativeBindings(testContext?: any): boolean {
     }
     return false;
   }
-  return true;
+  
+  // Additional check: Model availability
+  try {
+    getTestModelPath();
+    console.log('✅ Native bindings and test model available');
+    return true;
+  } catch (error) {
+    console.log('⚠️  Skipping test - no test model available');
+    console.log('   Download a model first: npm run setup-test');
+    if (typeof testContext?.skip === 'function') {
+      testContext.skip();
+    }
+    return false;
+  }
 }
 
 /**
@@ -113,19 +126,121 @@ export function isCompatibleHardware(): boolean {
 }
 
 /**
- * Production test configuration with real settings
+ * Check if all requirements are met for production testing
+ */
+export function canRunProductionTests(): boolean {
+  try {
+    // Check 1: Native bindings available
+    if (!areNativeBindingsAvailable()) {
+      console.log('❌ Native bindings not available');
+      return false;
+    }
+    
+    // Check 2: Compatible hardware
+    if (!isCompatibleHardware()) {
+      console.log('❌ Not on compatible hardware');
+      return false;
+    }
+    
+    // Check 3: Test model available
+    try {
+      const modelPath = getTestModelPath();
+      console.log(`✅ All requirements met - model: ${modelPath}`);
+      return true;
+    } catch (error) {
+      console.log('❌ No test model available');
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ Error checking requirements:', error);
+    return false;
+  }
+}
+
+/**
+ * Skip test with detailed reason if requirements not met
+ */
+export function skipIfRequirementsNotMet(testName: string): boolean {
+  if (!canRunProductionTests()) {
+    console.log(`⏭️  Skipping test '${testName}' - requirements not met`);
+    console.log('💡 For production testing, ensure:');
+    console.log('   1. Running on RK3588 hardware');
+    console.log('   2. Native bindings built: npm run build:native');
+    console.log('   3. Test model available: npm run setup-test');
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Production test configuration with memory-optimized settings for RK3588
+ * Tuned to work with NPU memory constraints
  */
 export const PRODUCTION_TEST_CONFIG = {
-  maxContextLen: 512,
-  maxNewTokens: 50,
-  topK: 40,
+  maxContextLen: 256,     // Reduced from 512 to minimize memory usage
+  maxNewTokens: 32,       // Reduced from 50 to minimize memory usage  
+  topK: 20,              // Reduced from 40 to minimize computation
   topP: 0.9,
   temperature: 0.7,
   repeatPenalty: 1.1,
-  cpuMask: 0x0F, // Use CPUs 0-3
+  cpuMask: 0x03,         // Use only CPUs 0-1 to reduce memory pressure
+  enabledCpusNum: 2,     // Limit to 2 CPU cores
+  nBatch: 1,             // Use batch size 1 to minimize memory
   isAsync: false,
   enableProfiler: true,
+  
+  // Extended parameters for memory optimization
+  extendParam: {
+    baseDomainId: 0,
+    embedFlash: true,    // Use flash memory for embeddings to save RAM
+    enabledCpusNum: 2,   // Limit CPU cores
+    enabledCpusMask: 0x03, // Binary: 11 (use CPU 0,1)
+    nBatch: 1,           // Minimize batch size
+    useCrossAttn: false,
+  }
 };
+
+/**
+ * Memory-optimized configuration for NPU tests
+ * Reduces memory usage to avoid allocation failures
+ */
+export const MEMORY_OPTIMIZED_CONFIG = {
+  maxContextLen: 512,    // Reduced from 2048
+  maxNewTokens: 128,     // Reduced from 512
+  temperature: 0.7,
+  topP: 0.9,
+  topK: 40,
+  nKeep: 0,
+  repeatPenalty: 1.1,
+  frequencyPenalty: 0.0,
+  presencePenalty: 0.0,
+  mirostat: 0,
+  mirostatTau: 5.0,
+  mirostatEta: 0.1,
+  skipSpecialToken: false,
+  isAsync: false,
+  extendParam: {
+    baseDomainId: 0,
+    embedFlash: false,
+    enabledCpusNum: 3,      // Use fewer CPUs to reduce memory
+    enabledCpusMask: 0x07,  // First 3 CPUs only
+    nBatch: 1,              // Minimal batch size
+    useCrossAttn: false,
+  }
+};
+
+/**
+ * Force cleanup NPU memory and garbage collection
+ */
+export async function forceMemoryCleanup(): Promise<void> {
+  // Force garbage collection if available
+  if (global.gc) {
+    global.gc();
+  }
+  
+  // Allow NPU memory to be released
+  await new Promise(resolve => setTimeout(resolve, 300));
+}
 
 /**
  * Real test prompts for production testing
@@ -142,6 +257,8 @@ export default {
   requireNativeBindings,
   getTestModelPath,
   isCompatibleHardware,
+  canRunProductionTests,
+  skipIfRequirementsNotMet,
   PRODUCTION_TEST_CONFIG,
   PRODUCTION_TEST_PROMPTS,
 };

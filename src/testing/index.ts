@@ -15,8 +15,12 @@ export {
   requireNativeBindings,
   getTestModelPath,
   isCompatibleHardware,
+  canRunProductionTests,
+  skipIfRequirementsNotMet,
   PRODUCTION_TEST_CONFIG,
-  PRODUCTION_TEST_PROMPTS
+  PRODUCTION_TEST_PROMPTS,
+  MEMORY_OPTIMIZED_CONFIG,
+  forceMemoryCleanup
 } from './test-utils.js';
 
 // Import for factory function
