@@ -51,12 +51,17 @@ detect_nodejs() {
 
 # Install Node.js via NodeSource repository (Ubuntu/Debian)
 install_nodejs_nodesource() {
-    local version="${1:-20}"  # Default to Node 20 LTS
+    log_install "Installing latest Node.js LTS via NodeSource repository"
     
-    log_install "Installing Node.js v$version via NodeSource repository"
+    # Get the latest LTS version major number for setup script
+    local latest_lts_version
+    latest_lts_version=$(fetch_latest_nodejs_version "lts")
+    local major_version=$(echo "$latest_lts_version" | cut -d. -f1)
+    
+    log_info "Installing Node.js v$latest_lts_version (latest LTS)"
     
     # Download and install the NodeSource repository
-    if ! curl -fsSL https://deb.nodesource.com/setup_${version}.x | sudo -E bash -; then
+    if ! curl -fsSL https://deb.nodesource.com/setup_${major_version}.x | sudo -E bash -; then
         log_error "Failed to add NodeSource repository"
         return 1
     fi
@@ -67,7 +72,7 @@ install_nodejs_nodesource() {
         return 1
     fi
     
-    log_success "Node.js installed via NodeSource"
+    log_success "Node.js v$latest_lts_version installed via NodeSource"
     return 0
 }
 
@@ -76,7 +81,7 @@ install_nodejs_package_manager() {
     log_install "Installing Node.js via system package manager"
     
     case "$OS" in
-        ubuntu|debian)
+        ubuntu|debian|armbian)
             # Try to install recent version
             if ! install_packages nodejs npm; then
                 log_error "Failed to install Node.js via apt"
@@ -123,9 +128,13 @@ install_nodejs_package_manager() {
 
 # Install Node.js via Node Version Manager (nvm)
 install_nodejs_nvm() {
-    local version="${1:-20}"
+    log_install "Installing latest Node.js LTS via NVM"
     
-    log_install "Installing Node.js v$version via NVM"
+    # Get latest LTS version
+    local latest_lts_version
+    latest_lts_version=$(fetch_latest_nodejs_version "lts")
+    
+    log_info "Installing Node.js v$latest_lts_version (latest LTS)"
     
     # Check if nvm is already installed
     if [[ ! -f "$HOME/.nvm/nvm.sh" ]]; then
@@ -148,23 +157,23 @@ install_nodejs_nvm() {
     fi
     
     # Install Node.js
-    if ! nvm install "$version"; then
+    if ! nvm install "$latest_lts_version"; then
         log_error "Failed to install Node.js via NVM"
         return 1
     fi
     
     # Use the installed version
-    if ! nvm use "$version"; then
-        log_error "Failed to use Node.js v$version"
+    if ! nvm use "$latest_lts_version"; then
+        log_error "Failed to use Node.js v$latest_lts_version"
         return 1
     fi
     
     # Set as default
-    if ! nvm alias default "$version"; then
-        log_warning "Could not set Node.js v$version as default"
+    if ! nvm alias default "$latest_lts_version"; then
+        log_warning "Could not set Node.js v$latest_lts_version as default"
     fi
     
-    log_success "Node.js v$version installed via NVM"
+    log_success "Node.js v$latest_lts_version installed via NVM"
     return 0
 }
 
@@ -178,12 +187,13 @@ install_nodejs() {
         return 0
     fi
     
-    # Determine installation method based on OS
+    # Determine installation method based on OS and architecture
     local installation_method="package_manager"
     
     case "$OS" in
-        ubuntu|debian)
-            # For Ubuntu/Debian, try NodeSource for newer versions
+        ubuntu|debian|armbian)
+            # For Ubuntu/Debian/Armbian, try NodeSource for newer versions
+            # NodeSource has good ARM64 support
             installation_method="nodesource"
             ;;
         macos)
@@ -199,6 +209,19 @@ install_nodejs() {
             installation_method="package_manager"
             ;;
     esac
+    
+    # Special optimization for ARM64/RK3588 systems
+    if is_arm64_optimized; then
+        log_info "ARM64 system detected - optimizing Node.js installation"
+        if [[ "$SYSTEM_ARCH" == "rk3588" ]]; then
+            log_info "RK3588 detected - using optimized installation strategy for Orange Pi 5 Plus"
+        fi
+        
+        # For ARM64, prefer NVM as fallback since it compiles specifically for the architecture
+        if [[ "$installation_method" == "nodesource" ]]; then
+            log_debug "Primary: NodeSource, Fallback: NVM (ARM64 optimized)"
+        fi
+    fi
     
     # Try the primary installation method
     local success=false

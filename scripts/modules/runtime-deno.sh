@@ -179,19 +179,19 @@ install_deno_github() {
             ;;
     esac
     
-    # Get latest release version
+    # Get latest release version using the core function
     local latest_version
-    latest_version=$(curl -s https://api.github.com/repos/denoland/deno/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+    latest_version=$(fetch_latest_deno_version)
     
     if [[ -z "$latest_version" ]]; then
         log_error "Could not determine latest Deno version"
         return 1
     fi
     
-    log_info "Installing Deno $latest_version"
+    log_info "Installing Deno v$latest_version (latest)"
     
     # Download URL
-    local download_url="https://github.com/denoland/deno/releases/download/${latest_version}/deno-${deno_arch}-unknown-${os_name}-gnu.zip"
+    local download_url="https://github.com/denoland/deno/releases/download/v${latest_version}/deno-${deno_arch}-unknown-${os_name}-gnu.zip"
     local temp_dir
     temp_dir=$(create_temp_dir "deno")
     local zip_file="$temp_dir/deno.zip"
@@ -298,7 +298,7 @@ check_deno_system_requirements() {
     
     # Check OS compatibility
     case "$OS" in
-        ubuntu|debian|rhel|arch|suse|macos)
+        ubuntu|debian|armbian|rhel|arch|suse|macos)
             log_debug "OS $OS is compatible with Deno"
             ;;
         *)

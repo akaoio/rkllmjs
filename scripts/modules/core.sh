@@ -307,7 +307,154 @@ init_core() {
     # Create cleanup trap
     trap cleanup_temp_dir EXIT
     
+    # Detect architecture for optimizations
+    detect_architecture
+    
     log_debug "Core module initialized"
+}
+
+# Architecture detection and optimization
+detect_architecture() {
+    local arch=$(uname -m)
+    local cpu_info=""
+    
+    # Get CPU info if available
+    if [[ -f /proc/cpuinfo ]]; then
+        cpu_info=$(grep -i "model name\|cpu part" /proc/cpuinfo | head -1 | cut -d: -f2 | xargs)
+    fi
+    
+    # Check for RK3588 specifically
+    if [[ "$cpu_info" == *"RK3588"* ]] || [[ -f /proc/device-tree/compatible ]] && grep -q "rockchip,rk3588" /proc/device-tree/compatible 2>/dev/null; then
+        export SYSTEM_ARCH="rk3588"
+        export SYSTEM_ARCH_FAMILY="arm64"
+        log_info "Detected RK3588 ARM64 architecture (optimized for Orange Pi 5 Plus)"
+    else
+        case "$arch" in
+            x86_64|amd64)
+                export SYSTEM_ARCH="x86_64"
+                export SYSTEM_ARCH_FAMILY="x86_64"
+                ;;
+            aarch64|arm64)
+                export SYSTEM_ARCH="aarch64"
+                export SYSTEM_ARCH_FAMILY="arm64"
+                ;;
+            armv7l|armv6l)
+                export SYSTEM_ARCH="arm32"
+                export SYSTEM_ARCH_FAMILY="arm32"
+                ;;
+            *)
+                export SYSTEM_ARCH="$arch"
+                export SYSTEM_ARCH_FAMILY="unknown"
+                log_warning "Unknown architecture: $arch"
+                ;;
+        esac
+    fi
+    
+    log_debug "Architecture: $SYSTEM_ARCH ($SYSTEM_ARCH_FAMILY)"
+}
+
+# Latest version fetching utilities
+fetch_latest_nodejs_version() {
+    local version_type="${1:-lts}"  # lts, current, or specific major version
+    
+    log_debug "Fetching latest Node.js version ($version_type)"
+    
+    # For LTS versions, use the Node.js API
+    if [[ "$version_type" == "lts" ]]; then
+        local latest_version
+        latest_version=$(curl -s https://nodejs.org/dist/index.json | grep -o '"version":"[^"]*' | head -1 | cut -d'"' -f4 | sed 's/^v//')
+        
+        if [[ -n "$latest_version" ]]; then
+            echo "$latest_version"
+        else
+            # Fallback to known stable version
+            echo "20.11.0"
+        fi
+    elif [[ "$version_type" == "current" ]]; then
+        # Get the latest current version
+        local latest_version
+        latest_version=$(curl -s https://nodejs.org/dist/index.json | grep -o '"version":"[^"]*' | head -1 | cut -d'"' -f4 | sed 's/^v//')
+        echo "${latest_version:-21.6.0}"
+    else
+        # Specific major version (e.g., "20" for Node 20.x)
+        local major_version="$version_type"
+        local latest_version
+        latest_version=$(curl -s https://nodejs.org/dist/index.json | grep -o '"version":"v'${major_version}'[^"]*' | head -1 | cut -d'"' -f4 | sed 's/^v//')
+        echo "${latest_version:-${major_version}.0.0}"
+    fi
+}
+
+fetch_latest_bun_version() {
+    log_debug "Fetching latest Bun version"
+    
+    local latest_version
+    latest_version=$(curl -s https://api.github.com/repos/oven-sh/bun/releases/latest | grep '"tag_name"' | cut -d'"' -f4 | sed 's/^bun-v//')
+    
+    if [[ -n "$latest_version" ]]; then
+        echo "$latest_version"
+    else
+        # Fallback to known stable version
+        echo "1.0.25"
+    fi
+}
+
+fetch_latest_deno_version() {
+    log_debug "Fetching latest Deno version"
+    
+    local latest_version
+    latest_version=$(curl -s https://api.github.com/repos/denoland/deno/releases/latest | grep '"tag_name"' | cut -d'"' -f4 | sed 's/^v//')
+    
+    if [[ -n "$latest_version" ]]; then
+        echo "$latest_version"
+    else
+        # Fallback to known stable version
+        echo "1.40.0"
+    fi
+}
+
+fetch_latest_yarn_version() {
+    local version_type="${1:-berry}"  # berry (4.x) or classic (1.x)
+    
+    log_debug "Fetching latest Yarn version ($version_type)"
+    
+    if [[ "$version_type" == "berry" ]]; then
+        # Get latest Yarn Berry (4.x)
+        local latest_version
+        latest_version=$(curl -s https://api.github.com/repos/yarnpkg/berry/releases/latest | grep '"tag_name"' | cut -d'"' -f4 | sed 's/^@yarnpkg\/cli\///')
+        echo "${latest_version:-4.0.2}"
+    else
+        # Get latest Yarn Classic (1.x)
+        local latest_version
+        latest_version=$(curl -s https://api.github.com/repos/yarnpkg/yarn/releases/latest | grep '"tag_name"' | cut -d'"' -f4 | sed 's/^v//')
+        echo "${latest_version:-1.22.19}"
+    fi
+}
+
+# Check if system is optimized for ARM64 compilation
+is_arm64_optimized() {
+    [[ "$SYSTEM_ARCH_FAMILY" == "arm64" ]] && return 0 || return 1
+}
+
+# Get optimal compilation flags for the current architecture
+get_arch_compile_flags() {
+    case "$SYSTEM_ARCH" in
+        rk3588)
+            # RK3588 specific optimizations
+            echo "-march=armv8-a+crc -mtune=cortex-a76 -mfpu=neon-fp-armv8 -O2"
+            ;;
+        aarch64)
+            # Generic ARM64 optimizations
+            echo "-march=armv8-a -mtune=generic -O2"
+            ;;
+        x86_64)
+            # Generic x86_64 optimizations
+            echo "-march=x86-64 -mtune=generic -O2"
+            ;;
+        *)
+            # Safe fallback
+            echo "-O2"
+            ;;
+    esac
 }
 
 # Initialize when module is loaded

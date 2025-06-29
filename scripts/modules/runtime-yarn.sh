@@ -95,9 +95,12 @@ install_yarn_corepack() {
         return 1
     fi
     
-    # Install latest Yarn
-    if corepack install -g yarn@stable; then
-        log_success "Yarn installed via Corepack"
+    # Install latest Yarn using dynamic version detection
+    local latest_yarn_version
+    latest_yarn_version=$(fetch_latest_yarn_version "berry")
+    
+    if corepack install -g yarn@$latest_yarn_version; then
+        log_success "Yarn v$latest_yarn_version (latest) installed via Corepack"
         return 0
     else
         log_error "Failed to install Yarn via Corepack"
@@ -149,7 +152,7 @@ install_yarn_package_manager() {
     log_install "Installing Yarn via package manager"
     
     case "$OS" in
-        ubuntu|debian)
+        ubuntu|debian|armbian)
             # Add Yarn repository and install
             if curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - && \
                echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list && \

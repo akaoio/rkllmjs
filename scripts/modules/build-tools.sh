@@ -94,7 +94,7 @@ get_build_packages() {
     local packages=()
     
     case "$OS" in
-        ubuntu|debian)
+        ubuntu|debian|armbian)
             packages+=(
                 "build-essential"
                 "cmake"
@@ -104,6 +104,25 @@ get_build_packages() {
                 "libffi-dev"
                 "python3-dev"
             )
+            
+            # Add ARM64/RK3588 specific packages for better performance
+            if is_arm64_optimized; then
+                packages+=(
+                    "gcc-aarch64-linux-gnu"
+                    "g++-aarch64-linux-gnu"
+                    "libc6-dev-arm64-cross"
+                )
+                log_info "Adding ARM64 cross-compilation tools for optimized builds"
+                
+                if [[ "$SYSTEM_ARCH" == "rk3588" ]]; then
+                    log_info "RK3588 detected - adding additional optimization packages"
+                    packages+=(
+                        "linux-libc-dev"
+                        "libdrm-dev"
+                        "libgbm-dev"
+                    )
+                fi
+            fi
             ;;
         rhel)
             packages+=(
@@ -247,6 +266,10 @@ install_build_essentials() {
     # Verify installation
     if check_build_tools; then
         log_success "Build tools installation completed and verified"
+        
+        # Setup architecture-specific build environment
+        setup_build_environment
+        
         return 0
     else
         log_error "Build tools installation verification failed"
@@ -261,7 +284,7 @@ install_python_dev() {
     local python_packages=()
     
     case "$OS" in
-        ubuntu|debian)
+        ubuntu|debian|armbian)
             python_packages+=("python3-dev" "python3-pip")
             ;;
         rhel)
@@ -437,4 +460,61 @@ show_build_info() {
     # Show architecture
     echo "  Architecture: $(uname -m)"
     echo "  Operating System: $OS"
+    
+    # Show system architecture details
+    if [[ -n "${SYSTEM_ARCH:-}" ]]; then
+        echo "  System Architecture: $SYSTEM_ARCH"
+        echo "  Architecture Family: $SYSTEM_ARCH_FAMILY"
+        
+        if [[ "$SYSTEM_ARCH" == "rk3588" ]]; then
+            echo "  🚀 RK3588 optimizations: ENABLED"
+            echo "  🎯 Target platform: Orange Pi 5 Plus"
+        fi
+    fi
+}
+
+# Setup architecture-specific build environment
+setup_build_environment() {
+    log_info "Setting up build environment for $SYSTEM_ARCH architecture"
+    
+    # Get optimal compile flags for this architecture
+    local compile_flags
+    compile_flags=$(get_arch_compile_flags)
+    
+    # Set environment variables for optimal compilation
+    export CFLAGS="${CFLAGS:-} $compile_flags"
+    export CXXFLAGS="${CXXFLAGS:-} $compile_flags"
+    
+    if [[ "$SYSTEM_ARCH" == "rk3588" ]]; then
+        log_info "Configuring RK3588 specific build optimizations"
+        
+        # RK3588 has 4x Cortex-A76 + 4x Cortex-A55 cores
+        # Set optimal parallel build jobs
+        local cpu_cores
+        cpu_cores=$(nproc 2>/dev/null || echo "8")
+        export MAKEFLAGS="${MAKEFLAGS:-} -j$cpu_cores"
+        
+        # RK3588 specific optimizations
+        export NPM_CONFIG_TARGET_ARCH="arm64"
+        export NPM_CONFIG_TARGET_PLATFORM="linux"
+        export NPM_CONFIG_DISTURL="https://electronjs.org/headers"
+        export NPM_CONFIG_RUNTIME="node"
+        export NPM_CONFIG_ARCH="arm64"
+        
+        # Python build optimizations for ARM64
+        export SETUPTOOLS_USE_DISTUTILS="stdlib"
+        
+        log_success "RK3588 build environment configured"
+    elif is_arm64_optimized; then
+        log_info "Configuring ARM64 build optimizations"
+        
+        # Generic ARM64 optimizations
+        export NPM_CONFIG_TARGET_ARCH="arm64"
+        export NPM_CONFIG_ARCH="arm64"
+        
+        log_success "ARM64 build environment configured"
+    fi
+    
+    # Show current build environment
+    show_build_info
 }

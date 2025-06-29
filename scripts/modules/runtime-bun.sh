@@ -50,7 +50,10 @@ detect_bun() {
 
 # Install Bun via official installer script
 install_bun_official() {
-    log_install "Installing Bun via official installer"
+    local latest_version
+    latest_version=$(fetch_latest_bun_version)
+    
+    log_install "Installing Bun v$latest_version (latest) via official installer"
     
     # Check if curl is available
     if ! command -v curl &> /dev/null; then
@@ -60,7 +63,7 @@ install_bun_official() {
     
     # Download and run the official Bun installer
     if curl -fsSL https://bun.sh/install | bash; then
-        log_success "Bun installed via official installer"
+        log_success "Bun v$latest_version installed via official installer"
         
         # Add to PATH for current session
         export PATH="$HOME/.bun/bin:$PATH"
@@ -185,7 +188,7 @@ check_bun_system_requirements() {
     
     # Check OS compatibility
     case "$OS" in
-        ubuntu|debian|rhel|arch|suse|macos)
+        ubuntu|debian|armbian|rhel|arch|suse|macos)
             log_debug "OS $OS is compatible with Bun"
             ;;
         *)

@@ -24,7 +24,21 @@ detect_os() {
                 case "$ID" in
                     ubuntu) OS="ubuntu" ;;
                     debian) OS="debian" ;;
-                    *) OS="ubuntu" ;; # Default to ubuntu for apt-based systems
+                    armbian) 
+                        OS="armbian" 
+                        # Armbian is Debian-based, so we'll use debian compatibility
+                        PACKAGE_MANAGER="apt"
+                        log_info "Detected Armbian - using Debian compatibility mode"
+                        ;;
+                    *) 
+                        # Check if it's Armbian by looking at pretty name
+                        if [[ "${PRETTY_NAME:-}" == *"Armbian"* ]]; then
+                            OS="armbian"
+                            log_info "Detected Armbian via PRETTY_NAME - using Debian compatibility mode"
+                        else
+                            OS="ubuntu" # Default to ubuntu for apt-based systems
+                        fi
+                        ;;
                 esac
             fi
         elif command -v yum &> /dev/null; then
@@ -79,7 +93,7 @@ detect_os() {
 # Check if OS is supported
 is_os_supported() {
     case "$OS" in
-        ubuntu|debian|rhel|arch|suse|macos) return 0 ;;
+        ubuntu|debian|armbian|rhel|arch|suse|macos) return 0 ;;
         *) return 1 ;;
     esac
 }
