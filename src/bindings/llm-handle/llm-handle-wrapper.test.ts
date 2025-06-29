@@ -23,7 +23,6 @@ import LLMHandleWrapper, {
   RKLLMCrossAttnParam,
   RKLLMInputType,
   RKLLMInferMode,
-  LLMCallState
 } from './llm-handle-wrapper';
 
 describe('LLMHandleWrapper Production Tests', () => {
@@ -39,7 +38,8 @@ describe('LLMHandleWrapper Production Tests', () => {
         const syncResult = LLMHandleWrapper.createDefaultParamSync();
         
         // Verify both results have identical structure
-        logger.expectation('async and sync results match', JSON.stringify(asyncResult), JSON.stringify(syncResult));
+        const resultsMatch = JSON.stringify(asyncResult) === JSON.stringify(syncResult);
+        logger.expectation(JSON.stringify(asyncResult), JSON.stringify(syncResult), resultsMatch);
         assert.deepEqual(asyncResult, syncResult);
         
         // Verify all required fields are present
@@ -85,7 +85,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         // Handle cross-platform development scenario
         if (error instanceof Error && error.message.includes('Failed to load native binding')) {
           logger.info('Native binding not available - this is expected on non-ARM64 platforms');
-          logger.testEnd('createDefaultParam comprehensive test', true, 'SKIPPED - Native binding unavailable');
+          logger.testEnd('createDefaultParam comprehensive test', true);
         } else {
           logger.error('createDefaultParam test failed', error instanceof Error ? error : new Error(String(error)));
           throw error;
@@ -104,14 +104,15 @@ describe('LLMHandleWrapper Production Tests', () => {
         
         // All parameters should be identical
         for (let i = 1; i < params.length; i++) {
-          logger.expectation(`parameters ${i} consistency`, params[0], params[i]);
+          const isConsistent = JSON.stringify(params[0]) === JSON.stringify(params[i]);
+          logger.expectation(JSON.stringify(params[0]), JSON.stringify(params[i]), isConsistent);
           assert.deepEqual(params[0], params[i]);
         }
         
         logger.testEnd('createDefaultParam consistency', true);
       } catch (error) {
         if (error instanceof Error && error.message.includes('Failed to load native binding')) {
-          logger.testEnd('createDefaultParam consistency', true, 'SKIPPED - Native binding unavailable');
+          logger.testEnd('createDefaultParam consistency', true);
         } else {
           logger.error('createDefaultParam consistency test failed', error instanceof Error ? error : new Error(String(error)));
           throw error;
@@ -172,7 +173,7 @@ describe('LLMHandleWrapper Production Tests', () => {
             if (initError.message.includes('Failed to load native binding') ||
                 initError.message.includes('Failed to initialize LLM')) {
               logger.info('LLM initialization failed - expected in development environment');
-              logger.testEnd('complete LLM lifecycle', true, 'SKIPPED - Development environment');
+              logger.testEnd('complete LLM lifecycle', true);
             } else {
               throw initError;
             }
@@ -229,7 +230,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         logger.testEnd('parameter validation', true);
       } catch (error) {
         if (error instanceof Error && error.message.includes('Failed to load native binding')) {
-          logger.testEnd('parameter validation', true, 'SKIPPED - Native binding unavailable');
+          logger.testEnd('parameter validation', true);
         } else {
           logger.error('parameter validation test failed', error instanceof Error ? error : new Error(String(error)));
           throw error;
@@ -266,7 +267,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         logger.testEnd('LoRA adapter loading', true);
       } catch (error) {
         if (error instanceof Error && error.message.includes('Failed to load native binding')) {
-          logger.testEnd('LoRA adapter loading', true, 'SKIPPED - Native binding unavailable');
+          logger.testEnd('LoRA adapter loading', true);
         } else {
           logger.error('LoRA adapter loading test failed', error instanceof Error ? error : new Error(String(error)));
           throw error;
@@ -283,12 +284,12 @@ describe('LLMHandleWrapper Production Tests', () => {
         const input: RKLLMInput = {
           role: 'user',
           enable_thinking: false,
-          input_type: RKLLMInputType.RKLLM_INPUT_PROMPT,
+          input_type: RKLLMInputType.PROMPT,
           prompt_input: 'What is the capital of France?'
         };
 
         const inferParams: RKLLMInferParam = {
-          mode: RKLLMInferMode.RKLLM_INFER_GENERATE,
+          mode: RKLLMInferMode.GENERATE,
           keep_history: 1
         };
 
@@ -308,7 +309,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         logger.testEnd('inference operations', true);
       } catch (error) {
         if (error instanceof Error && error.message.includes('Failed to load native binding')) {
-          logger.testEnd('inference operations', true, 'SKIPPED - Native binding unavailable');
+          logger.testEnd('inference operations', true);
         } else {
           logger.error('inference operations test failed', error instanceof Error ? error : new Error(String(error)));
           throw error;
@@ -323,7 +324,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         const multimodalInput: RKLLMInput = {
           role: 'user',
           enable_thinking: false,
-          input_type: RKLLMInputType.RKLLM_INPUT_MULTIMODAL,
+          input_type: RKLLMInputType.MULTIMODAL,
           multimodal_input: {
             prompt: 'Describe this image',
             image_embed: new Float32Array([0.1, 0.2, 0.3, 0.4]), // Sample embedding
@@ -335,7 +336,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         };
 
         const tokenInput: RKLLMInput = {
-          input_type: RKLLMInputType.RKLLM_INPUT_TOKEN,
+          input_type: RKLLMInputType.TOKEN,
           token_input: {
             input_ids: new Int32Array([1, 2, 3, 4, 5]),
             n_tokens: 5
@@ -343,7 +344,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         };
 
         const embedInput: RKLLMInput = {
-          input_type: RKLLMInputType.RKLLM_INPUT_EMBED,
+          input_type: RKLLMInputType.EMBED,
           embed_input: {
             embed: new Float32Array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6]),
             n_tokens: 2  // 2 tokens with 3-dimensional embeddings
@@ -351,14 +352,14 @@ describe('LLMHandleWrapper Production Tests', () => {
         };
 
         // Verify input structure
-        logger.expectation('multimodal input type', multimodalInput.input_type, RKLLMInputType.RKLLM_INPUT_MULTIMODAL);
-        assert.strictEqual(multimodalInput.input_type, RKLLMInputType.RKLLM_INPUT_MULTIMODAL);
+        logger.expectation(multimodalInput.input_type, RKLLMInputType.MULTIMODAL, multimodalInput.input_type === RKLLMInputType.MULTIMODAL);
+        assert.strictEqual(multimodalInput.input_type, RKLLMInputType.MULTIMODAL);
         
-        logger.expectation('token input type', tokenInput.input_type, RKLLMInputType.RKLLM_INPUT_TOKEN);
-        assert.strictEqual(tokenInput.input_type, RKLLMInputType.RKLLM_INPUT_TOKEN);
+        logger.expectation(tokenInput.input_type, RKLLMInputType.TOKEN, tokenInput.input_type === RKLLMInputType.TOKEN);
+        assert.strictEqual(tokenInput.input_type, RKLLMInputType.TOKEN);
         
-        logger.expectation('embed input type', embedInput.input_type, RKLLMInputType.RKLLM_INPUT_EMBED);
-        assert.strictEqual(embedInput.input_type, RKLLMInputType.RKLLM_INPUT_EMBED);
+        logger.expectation(embedInput.input_type, RKLLMInputType.EMBED, embedInput.input_type === RKLLMInputType.EMBED);
+        assert.strictEqual(embedInput.input_type, RKLLMInputType.EMBED);
         
         logger.testEnd('multimodal input support', true);
       } catch (error) {
@@ -394,7 +395,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         logger.testEnd('chat template configuration', true);
       } catch (error) {
         if (error instanceof Error && error.message.includes('Failed to load native binding')) {
-          logger.testEnd('chat template configuration', true, 'SKIPPED - Native binding unavailable');
+          logger.testEnd('chat template configuration', true);
         } else {
           logger.error('chat template configuration test failed', error instanceof Error ? error : new Error(String(error)));
           throw error;
@@ -441,7 +442,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         logger.testEnd('function calling tools', true);
       } catch (error) {
         if (error instanceof Error && error.message.includes('Failed to load native binding')) {
-          logger.testEnd('function calling tools', true, 'SKIPPED - Native binding unavailable');
+          logger.testEnd('function calling tools', true);
         } else {
           logger.error('function calling tools test failed', error instanceof Error ? error : new Error(String(error)));
           throw error;
@@ -477,7 +478,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         logger.testEnd('cross-attention parameters', true);
       } catch (error) {
         if (error instanceof Error && error.message.includes('Failed to load native binding')) {
-          logger.testEnd('cross-attention parameters', true, 'SKIPPED - Native binding unavailable');
+          logger.testEnd('cross-attention parameters', true);
         } else {
           logger.error('cross-attention parameters test failed', error instanceof Error ? error : new Error(String(error)));
           throw error;
@@ -512,7 +513,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         logger.testEnd('invalid handle handling', true);
       } catch (error) {
         if (error instanceof Error && error.message.includes('Failed to load native binding')) {
-          logger.testEnd('invalid handle handling', true, 'SKIPPED - Native binding unavailable');
+          logger.testEnd('invalid handle handling', true);
         } else {
           logger.error('invalid handle handling test failed', error instanceof Error ? error : new Error(String(error)));
           throw error;
@@ -565,7 +566,7 @@ describe('LLMHandleWrapper Production Tests', () => {
         logger.testEnd('resource cleanup on errors', true);
       } catch (error) {
         if (error instanceof Error && error.message.includes('Failed to load native binding')) {
-          logger.testEnd('resource cleanup on errors', true, 'SKIPPED - Native binding unavailable');
+          logger.testEnd('resource cleanup on errors', true);
         } else {
           logger.error('resource cleanup test failed', error instanceof Error ? error : new Error(String(error)));
           throw error;

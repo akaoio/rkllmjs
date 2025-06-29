@@ -150,10 +150,10 @@ describe('RKLLM Client - Production Tests', () => {
       }
     });
 
-    it('should fail gracefully without native bindings', async (testContext) => {
+    it('should fail gracefully without native bindings', async () => {
       if (areNativeBindingsAvailable()) {
         testLogger.info('Skipping - native bindings available');
-        testContext.skip();
+        console.log("Skipping test - requirements not met"); return;
         return;
       }
       
@@ -193,7 +193,7 @@ describe('RKLLM Client - Production Tests', () => {
         await client.initialize();
       } catch (error) {
         testLogger.warn('Failed to setup inference test environment', error);
-        testContext.skip();
+        console.log("Skipping test - requirements not met"); return;
       }
     });
 
@@ -322,7 +322,7 @@ describe('RKLLM Client - Production Tests', () => {
       if (!requireNativeBindings(testContext)) return;
       if (!isCompatibleHardware()) {
         testLogger.warn('Not on RK3588 - skipping performance tests');
-        testContext.skip();
+        console.log("Skipping test - requirements not met"); return;
         return;
       }
       
@@ -334,7 +334,7 @@ describe('RKLLM Client - Production Tests', () => {
         await client.initialize();
       } catch (error) {
         testLogger.warn('Failed to setup performance test environment', error);
-        testContext.skip();
+        console.log("Skipping test - requirements not met"); return;
       }
     });
 

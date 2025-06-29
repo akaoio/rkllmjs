@@ -18,8 +18,8 @@ test('Test utils placeholder test', async () => {
     
     logger.testEnd('test-utils validation', true);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.testEnd('test-utils validation', false, 0, errorMessage);
+    logger.testEnd('test-utils validation', false);
+    logger.error('test-utils validation failed', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 });

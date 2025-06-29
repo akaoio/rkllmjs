@@ -31,7 +31,9 @@ import {
   LLMHandleWrapper,
   type RKLLMParam as MainRKLLMParam,
   type RKLLMInput as MainRKLLMInput,
-  type LLMHandle 
+  type LLMHandle,
+  toC_RKLLMParam,
+  toC_RKLLMInput
 } from '../bindings/llm-handle/llm-handle-wrapper.js';
 
 // ============================================================================
@@ -60,6 +62,14 @@ export interface InferenceOptions {
   onProgress?: (progress: number) => void; // Progress callback (0-1)
   signal?: AbortSignal;                 // Abort signal for cancellation
   timeout?: number;                     // Operation timeout in ms
+  
+  // Dynamic inference parameters (override client defaults)
+  maxNewTokens?: number;                // Override max tokens for this inference
+  temperature?: number;                 // Override temperature for this inference
+  topK?: number;                        // Override top-K for this inference
+  topP?: number;                        // Override top-P for this inference
+  repeatPenalty?: number;               // Override repeat penalty for this inference
+  enableProfiler?: boolean;             // Enable performance profiling for this inference
 }
 
 /**
@@ -696,7 +706,7 @@ export class RKLLMClient extends EventEmitter {
       const mainParam = await LLMHandleWrapper.createDefaultParam();
       
       // Convert from main branch's format to our format
-      return {
+      const result: RKLLMParam = {
         modelPath: modelPath || mainParam.model_path || '',
         maxContextLen: mainParam.max_context_len,
         maxNewTokens: mainParam.max_new_tokens,
@@ -712,9 +722,6 @@ export class RKLLMClient extends EventEmitter {
         skipSpecialToken: mainParam.skip_special_token || false,
         isAsync: mainParam.is_async !== undefined ? mainParam.is_async : true,
         nKeep: 0, // Not in main param, use default
-        imgStart: mainParam.img_start,
-        imgEnd: mainParam.img_end,
-        imgContent: mainParam.img_content,
         extendParam: {
           baseDomainId: mainParam.extend_param.base_domain_id,
           embedFlash: mainParam.extend_param.embed_flash !== 0,
@@ -724,6 +731,19 @@ export class RKLLMClient extends EventEmitter {
           useCrossAttn: mainParam.extend_param.use_cross_attn !== 0,
         },
       };
+
+      // Only assign optional fields if they exist
+      if (mainParam.img_start !== undefined) {
+        result.imgStart = mainParam.img_start;
+      }
+      if (mainParam.img_end !== undefined) {
+        result.imgEnd = mainParam.img_end;
+      }
+      if (mainParam.img_content !== undefined) {
+        result.imgContent = mainParam.img_content;
+      }
+
+      return result;
     } catch (error) {
       // Fallback to hardcoded defaults if LLMHandleWrapper not available
       return {
@@ -833,104 +853,72 @@ export class RKLLMClient extends EventEmitter {
    * Convert client config to main branch's RKLLMParam format
    */
   private convertToMainParam(config: RKLLMClientConfig): MainRKLLMParam {
-    return {
-      model_path: config.modelPath,
-      max_context_len: config.maxContextLen ?? 4096,
-      max_new_tokens: config.maxNewTokens ?? 512,
-      top_k: config.topK ?? 40,
-      n_keep: config.nKeep ?? 0,
-      top_p: config.topP ?? 0.9,
+    // First convert to canonical format, then to C API format
+    const canonical: RKLLMParam = {
+      modelPath: config.modelPath,
+      maxContextLen: config.maxContextLen ?? 4096,
+      maxNewTokens: config.maxNewTokens ?? 512,
+      topK: config.topK ?? 40,
+      nKeep: config.nKeep ?? 0,
+      topP: config.topP ?? 0.9,
       temperature: config.temperature ?? 0.7,
-      repeat_penalty: config.repeatPenalty ?? 1.1,
-      frequency_penalty: config.frequencyPenalty ?? 0.0,
-      presence_penalty: config.presencePenalty ?? 0.0,
+      repeatPenalty: config.repeatPenalty ?? 1.1,
+      frequencyPenalty: config.frequencyPenalty ?? 0.0,
+      presencePenalty: config.presencePenalty ?? 0.0,
       mirostat: config.mirostat ?? 0,
-      mirostat_tau: config.mirostatTau ?? 5.0,
-      mirostat_eta: config.mirostatEta ?? 0.1,
-      skip_special_token: config.skipSpecialToken ?? false,
-      is_async: config.isAsync ?? true,
-      img_start: config.imgStart,
-      img_end: config.imgEnd,
-      img_content: config.imgContent,
-      extend_param: {
-        base_domain_id: config.extendParam?.baseDomainId ?? 0,
-        embed_flash: config.extendParam?.embedFlash ? 1 : 0,
-        enabled_cpus_num: config.extendParam?.enabledCpusNum ?? 4,
-        enabled_cpus_mask: config.extendParam?.enabledCpusMask ?? 0xFF,
-        n_batch: config.extendParam?.nBatch ?? 512,
-        use_cross_attn: config.extendParam?.useCrossAttn ? 1 : 0,
-        reserved: new Uint8Array(104) // 104 bytes reserved
-      }
+      mirostatTau: config.mirostatTau ?? 5.0,
+      mirostatEta: config.mirostatEta ?? 0.1,
+      skipSpecialToken: config.skipSpecialToken ?? false,
+      isAsync: config.isAsync ?? true,
+      extendParam: {
+        baseDomainId: config.extendParam?.baseDomainId ?? 0,
+        embedFlash: config.extendParam?.embedFlash ?? false,
+        enabledCpusNum: config.extendParam?.enabledCpusNum ?? 4,
+        enabledCpusMask: config.extendParam?.enabledCpusMask ?? 0xFF,
+        nBatch: config.extendParam?.nBatch ?? 512,
+        useCrossAttn: config.extendParam?.useCrossAttn ?? false,
+      },
     };
+
+    // Only assign optional fields if they exist
+    if (config.imgStart !== undefined) {
+      canonical.imgStart = config.imgStart;
+    }
+    if (config.imgEnd !== undefined) {
+      canonical.imgEnd = config.imgEnd;
+    }
+    if (config.imgContent !== undefined) {
+      canonical.imgContent = config.imgContent;
+    }
+
+    // Use the conversion function to handle optional fields properly
+    return toC_RKLLMParam(canonical);
   }
 
   /**
    * Convert client input to main branch's RKLLMInput format
    */
   private convertToMainInput(input: RKLLMInput): MainRKLLMInput {
-    return {
-      input_type: this.convertInputType(input.inputType),
-      prompt_input: input.promptInput,
-      embed_input: input.embedInput ? {
-        embed: input.embedInput.embed,
-        n_tokens: input.embedInput.nTokens
-      } : undefined,
-      token_input: input.tokenInput ? {
-        input_ids: input.tokenInput.inputIds,
-        n_tokens: input.tokenInput.nTokens
-      } : undefined,
-      multimodal_input: input.multimodalInput ? {
-        prompt: input.multimodalInput.prompt,
-        image_embed: input.multimodalInput.imageEmbed,
-        n_image_tokens: input.multimodalInput.nImageTokens,
-        n_image: input.multimodalInput.nImage,
-        image_width: input.multimodalInput.imageWidth,
-        image_height: input.multimodalInput.imageHeight
-      } : undefined
-    };
-  }
-
-  /**
-   * Convert input type enums between implementations
-   */
-  private convertInputType(inputType: RKLLMInputType): import('../bindings/llm-handle/llm-handle-wrapper.js').RKLLMInputType {
-    const { RKLLMInputType: MainRKLLMInputType } = require('../bindings/llm-handle/llm-handle-wrapper.js');
-    
-    switch (inputType) {
-      case RKLLMInputType.PROMPT:
-        return MainRKLLMInputType.RKLLM_INPUT_PROMPT;
-      case RKLLMInputType.TOKEN:
-        return MainRKLLMInputType.RKLLM_INPUT_TOKEN;
-      case RKLLMInputType.EMBED:
-        return MainRKLLMInputType.RKLLM_INPUT_EMBED;
-      case RKLLMInputType.MULTIMODAL:
-        return MainRKLLMInputType.RKLLM_INPUT_MULTIMODAL;
-      default:
-        return MainRKLLMInputType.RKLLM_INPUT_PROMPT;
-    }
+    // Use the conversion function to handle optional fields properly
+    return toC_RKLLMInput(input);
   }
 
   /**
    * Convert client infer params to main branch's format
    */
   private convertToMainInferParams(inferParams: RKLLMInferParam): import('../bindings/llm-handle/llm-handle-wrapper.js').RKLLMInferParam {
-    const { RKLLMInferMode: MainRKLLMInferMode } = require('../bindings/llm-handle/llm-handle-wrapper.js');
-    
-    // Convert mode enum
-    let mainMode = MainRKLLMInferMode.RKLLM_INFER_GENERATE; // default
-    if (inferParams.mode === RKLLMInferMode.GET_LAST_HIDDEN_LAYER) {
-      mainMode = MainRKLLMInferMode.RKLLM_INFER_GET_LAST_HIDDEN_LAYER;
-    } else if (inferParams.mode === RKLLMInferMode.GET_LOGITS) {
-      mainMode = MainRKLLMInferMode.RKLLM_INFER_GET_LOGITS;
-    }
-
-    return {
-      mode: mainMode,
-      lora_params: inferParams.loraParams ? [{
-        lora_adapter_name: inferParams.loraParams.loraAdapterName
-      }] : undefined,
+    const result: import('../bindings/llm-handle/llm-handle-wrapper.js').RKLLMInferParam = {
+      mode: inferParams.mode, // Enums are now unified, no conversion needed
       keep_history: inferParams.keepHistory ? 1 : 0
     };
+
+    if (inferParams.loraParams) {
+      result.lora_params = [{
+        lora_adapter_name: inferParams.loraParams.loraAdapterName
+      }];
+    }
+
+    return result;
   }
 }
 
