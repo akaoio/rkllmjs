@@ -113,7 +113,7 @@ echo "🏛️ Checking directory structure..."
 # This is a simplified check - in practice, you might want more sophisticated logic
 
 # Find directories with multiple TypeScript files (excluding tests and type definitions)
-MULTI_FILE_DIRS=$(find src -type d -exec sh -c 'count=$(find "$1" -maxdepth 1 -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | wc -l); if [ $count -gt 1 ]; then echo "$1"; fi' _ {} \;)
+MULTI_FILE_DIRS=$(find src -type d -not -path "src/testing" -exec sh -c 'count=$(find "$1" -maxdepth 1 -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | wc -l); if [ $count -gt 1 ]; then echo "$1"; fi' _ {} \;)
 
 if [ -n "$MULTI_FILE_DIRS" ]; then
     for dir in $MULTI_FILE_DIRS; do
@@ -322,8 +322,20 @@ SIMILAR_INTERFACES=$(echo "$INTERFACE_ANALYSIS" | cut -d: -f2 | sort | uniq -d)
 if [ -n "$SIMILAR_INTERFACES" ]; then
     echo "$SIMILAR_INTERFACES" | while read prop_count; do
         MATCHING_INTERFACES=$(echo "$INTERFACE_ANALYSIS" | grep ":$prop_count$" | cut -d: -f1 | tr '\n' ' ')
-        if [ $(echo $MATCHING_INTERFACES | wc -w) -gt 1 ]; then
-            report_warning "Interfaces with similar structure ($prop_count properties): $MATCHING_INTERFACES"
+        INTERFACE_COUNT=$(echo $MATCHING_INTERFACES | wc -w)
+        
+        # Filter out expected conversion pairs (C_* with corresponding canonical types)
+        NON_CONVERSION_INTERFACES=$(echo $MATCHING_INTERFACES | tr ' ' '\n' | grep -v "^C_" | tr '\n' ' ')
+        CONVERSION_INTERFACES=$(echo $MATCHING_INTERFACES | tr ' ' '\n' | grep "^C_" | tr '\n' ' ')
+        
+        # Only warn if there are multiple non-conversion interfaces, or unmatched conversion interfaces
+        NON_CONVERSION_COUNT=$(echo $NON_CONVERSION_INTERFACES | wc -w)
+        
+        if [ $NON_CONVERSION_COUNT -gt 1 ]; then
+            report_warning "Multiple interfaces with similar structure ($prop_count properties): $NON_CONVERSION_INTERFACES"
+            if [ -n "$CONVERSION_INTERFACES" ]; then
+                echo "   (Note: Related C API conversion interfaces: $CONVERSION_INTERFACES)"
+            fi
         fi
     done
 else

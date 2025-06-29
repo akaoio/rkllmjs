@@ -47,12 +47,12 @@ describe('Testing Module Integration', () => {
     assert.ok(true, 'Unified infrastructure should work seamlessly');
   });
 
-  test('should maintain backward compatibility', () => {
-    // All previous imports should still work
-    const { TestLogger: TL } = require('./test-logger.js');
-    const { areNativeBindingsAvailable: check } = require('./test-utils.js');
+  test('should maintain backward compatibility', async () => {
+    // All previous imports should still work with ESM
+    const testLoggerModule = await import('./test-logger.js');
+    const testUtilsModule = await import('./test-utils.js');
     
-    assert.ok(typeof TL === 'function');
-    assert.ok(typeof check === 'function');
+    assert.ok(typeof testLoggerModule.TestLogger === 'function');
+    assert.ok(typeof testUtilsModule.areNativeBindingsAvailable === 'function');
   });
 });
