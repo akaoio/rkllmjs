@@ -3,10 +3,10 @@
 # RKLLM.js Core Utilities Module
 # Provides core constants, utilities, and common functions
 
-# Script metadata
-readonly SCRIPT_NAME="RKLLM.js Development Setup"
-readonly SCRIPT_VERSION="1.0.0"
-readonly SCRIPT_DESCRIPTION="Interactive development environment setup for RKLLM.js"
+# Script metadata (conditionally set to avoid conflicts)
+[[ -z "${SCRIPT_NAME:-}" ]] && readonly SCRIPT_NAME="RKLLM.js Development Setup"
+[[ -z "${SCRIPT_VERSION:-}" ]] && readonly SCRIPT_VERSION="1.0.0"
+[[ -z "${SCRIPT_DESCRIPTION:-}" ]] && readonly SCRIPT_DESCRIPTION="Interactive development environment setup for RKLLM.js"
 
 # Colors for output
 readonly RED='\033[0;31m'

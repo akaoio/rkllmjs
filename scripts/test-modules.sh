@@ -18,7 +18,7 @@ else
 fi
 
 # Test loading each module individually
-modules=("core" "ui-responsive" "os-detection" "runtime-node")
+modules=("core" "ui-responsive" "os-detection" "runtime-node" "runtime-bun" "runtime-deno" "runtime-yarn" "build-tools")
 
 for module in "${modules[@]}"; do
     echo "Testing module: $module"
