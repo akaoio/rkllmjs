@@ -149,10 +149,29 @@ EOF
     report_success "Deno configuration created: deno.json"
 fi
 
-# Native module build (placeholder - to be implemented when C++ bindings are ready)
-report_status "Native module build (placeholder)..."
-report_warning "Native C++ bindings not yet implemented"
-report_warning "Will be built using N-API when ready"
+# Native module build (N-API bindings for RKLLM)
+report_status "Building native C++ N-API bindings..."
+if command -v node-gyp &> /dev/null; then
+    if node-gyp rebuild; then
+        report_success "Native bindings compiled successfully"
+    else
+        report_error "Native bindings compilation failed!"
+        report_warning "Falling back to JavaScript-only mode"
+    fi
+else
+    report_warning "node-gyp not found - installing..."
+    if npm install -g node-gyp; then
+        if node-gyp rebuild; then
+            report_success "Native bindings compiled successfully"
+        else
+            report_error "Native bindings compilation failed!"
+            report_warning "Falling back to JavaScript-only mode"
+        fi
+    else
+        report_error "Failed to install node-gyp"
+        report_warning "Falling back to JavaScript-only mode"
+    fi
+fi
 
 # Generate package information
 report_status "Generating build information..."

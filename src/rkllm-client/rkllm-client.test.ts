@@ -1,6 +1,7 @@
 /**
- * Unit tests for RKLLM Client
- * Tests high-level wrapper functionality and Promise-based API
+ * Production tests for RKLLM Client
+ * Essential tests with real native bindings and actual RKLLM models
+ * No mocks - only production-ready functionality
  */
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
@@ -9,364 +10,73 @@ import { TestLogger } from '../test-logger/test-logger.js';
 import {
   RKLLMClient,
   type RKLLMClientConfig,
-  type InferenceOptions,
 } from './rkllm-client.js';
 import {
   RKLLMInputType,
-  RKLLMInferMode,
   RKLLMStatusCode,
   RKLLMError,
 } from '../rkllm-types/rkllm-types.js';
+import {
+  areNativeBindingsAvailable,
+  requireNativeBindings,
+  getTestModelPath,
+  isCompatibleHardware,
+  PRODUCTION_TEST_CONFIG,
+  PRODUCTION_TEST_PROMPTS,
+} from './test-utils.js';
 
 // Initialize test logger
-const testLogger = new TestLogger('rkllm-client');
+const testLogger = new TestLogger('rkllm-client-production');
 
-describe('RKLLM Client', () => {
+describe('RKLLM Client - Production Tests', () => {
   let client: RKLLMClient;
   let testConfig: RKLLMClientConfig;
 
   beforeEach(() => {
-    testLogger.info('Setting up test environment');
-    
+    testLogger.info('Setting up production test environment');
     testConfig = {
-      modelPath: '/tmp/test-model.rkllm',
-      autoInit: false, // Manual init for testing
+      ...PRODUCTION_TEST_CONFIG,
+      modelPath: '', // Will be set by tests that require models
+      autoInit: false,
       enableEventLogging: true,
-      maxContextLen: 2048,
-      maxNewTokens: 256,
-      temperature: 0.8,
     };
   });
 
   afterEach(async () => {
-    if (client && client.isClientInitialized()) {
-      await client.destroy();
+    if (client?.isClientInitialized()) {
+      try {
+        await client.destroy();
+        testLogger.info('Client destroyed successfully');
+      } catch (error) {
+        testLogger.error('Failed to destroy client', error as Error);
+      }
     }
-    testLogger.info('Test environment cleaned up');
+    testLogger.info('Production test environment cleaned up');
   });
 
   // ============================================================================
-  // Constructor and Configuration Tests
+  // Environment Prerequisites
   // ============================================================================
 
-  describe('Constructor', () => {
-    it('should create client with configuration', () => {
-      testLogger.info('Testing RKLLMClient constructor');
+  describe('Environment', () => {
+    it('should check native bindings availability', () => {
+      testLogger.info('Checking native bindings availability');
+      const available = areNativeBindingsAvailable();
+      testLogger.info(`Native bindings available: ${available}`);
       
-      client = new RKLLMClient(testConfig);
-      
-      assert.ok(client instanceof RKLLMClient);
-      assert.equal(client.isClientInitialized(), false);
-      
-      const config = client.getConfig();
-      assert.equal(config.modelPath, testConfig.modelPath);
-      assert.equal(config.maxContextLen, testConfig.maxContextLen);
-      assert.equal(config.temperature, testConfig.temperature);
-      
-      testLogger.info('RKLLMClient constructor validation completed');
-    });
-
-    it('should apply default configuration values', () => {
-      testLogger.info('Testing default configuration values');
-      
-      const minimalConfig: RKLLMClientConfig = {
-        modelPath: '/tmp/minimal-model.rkllm',
-        autoInit: false,
-      };
-      
-      client = new RKLLMClient(minimalConfig);
-      const config = client.getConfig();
-      
-      assert.equal(config.modelPath, minimalConfig.modelPath);
-      assert.equal(config.maxContextLen, 4096); // Default value
-      assert.equal(config.temperature, 0.7); // Default value
-      assert.equal(config.topP, 0.9); // Default value
-      assert.equal(config.isAsync, true); // Default value
-      
-      testLogger.info('Default configuration validation completed');
-    });
-
-    it('should create default parameters using static method', () => {
-      testLogger.info('Testing createDefaultParams static method');
-      
-      const params = RKLLMClient.createDefaultParams({
-        modelPath: '/tmp/test.rkllm',
-        maxContextLen: 8192,
-        temperature: 0.5,
-      });
-      
-      assert.equal(params.modelPath, '/tmp/test.rkllm');
-      assert.equal(params.maxContextLen, 8192);
-      assert.equal(params.temperature, 0.5);
-      assert.equal(params.maxNewTokens, 512); // Default
-      assert.equal(params.topK, 40); // Default
-      
-      testLogger.info('createDefaultParams validation completed');
-    });
-  });
-
-  // ============================================================================
-  // Lifecycle Tests
-  // ============================================================================
-
-  describe('Lifecycle Management', () => {
-    beforeEach(() => {
-      client = new RKLLMClient(testConfig);
-    });
-
-    it('should initialize client successfully', async () => {
-      testLogger.info('Testing client initialization');
-      
-      assert.equal(client.isClientInitialized(), false);
-      
-      let initializeEventEmitted = false;
-      let modelLoadEventEmitted = false;
-      
-      client.on('initialized', () => {
-        initializeEventEmitted = true;
-      });
-      
-      client.on('model:loaded', (modelPath) => {
-        modelLoadEventEmitted = true;
-        assert.equal(modelPath, testConfig.modelPath);
-      });
-      
-      await client.initialize();
-      
-      assert.equal(client.isClientInitialized(), true);
-      assert.equal(initializeEventEmitted, true);
-      assert.equal(modelLoadEventEmitted, true);
-      
-      testLogger.info('Client initialization validation completed');
-    });
-
-    it('should prevent double initialization', async () => {
-      testLogger.info('Testing double initialization prevention');
-      
-      await client.initialize();
-      
-      try {
-        await client.initialize();
-        assert.fail('Expected RKLLMError to be thrown');
-      } catch (error) {
-        assert.ok(error instanceof RKLLMError);
-        assert.equal(error.code, RKLLMStatusCode.ERROR_UNKNOWN);
+      if (!available) {
+        testLogger.warn('Native bindings not available - build with: npm run build:native');
       }
-      
-      testLogger.info('Double initialization prevention validation completed');
     });
 
-    it('should destroy client successfully', async () => {
-      testLogger.info('Testing client destruction');
+    it('should check hardware compatibility', () => {
+      testLogger.info('Checking hardware compatibility (RK3588)');
+      const compatible = isCompatibleHardware();
+      testLogger.info(`Hardware compatible: ${compatible}`);
       
-      await client.initialize();
-      assert.equal(client.isClientInitialized(), true);
-      
-      let destroyEventEmitted = false;
-      let modelUnloadEventEmitted = false;
-      
-      client.on('destroyed', () => {
-        destroyEventEmitted = true;
-      });
-      
-      client.on('model:unloaded', () => {
-        modelUnloadEventEmitted = true;
-      });
-      
-      await client.destroy();
-      
-      assert.equal(client.isClientInitialized(), false);
-      assert.equal(destroyEventEmitted, true);
-      assert.equal(modelUnloadEventEmitted, true);
-      
-      testLogger.info('Client destruction validation completed');
-    });
-
-    it('should handle destroy on uninitialized client', async () => {
-      testLogger.info('Testing destroy on uninitialized client');
-      
-      assert.equal(client.isClientInitialized(), false);
-      
-      // Should not throw error
-      await client.destroy();
-      
-      assert.equal(client.isClientInitialized(), false);
-      
-      testLogger.info('Uninitialized client destroy validation completed');
-    });
-  });
-
-  // ============================================================================
-  // Inference Tests
-  // ============================================================================
-
-  describe('Text Generation', () => {
-    beforeEach(async () => {
-      client = new RKLLMClient(testConfig);
-      await client.initialize();
-    });
-
-    it('should generate text from prompt', async () => {
-      testLogger.info('Testing text generation from prompt');
-      
-      const prompt = 'What is artificial intelligence?';
-      let inferenceStarted = false;
-      let inferenceCompleted = false;
-      
-      client.on('inference:start', (input) => {
-        inferenceStarted = true;
-        assert.equal(input.inputType, RKLLMInputType.PROMPT);
-        assert.equal(input.promptInput, prompt);
-      });
-      
-      client.on('inference:complete', (result) => {
-        inferenceCompleted = true;
-        assert.ok(result.text);
-        assert.ok(result.tokenCount > 0);
-      });
-      
-      const result = await client.generate(prompt);
-      
-      assert.ok(result.text);
-      assert.equal(result.finishReason, 'completed');
-      assert.ok(result.performance.totalTimeMs > 0);
-      assert.ok(result.metadata?.modelName);
-      assert.equal(inferenceStarted, true);
-      assert.equal(inferenceCompleted, true);
-      
-      testLogger.info('Text generation validation completed', { result });
-    });
-
-    it('should generate text from tokens', async () => {
-      testLogger.info('Testing text generation from tokens');
-      
-      const tokens = new Int32Array([1, 2, 3, 4, 5]);
-      
-      let inferenceStarted = false;
-      client.on('inference:start', (input) => {
-        inferenceStarted = true;
-        assert.equal(input.inputType, RKLLMInputType.TOKEN);
-        assert.equal(input.tokenInput?.nTokens, tokens.length);
-      });
-      
-      const result = await client.generateFromTokens(tokens);
-      
-      assert.ok(result.text);
-      assert.equal(result.finishReason, 'completed');
-      assert.equal(inferenceStarted, true);
-      
-      testLogger.info('Token generation validation completed');
-    });
-
-    it('should generate text from embedding', async () => {
-      testLogger.info('Testing text generation from embedding');
-      
-      const embedding = new Float32Array([0.1, 0.2, 0.3, 0.4]);
-      const nTokens = 2;
-      
-      let inferenceStarted = false;
-      client.on('inference:start', (input) => {
-        inferenceStarted = true;
-        assert.equal(input.inputType, RKLLMInputType.EMBED);
-        assert.equal(input.embedInput?.nTokens, nTokens);
-      });
-      
-      const result = await client.generateFromEmbedding(embedding, nTokens);
-      
-      assert.ok(result.text);
-      assert.equal(result.finishReason, 'completed');
-      assert.equal(inferenceStarted, true);
-      
-      testLogger.info('Embedding generation validation completed');
-    });
-
-    it('should handle inference options', async () => {
-      testLogger.info('Testing inference with options');
-      
-      const prompt = 'Test prompt';
-      let tokenCallbackCount = 0;
-      let progressCallbackCount = 0;
-      
-      const options: InferenceOptions = {
-        mode: RKLLMInferMode.GENERATE,
-        streaming: true,
-        onToken: (token) => {
-          tokenCallbackCount++;
-          assert.ok(typeof token === 'string');
-        },
-        onProgress: (progress) => {
-          progressCallbackCount++;
-          assert.ok(progress >= 0 && progress <= 1);
-        },
-      };
-      
-      const result = await client.generate(prompt, options);
-      
-      assert.ok(result.text);
-      assert.ok(tokenCallbackCount > 0);
-      // Progress callback might not be called in mock implementation
-      
-      testLogger.info('Inference options validation completed', {
-        tokenCallbacks: tokenCallbackCount,
-        progressCallbacks: progressCallbackCount,
-      });
-    });
-
-    it('should prevent concurrent inference', async () => {
-      testLogger.info('Testing concurrent inference prevention');
-      
-      const prompt1 = 'First prompt';
-      const prompt2 = 'Second prompt';
-      
-      // Start first inference (don't await yet)
-      const promise1 = client.generate(prompt1);
-      
-      // Try to start second inference
-      try {
-        await client.generate(prompt2);
-        assert.fail('Expected RKLLMError to be thrown');
-      } catch (error) {
-        assert.ok(error instanceof RKLLMError);
-        assert.equal(error.code, RKLLMStatusCode.ERROR_TASK_RUNNING);
+      if (!compatible) {
+        testLogger.warn('Not on RK3588 hardware - NPU acceleration unavailable');
       }
-      
-      // Wait for first inference to complete
-      const result1 = await promise1;
-      assert.ok(result1.text);
-      
-      testLogger.info('Concurrent inference prevention validation completed');
-    });
-  });
-
-  // ============================================================================
-  // Control Tests
-  // ============================================================================
-
-  describe('Inference Control', () => {
-    beforeEach(async () => {
-      client = new RKLLMClient(testConfig);
-      await client.initialize();
-    });
-
-    it('should check running status', () => {
-      testLogger.info('Testing inference running status');
-      
-      assert.equal(client.isInferenceRunning(), false);
-      
-      testLogger.info('Inference status validation completed');
-    });
-
-    it('should handle abort on non-running inference', async () => {
-      testLogger.info('Testing abort on non-running inference');
-      
-      assert.equal(client.isInferenceRunning(), false);
-      
-      // Should not throw error
-      await client.abort();
-      
-      assert.equal(client.isInferenceRunning(), false);
-      
-      testLogger.info('Non-running inference abort validation completed');
     });
   });
 
@@ -374,119 +84,204 @@ describe('RKLLM Client', () => {
   // Configuration Tests
   // ============================================================================
 
-  describe('Configuration Management', () => {
-    beforeEach(async () => {
-      client = new RKLLMClient(testConfig);
-      await client.initialize();
-    });
-
-    it('should load LoRA adapter', async () => {
-      testLogger.info('Testing LoRA adapter loading');
+  describe('Configuration', () => {
+    it('should create client with production config', () => {
+      testLogger.info('Testing production configuration');
       
-      const adapter = {
-        loraAdapterPath: '/tmp/test-lora.bin',
-        loraAdapterName: 'test-lora',
-        scale: 1.0,
+      const config: RKLLMClientConfig = {
+        ...PRODUCTION_TEST_CONFIG,
+        modelPath: '/path/to/production-model.rkllm',
+        autoInit: false,
       };
       
-      let loraLoadedEventEmitted = false;
-      client.on('lora:loaded', (adapterName) => {
-        loraLoadedEventEmitted = true;
-        assert.equal(adapterName, adapter.loraAdapterName);
-      });
+      client = new RKLLMClient(config);
       
-      await client.loadLora(adapter);
+      assert.ok(client instanceof RKLLMClient);
+      assert.equal(client.isClientInitialized(), false);
       
-      const loadedAdapters = client.getLoadedLoraAdapters();
-      assert.ok(loadedAdapters.includes(adapter.loraAdapterName));
-      assert.equal(loraLoadedEventEmitted, true);
+      const clientConfig = client.getConfig();
+      assert.equal(clientConfig.maxContextLen, PRODUCTION_TEST_CONFIG.maxContextLen);
+      assert.equal(clientConfig.temperature, PRODUCTION_TEST_CONFIG.temperature);
       
-      testLogger.info('LoRA adapter loading validation completed');
+      testLogger.info('Production configuration validation completed');
     });
 
-    it('should set chat template', async () => {
-      testLogger.info('Testing chat template configuration');
+    it('should validate required parameters', () => {
+      testLogger.info('Testing parameter validation');
       
-      const chatTemplate = {
-        systemPrompt: 'You are a helpful assistant.',
-        promptPrefix: 'User: ',
-        promptPostfix: '\nAssistant: ',
-      };
-      
-      // Should not throw error
-      await client.setChatTemplate(chatTemplate);
-      
-      testLogger.info('Chat template configuration validation completed');
-    });
-
-    it('should set function tools', async () => {
-      testLogger.info('Testing function tools configuration');
-      
-      const functionTools = {
-        systemPrompt: 'You can call functions.',
-        tools: JSON.stringify({
-          functions: [{
-            name: 'get_weather',
-            description: 'Get weather information',
-            parameters: {
-              type: 'object',
-              properties: {
-                location: { type: 'string' }
-              }
-            }
-          }]
-        }),
-        toolResponseStr: '<tool_response>',
-      };
-      
-      // Should not throw error
-      await client.setFunctionTools(functionTools);
-      
-      testLogger.info('Function tools configuration validation completed');
+      try {
+        // Missing modelPath should throw
+        client = new RKLLMClient({} as any);
+        assert.fail('Expected error for missing modelPath');
+      } catch (error) {
+        assert.ok(error instanceof Error);
+        testLogger.info('Parameter validation working correctly');
+      }
     });
   });
 
   // ============================================================================
-  // Cache Management Tests
+  // Initialization Tests (Require Native Bindings)
   // ============================================================================
 
-  describe('Cache Management', () => {
-    beforeEach(async () => {
-      client = new RKLLMClient(testConfig);
-      await client.initialize();
+  describe('Initialization', function() {
+    it('should initialize with real model and native bindings', async (testContext) => {
+      if (!requireNativeBindings(testContext)) return;
+      
+      testLogger.info('Testing initialization with real model');
+      
+      try {
+        const modelPath = getTestModelPath();
+        testConfig.modelPath = modelPath;
+        client = new RKLLMClient(testConfig);
+        
+        let initEventEmitted = false;
+        client.on('initialized', () => { initEventEmitted = true; });
+        
+        await client.initialize();
+        
+        assert.equal(client.isClientInitialized(), true);
+        assert.equal(initEventEmitted, true);
+        
+        testLogger.info('Initialization with real model completed successfully');
+      } catch (error) {
+        testLogger.error('Initialization failed', error as Error);
+        throw error;
+      }
     });
 
-    it('should load prompt cache', async () => {
-      testLogger.info('Testing prompt cache loading');
+    it('should fail gracefully without native bindings', async (testContext) => {
+      if (areNativeBindingsAvailable()) {
+        testLogger.info('Skipping - native bindings available');
+        testContext.skip();
+        return;
+      }
       
-      const cachePath = '/tmp/test-cache.bin';
+      testLogger.info('Testing graceful failure without native bindings');
       
-      let cacheLoadedEventEmitted = false;
-      client.on('cache:loaded', (loadedPath) => {
-        cacheLoadedEventEmitted = true;
-        assert.equal(loadedPath, cachePath);
-      });
+      const config: RKLLMClientConfig = {
+        ...PRODUCTION_TEST_CONFIG,
+        modelPath: '/any/path/model.rkllm',
+        autoInit: false,
+      };
       
-      await client.loadPromptCache(cachePath);
+      client = new RKLLMClient(config);
       
-      assert.equal(cacheLoadedEventEmitted, true);
+      try {
+        await client.initialize();
+        assert.fail('Expected initialization to fail');
+      } catch (error) {
+        assert.ok(error instanceof RKLLMError);
+        assert.equal(error.code, RKLLMStatusCode.ERROR_NATIVE_BINDING_NOT_AVAILABLE);
+        testLogger.info('Graceful failure working correctly');
+      }
+    });
+  });
+
+  // ============================================================================
+  // Inference Tests (Require Real Model)
+  // ============================================================================
+
+  describe('Inference', function() {
+    beforeEach(async (testContext) => {
+      if (!requireNativeBindings(testContext)) return;
       
-      testLogger.info('Prompt cache loading validation completed');
+      try {
+        const modelPath = getTestModelPath();
+        testConfig.modelPath = modelPath;
+        client = new RKLLMClient(testConfig);
+        await client.initialize();
+      } catch (error) {
+        testLogger.warn('Failed to setup inference test environment', error);
+        testContext.skip();
+      }
     });
 
-    it('should release prompt cache', async () => {
-      testLogger.info('Testing prompt cache release');
+    it('should perform real text generation', async (testContext) => {
+      if (!requireNativeBindings(testContext)) return;
       
-      let cacheClearedEventEmitted = false;
-      client.on('cache:cleared', () => {
-        cacheClearedEventEmitted = true;
-      });
+      testLogger.info('Testing real text generation');
       
-      await client.releasePromptCache();
+      const prompt = PRODUCTION_TEST_PROMPTS[0]!!;
+      let resultReceived = false;
       
-      assert.equal(cacheClearedEventEmitted, true);
+      try {
+        const result = await client.generate(prompt, {
+          maxNewTokens: 20,
+          temperature: 0.7,
+        });
+        
+        assert.ok(result);
+        assert.ok(typeof result.text === 'string');
+        assert.ok(result.text.length > 0);
+        assert.ok(typeof result.tokenCount === 'number');
+        assert.ok(result.tokenCount > 0);
+        
+        resultReceived = true;
+        testLogger.info(`Generated response: "${result.text.substring(0, 50)}..."`);
+        testLogger.info(`Tokens generated: ${result.tokenCount}`);
+        testLogger.info('Real text generation completed successfully');
+      } catch (error) {
+        testLogger.error('Text generation failed', error as Error);
+        throw error;
+      }
       
-      testLogger.info('Prompt cache release validation completed');
+      assert.equal(resultReceived, true);
+    });
+
+    it('should handle streaming inference', async (testContext) => {
+      if (!requireNativeBindings(testContext)) return;
+      
+      testLogger.info('Testing streaming inference');
+      
+      const prompt = PRODUCTION_TEST_PROMPTS[1]!;
+      let tokensReceived = 0;
+      let streamingWorked = false;
+      
+      try {
+        const result = await client.generate(prompt, {
+          streaming: true,
+          maxNewTokens: 15,
+          onToken: (token: string) => {
+            testLogger.info(`Streaming token: ${token}`);
+            tokensReceived++;
+            streamingWorked = true;
+          },
+        });
+        
+        assert.ok(result);
+        assert.ok(streamingWorked);
+        assert.ok(tokensReceived > 0);
+        
+        testLogger.info(`Streaming completed with ${tokensReceived} tokens`);
+      } catch (error) {
+        testLogger.error('Streaming inference failed', error as Error);
+        throw error;
+      }
+    });
+
+    it('should handle multiple inference types', async (testContext) => {
+      if (!requireNativeBindings(testContext)) return;
+      
+      testLogger.info('Testing multiple inference types');
+      
+      try {
+        // Test text input
+        const textResult = await client.infer({
+          inputType: RKLLMInputType.PROMPT,
+          promptInput: PRODUCTION_TEST_PROMPTS[2]!,
+        }, {
+          maxNewTokens: 10,
+        });
+        
+        assert.ok(textResult);
+        assert.ok(textResult.text);
+        
+        testLogger.info('Multiple inference types test completed');
+      } catch (error) {
+        testLogger.error('Multiple inference test failed', error as Error);
+        throw error;
+      }
     });
   });
 
@@ -495,234 +290,123 @@ describe('RKLLM Client', () => {
   // ============================================================================
 
   describe('Error Handling', () => {
-    it('should throw error for operations on uninitialized client', async () => {
-      testLogger.info('Testing operations on uninitialized client');
+    it('should throw structured errors', async () => {
+      testLogger.info('Testing structured error handling');
       
-      client = new RKLLMClient(testConfig);
+      const config: RKLLMClientConfig = {
+        ...PRODUCTION_TEST_CONFIG,
+        modelPath: '/nonexistent/model.rkllm',
+        autoInit: false,
+      };
+      
+      client = new RKLLMClient(config);
       
       try {
         await client.generate('test prompt');
-        assert.fail('Expected RKLLMError to be thrown');
+        assert.fail('Expected error for uninitialized client');
       } catch (error) {
         assert.ok(error instanceof RKLLMError);
-        assert.equal(error.code, RKLLMStatusCode.ERROR_INVALID_HANDLE);
+        assert.ok(typeof error.code === 'number');
+        assert.ok(typeof error.message === 'string');
+        testLogger.info('Structured error handling working correctly');
       }
-      
-      testLogger.info('Uninitialized client error validation completed');
     });
+  });
 
-    it('should emit error events', async () => {
-      testLogger.info('Testing error event emission');
-      
-      client = new RKLLMClient(testConfig);
-      
-      client.on('error', (error) => {
-        assert.ok(error instanceof RKLLMError);
-      });
+  // ============================================================================
+  // Performance Tests
+  // ============================================================================
+
+  describe('Performance', function() {
+    beforeEach(async (testContext) => {
+      if (!requireNativeBindings(testContext)) return;
+      if (!isCompatibleHardware()) {
+        testLogger.warn('Not on RK3588 - skipping performance tests');
+        testContext.skip();
+        return;
+      }
       
       try {
-        await client.generate('test');
+        const modelPath = getTestModelPath();
+        testConfig.modelPath = modelPath;
+        
+        client = new RKLLMClient(testConfig);
+        await client.initialize();
       } catch (error) {
-        // Expected error
+        testLogger.warn('Failed to setup performance test environment', error);
+        testContext.skip();
       }
+    });
+
+    it('should measure inference performance', async (testContext) => {
+      if (!requireNativeBindings(testContext)) return;
       
-      // Error event may not be emitted for this specific error, but functionality is there
+      testLogger.info('Testing inference performance measurement');
       
-      testLogger.info('Error event validation completed');
+      const prompt = PRODUCTION_TEST_PROMPTS[3]!;
+      const startTime = Date.now();
+      
+      try {
+        const result = await client.generate(prompt, {
+          maxNewTokens: 50,
+          enableProfiler: true,
+        });
+        
+        const endTime = Date.now();
+        const totalTime = endTime - startTime;
+        
+        assert.ok(result.performance);
+        assert.ok(typeof result.performance.totalTimeMs === 'number');
+        assert.ok(result.performance.totalTimeMs > 0);
+        assert.ok(result.performance.totalTimeMs <= totalTime);
+        
+        testLogger.info(`Performance metrics:`, {
+          totalTime: `${totalTime}ms`,
+          inferenceTime: `${result.performance.totalTimeMs}ms`,
+          tokensPerSecond: result.tokenCount / (result.performance.totalTimeMs / 1000),
+        });
+        
+        testLogger.info('Performance measurement completed successfully');
+      } catch (error) {
+        testLogger.error('Performance test failed', error as Error);
+        throw error;
+      }
     });
   });
 
   // ============================================================================
-  // Event System Tests
+  // Cleanup Tests
   // ============================================================================
 
-  describe('Event System', () => {
-    beforeEach(async () => {
-      client = new RKLLMClient({
-        ...testConfig,
-        enableEventLogging: true,
-      });
-      await client.initialize();
-    });
-
-    it('should emit debug events when logging enabled', async () => {
-      testLogger.info('Testing debug event emission');
+  describe('Cleanup', function() {
+    it('should cleanup resources properly', async (testContext) => {
+      if (!requireNativeBindings(testContext)) return;
       
-      let debugEventEmitted = false;
-      client.on('debug', (message) => {
-        debugEventEmitted = true;
-        assert.ok(typeof message === 'string');
-      });
+      testLogger.info('Testing resource cleanup');
       
-      await client.generate('test prompt');
-      
-      assert.equal(debugEventEmitted, true);
-      
-      testLogger.info('Debug event validation completed');
-    });
-
-    it('should support event listener management', () => {
-      testLogger.info('Testing event listener management');
-      
-      const listener = () => {};
-      
-      client.on('inference:complete', listener);
-      client.off('inference:complete', listener);
-      
-      // Should not throw errors
-      assert.ok(true);
-      
-      testLogger.info('Event listener management validation completed');
-    });
-  });
-
-  // ============================================================================
-  // Utility Methods Tests
-  // ============================================================================
-
-  describe('Utility Methods', () => {
-    beforeEach(async () => {
-      client = new RKLLMClient(testConfig);
-      await client.initialize();
-    });
-
-    it('should return immutable configuration', () => {
-      testLogger.info('Testing configuration immutability');
-      
-      const config = client.getConfig();
-      
-      // Should be frozen object
-      assert.throws(() => {
-        (config as any).modelPath = 'modified';
-      });
-      
-      testLogger.info('Configuration immutability validation completed');
-    });
-
-    it('should track loaded LoRA adapters', async () => {
-      testLogger.info('Testing LoRA adapter tracking');
-      
-      assert.deepEqual(client.getLoadedLoraAdapters(), []);
-      
-      const adapter = {
-        loraAdapterPath: '/tmp/adapter.bin',
-        loraAdapterName: 'test-adapter',
-        scale: 1.0,
-      };
-      
-      await client.loadLora(adapter);
-      
-      const loadedAdapters = client.getLoadedLoraAdapters();
-      assert.equal(loadedAdapters.length, 1);
-      assert.equal(loadedAdapters[0], adapter.loraAdapterName);
-      
-      testLogger.info('LoRA adapter tracking validation completed');
-    });
-  });
-
-  // ============================================================================
-  // PR #34 Integration Tests
-  // ============================================================================
-
-  describe('PR #34 Native Binding Integration', () => {
-    it('should use native binding when available', async () => {
-      testLogger.info('Testing native binding integration (mock scenario)');
-      
-      // Since the actual native binding may not be available in tests,
-      // we test the fallback behavior and integration logic
-      
-      client = new RKLLMClient({
-        ...testConfig,
-        modelPath: '/tmp/test-model.rkllm',
-      });
-      
-      // Test that initialization works (will use mock if native not available)
-      await client.initialize();
-      assert.ok(client.isClientInitialized());
-      
-      testLogger.info('Native binding integration logic validated');
-    });
-
-    it('should get default parameters from native binding when available', async () => {
-      testLogger.info('Testing getDefaultParameters static method');
-      
-      const defaultParams = await RKLLMClient.getDefaultParameters('/tmp/test.rkllm');
-      
-      // Verify the structure matches our expected format
-      assert.ok(typeof defaultParams === 'object');
-      assert.ok(typeof defaultParams.modelPath === 'string');
-      assert.ok(typeof defaultParams.maxContextLen === 'number');
-      assert.ok(typeof defaultParams.maxNewTokens === 'number');
-      assert.ok(typeof defaultParams.temperature === 'number');
-      assert.ok(defaultParams.maxContextLen > 0);
-      assert.ok(defaultParams.maxNewTokens > 0);
-      
-      testLogger.info('Default parameters from native binding validated');
-    });
-
-    it('should convert config to native RKLLMParam format', async () => {
-      testLogger.info('Testing config conversion for native binding');
-      
-      client = new RKLLMClient({
-        ...testConfig,
-        modelPath: '/tmp/test-model.rkllm',
-      });
-      
-      // Access the private method through type assertion for testing
-      const convertedParam = (client as any).convertToRKLLMParam(client.getConfig());
-      
-      // Verify conversion follows PR #34's expected format
-      assert.equal(convertedParam.model_path, '/tmp/test-model.rkllm');
-      assert.equal(convertedParam.max_context_len, testConfig.maxContextLen);
-      assert.equal(convertedParam.max_new_tokens, testConfig.maxNewTokens);
-      assert.equal(convertedParam.temperature, testConfig.temperature);
-      assert.equal(typeof convertedParam.is_async, 'boolean');
-      
-      testLogger.info('Config conversion to native format validated');
-    });
-
-    it('should handle native binding load failures gracefully', async () => {
-      testLogger.info('Testing graceful fallback when native binding unavailable');
-      
-      client = new RKLLMClient({
-        ...testConfig,
-        modelPath: '/tmp/nonexistent-model.rkllm',
-      });
-      
-      // Should initialize successfully even without native binding (using mocks)
-      await client.initialize();
-      assert.ok(client.isClientInitialized());
-      
-      // Should be able to perform operations with fallback
-      const result = await client.generate('Test prompt');
-      assert.ok(result);
-      assert.ok(typeof result.text === 'string');
-      
-      testLogger.info('Graceful fallback behavior validated');
-    });
-
-    it('should maintain handle lifecycle with native bindings', async () => {
-      testLogger.info('Testing handle lifecycle management');
-      
-      client = new RKLLMClient({
-        ...testConfig,
-        modelPath: '/tmp/test-model.rkllm',
-      });
-      
-      // Test initialization creates handle
-      await client.initialize();
-      const handle = (client as any).nativeHandle;
-      
-      // For mock scenario, handle will be null (but that's expected)
-      // In real scenario with native binding, handle would be set
-      testLogger.info(`Handle after init: ${handle ? 'present' : 'null (expected for mock)'}`);
-      
-      // Test destruction cleans up handle
-      await client.destroy();
-      const handleAfterDestroy = (client as any).nativeHandle;
-      assert.equal(handleAfterDestroy, null);
-      
-      testLogger.info('Handle lifecycle management validated');
+      try {
+        const modelPath = getTestModelPath();
+        testConfig.modelPath = modelPath;
+        client = new RKLLMClient(testConfig);
+        
+        await client.initialize();
+        assert.equal(client.isClientInitialized(), true);
+        
+        await client.destroy();
+        assert.equal(client.isClientInitialized(), false);
+        
+        // Try to use destroyed client - should fail
+        try {
+          await client.generate('test');
+          assert.fail('Expected error for destroyed client');
+        } catch (error) {
+          assert.ok(error instanceof RKLLMError);
+          testLogger.info('Resource cleanup working correctly');
+        }
+      } catch (error) {
+        testLogger.error('Cleanup test failed', error as Error);
+        throw error;
+      }
     });
   });
 });

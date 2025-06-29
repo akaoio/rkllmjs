@@ -200,11 +200,11 @@ export class RKLLMClient extends EventEmitter {
       this.debugLog('Initializing RKLLM client', { modelPath: this.modelPath });
 
       // Call native rkllm_init when available (PR #34 integration)
-      const result = await this.simulateNativeCall('rkllm_init', this.config);
+      const result = await this.callNativeFunction('rkllm_init', this.config);
       
       // Store native handle if returned
       if (result.handle) {
-        this.nativeHandle = result.handle;
+        this.nativeHandle = result.handleId;
         this.debugLog('Native handle obtained', { handle: this.nativeHandle });
       }
 
@@ -244,10 +244,10 @@ export class RKLLMClient extends EventEmitter {
 
       // Call native rkllm_destroy when available (PR #34 integration)
       if (this.nativeHandle) {
-        await this.simulateNativeCall('rkllm_destroy', { handle: this.nativeHandle });
+        await this.callNativeFunction('rkllm_destroy', { handleId: this.nativeHandle });
         this.nativeHandle = null;
       } else {
-        await this.simulateNativeCall('rkllm_destroy');
+        await this.callNativeFunction('rkllm_destroy');
       }
 
       this.isInitialized = false;
@@ -388,7 +388,7 @@ export class RKLLMClient extends EventEmitter {
       };
 
       // TODO: Call native inference when C++ bindings are available
-      const result = await this.simulateInference(input, inferParams, callback, options);
+      const result = await this.runInference(input, inferParams, callback, options);
       
       const totalTime = Date.now() - startTime;
       const tokensPerSecond = tokenCount > 0 ? (tokenCount / (generateTime / 1000)) : 0;
@@ -451,7 +451,7 @@ export class RKLLMClient extends EventEmitter {
       }
 
       // TODO: Call native rkllm_abort when C++ bindings are available
-      await this.simulateNativeCall('rkllm_abort');
+      await this.callNativeFunction('rkllm_abort', { handleId: this.nativeHandle });
 
       this.emit('inference:abort');
       this.debugLog('Inference aborted successfully');
@@ -486,7 +486,7 @@ export class RKLLMClient extends EventEmitter {
       this.debugLog('Loading LoRA adapter', { adapter });
 
       // TODO: Call native rkllm_load_lora when C++ bindings are available
-      await this.simulateNativeCall('rkllm_load_lora', adapter);
+      await this.callNativeFunction('rkllm_load_lora', this.nativeHandle, adapter);
 
       this.loadedLoraAdapters.add(adapter.loraAdapterName);
       this.emit('lora:loaded', adapter.loraAdapterName);
@@ -511,7 +511,7 @@ export class RKLLMClient extends EventEmitter {
       this.debugLog('Setting chat template', { config });
 
       // TODO: Call native rkllm_set_chat_template when C++ bindings are available
-      await this.simulateNativeCall('rkllm_set_chat_template', config);
+      await this.callNativeFunction('rkllm_set_chat_template', this.nativeHandle, config);
 
       this.debugLog('Chat template set successfully');
 
@@ -534,7 +534,7 @@ export class RKLLMClient extends EventEmitter {
       this.debugLog('Setting function tools', { config });
 
       // TODO: Call native rkllm_set_function_tools when C++ bindings are available
-      await this.simulateNativeCall('rkllm_set_function_tools', config);
+      await this.callNativeFunction('rkllm_set_function_tools', this.nativeHandle, config);
 
       this.debugLog('Function tools set successfully');
 
@@ -561,7 +561,7 @@ export class RKLLMClient extends EventEmitter {
       this.debugLog('Loading prompt cache', { cachePath });
 
       // TODO: Call native rkllm_load_prompt_cache when C++ bindings are available
-      await this.simulateNativeCall('rkllm_load_prompt_cache', { cachePath });
+      await this.callNativeFunction('rkllm_load_prompt_cache', this.nativeHandle, cachePath);
 
       this.emit('cache:loaded', cachePath);
       this.debugLog('Prompt cache loaded successfully');
@@ -585,7 +585,7 @@ export class RKLLMClient extends EventEmitter {
       this.debugLog('Releasing prompt cache');
 
       // TODO: Call native rkllm_release_prompt_cache when C++ bindings are available
-      await this.simulateNativeCall('rkllm_release_prompt_cache');
+      await this.callNativeFunction('rkllm_release_prompt_cache', this.nativeHandle);
 
       this.emit('cache:cleared');
       this.debugLog('Prompt cache released successfully');
@@ -738,67 +738,110 @@ export class RKLLMClient extends EventEmitter {
   }
 
   /**
-   * Try to load native binding from PR #34's implementation
+   * Load native binding - required for production use
    */
   private loadNativeBinding(): any {
     try {
-      // Try to load the compiled binding from PR #34
+      // Load the compiled binding
       const binding = require('../../build/Release/binding.node');
       this.debugLog('Loaded native RKLLM binding successfully');
       return binding;
     } catch (error) {
-      this.debugLog('Native binding not available, using mock implementation', { error: error instanceof Error ? error.message : String(error) });
-      return null;
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.debugLog('Failed to load native binding', { error: errorMsg });
+      throw new RKLLMError(
+        `Native RKLLM binding not available: ${errorMsg}. Please build the native module first.`,
+        RKLLMStatusCode.ERROR_NATIVE_BINDING_NOT_AVAILABLE
+      );
     }
   }
 
   /**
-   * Call native function or simulate if binding not available (aligned with PR #34)
+   * Call native function - no mock fallback for production
    */
-  private async simulateNativeCall(functionName: string, ...args: any[]): Promise<any> {
+  private async callNativeFunction(functionName: string, ...args: any[]): Promise<any> {
     const nativeBinding = this.loadNativeBinding();
     
-    if (nativeBinding) {
-      try {
-        // Use actual native binding functions from PR #34
-        switch (functionName) {
-          case 'rkllm_init':
-            // Convert our config to PR #34's RKLLMParam format
-            const param = this.convertToRKLLMParam(args[0]);
-            const handle = await nativeBinding.init(param);
-            this.debugLog(`Native call successful: ${functionName}`, { handle });
-            return { status: RKLLMStatusCode.SUCCESS, handle };
-            
-          case 'rkllm_destroy':
-            if (args[0] && args[0].handle) {
-              const success = await nativeBinding.destroy(args[0].handle);
-              this.debugLog(`Native call successful: ${functionName}`, { success });
-              return { status: success ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
-            }
-            break;
-            
-          case 'rkllm_createDefaultParam':
-            const defaultParam = await nativeBinding.createDefaultParam();
-            this.debugLog(`Native call successful: ${functionName}`, { defaultParam });
-            return { status: RKLLMStatusCode.SUCCESS, param: defaultParam };
-            
-          default:
-            this.debugLog(`Native function ${functionName} not yet implemented in binding`);
-            break;
+    try {
+      switch (functionName) {
+        case 'rkllm_init': {
+          const param = this.convertToRKLLMParam(args[0]);
+          const handleId = await nativeBinding.init(param);
+          this.debugLog(`Native call successful: ${functionName}`, { handleId });
+          return { status: RKLLMStatusCode.SUCCESS, handleId };
         }
-      } catch (error) {
-        this.debugLog(`Native call failed: ${functionName}`, { error: error instanceof Error ? error.message : String(error) });
-        // Fall through to simulation
+        
+        case 'rkllm_destroy': {
+          if (args[0] && args[0].handleId) {
+            const result = await nativeBinding.destroy(args[0].handleId);
+            this.debugLog(`Native call successful: ${functionName}`, { result });
+            return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
+          }
+          throw new Error('Handle ID required for destroy operation');
+        }
+        
+        case 'rkllm_run': {
+          const [handleId, input, inferParams] = args;
+          const result = await nativeBinding.run(handleId, input, inferParams);
+          this.debugLog(`Native call successful: ${functionName}`, { result });
+          return { status: RKLLMStatusCode.SUCCESS, result };
+        }
+        
+        case 'rkllm_abort': {
+          if (args[0] && args[0].handleId) {
+            const result = await nativeBinding.abort(args[0].handleId);
+            this.debugLog(`Native call successful: ${functionName}`, { result });
+            return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
+          }
+          throw new Error('Handle ID required for abort operation');
+        }
+        
+        case 'rkllm_load_lora': {
+          const [handleId, adapter] = args;
+          const result = await nativeBinding.loadLora(handleId, adapter);
+          this.debugLog(`Native call successful: ${functionName}`, { result });
+          return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
+        }
+        
+        case 'rkllm_set_chat_template': {
+          const [handleId, config] = args;
+          const result = await nativeBinding.setChatTemplate(handleId, config);
+          this.debugLog(`Native call successful: ${functionName}`, { result });
+          return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
+        }
+        
+        case 'rkllm_set_function_tools': {
+          const [handleId, config] = args;
+          const result = await nativeBinding.setFunctionTools(handleId, config);
+          this.debugLog(`Native call successful: ${functionName}`, { result });
+          return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
+        }
+        
+        case 'rkllm_load_prompt_cache': {
+          const [handleId, cachePath] = args;
+          const result = await nativeBinding.loadPromptCache(handleId, cachePath);
+          this.debugLog(`Native call successful: ${functionName}`, { result });
+          return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
+        }
+        
+        case 'rkllm_release_prompt_cache': {
+          const [handleId] = args;
+          const result = await nativeBinding.releasePromptCache(handleId);
+          this.debugLog(`Native call successful: ${functionName}`, { result });
+          return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
+        }
+        
+        default:
+          throw new Error(`Unknown native function: ${functionName}`);
       }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.debugLog(`Native call failed: ${functionName}`, { error: errorMsg });
+      throw new RKLLMError(
+        `Native call ${functionName} failed: ${errorMsg}`,
+        RKLLMStatusCode.ERROR_NATIVE_CALL_FAILED
+      );
     }
-    
-    // Simulate async operation delay for mock
-    await new Promise(resolve => setTimeout(resolve, 10));
-    
-    this.debugLog(`Simulated native call: ${functionName}`, { args });
-    
-    // Return mock success for now
-    return { status: RKLLMStatusCode.SUCCESS };
   }
 
   /**
@@ -825,34 +868,46 @@ export class RKLLMClient extends EventEmitter {
   }
 
   /**
-   * Simulate inference operation (placeholder until C++ bindings are available)
+   * Run inference using native RKLLM library
    */
-  private async simulateInference(
-    _input: RKLLMInput, 
-    _inferParams: RKLLMInferParam, 
+  private async runInference(
+    input: RKLLMInput, 
+    inferParams: RKLLMInferParam, 
     callback: LLMResultCallback,
     _options: InferenceOptions
   ): Promise<RKLLMResult> {
-    // Add realistic delay to ensure totalTimeMs > 0 in tests
-    await new Promise(resolve => setTimeout(resolve, 20));
-    
-    // Simulate inference with mock data
-    const mockResult: RKLLMResult = {
-      text: _input.promptInput ? `Response to: ${_input.promptInput}` : 'Mock generated response',
-      tokenId: 42,
-      perf: {
-        prefillTimeMs: 50,
-        prefillTokens: 10,
-        generateTimeMs: 200,
-        generateTokens: 15,
-        memoryUsageMb: 512,
-      },
-    };
+    if (!this.nativeHandle) {
+      throw new RKLLMError('RKLLM not initialized', RKLLMStatusCode.ERROR_INVALID_HANDLE);
+    }
 
-    // Simulate callback execution
-    await callback(mockResult, LLMCallState.FINISH);
-    
-    return mockResult;
+    try {
+      const result = await this.callNativeFunction('rkllm_run', this.nativeHandle, input, inferParams);
+      
+      if (result.status !== RKLLMStatusCode.SUCCESS) {
+        throw new RKLLMError('Inference failed', result.status);
+      }
+
+      // Convert native result to RKLLMResult format
+      const rkllmResult: RKLLMResult = {
+        text: result.result.text || '',
+        tokenId: result.result.tokenId || 0,
+        perf: result.result.perf || {
+          prefillTimeMs: 0,
+          prefillTokens: 0,
+          generateTimeMs: 0,
+          generateTokens: 0,
+          memoryUsageMb: 0,
+        },
+      };
+
+      // Call the callback with the result
+      await callback(rkllmResult, LLMCallState.FINISH);
+      
+      return rkllmResult;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      throw new RKLLMError(`Inference failed: ${errorMsg}`, RKLLMStatusCode.ERROR_INFERENCE_FAILED);
+    }
   }
 }
 
