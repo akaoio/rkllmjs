@@ -8,41 +8,46 @@
  * - Destroying LLM instances
  */
 
-// Enums matching RKLLM C definitions
-export enum LLMCallState {
-  RKLLM_RUN_NORMAL = 0,
-  RKLLM_RUN_WAITING = 1,
-  RKLLM_RUN_FINISH = 2,
-  RKLLM_RUN_ERROR = 3
-}
+// Import canonical types from rkllm-types (single source of truth)
+import {
+  LLMCallState,
+  RKLLMInputType,
+  RKLLMInferMode,
+  CPU_CORES as CPU_MASKS,
+  type RKLLMExtendParam as CanonicalRKLLMExtendParam,
+  type RKLLMParam as CanonicalRKLLMParam,
+  type RKLLMInput as CanonicalRKLLMInput,
+  type RKLLMLoraAdapter as CanonicalRKLLMLoraAdapter,
+  type RKLLMEmbedInput as CanonicalRKLLMEmbedInput,
+  type RKLLMTokenInput as CanonicalRKLLMTokenInput,
+  type RKLLMMultiModelInput as CanonicalRKLLMMultiModelInput,
+  type RKLLMLoraParam as CanonicalRKLLMLoraParam,
+  type RKLLMPromptCacheParam as CanonicalRKLLMPromptCacheParam,
+  type RKLLMCrossAttnParam as CanonicalRKLLMCrossAttnParam,
+  type RKLLMInferParam as CanonicalRKLLMInferParam,
+  type RKLLMResultLastHiddenLayer as CanonicalRKLLMResultLastHiddenLayer,
+  type RKLLMResultLogits as CanonicalRKLLMResultLogits,
+  type RKLLMPerfStat as CanonicalRKLLMPerfStat,
+  type RKLLMResult as CanonicalRKLLMResult,
+} from '../../rkllm-types/rkllm-types.js';
 
-export enum RKLLMInputType {
-  RKLLM_INPUT_PROMPT = 0,
-  RKLLM_INPUT_TOKEN = 1,
-  RKLLM_INPUT_EMBED = 2,
-  RKLLM_INPUT_MULTIMODAL = 3
-}
+// Re-export canonical types for backward compatibility
+export { LLMCallState, RKLLMInputType, RKLLMInferMode, CPU_MASKS };
 
-export enum RKLLMInferMode {
-  RKLLM_INFER_GENERATE = 0,
-  RKLLM_INFER_GET_LAST_HIDDEN_LAYER = 1,
-  RKLLM_INFER_GET_LOGITS = 2
-}
+// ============================================================================
+// Type Conversions: Canonical (camelCase) ↔ C API (snake_case)
+// ============================================================================
 
-// CPU core constants
-export const CPU_MASKS = {
-  CPU0: 1 << 0,
-  CPU1: 1 << 1,
-  CPU2: 1 << 2,
-  CPU3: 1 << 3,
-  CPU4: 1 << 4,
-  CPU5: 1 << 5,
-  CPU6: 1 << 6,
-  CPU7: 1 << 7
-} as const;
+/**
+ * Convert canonical camelCase types to C API snake_case format
+ * This is the only place where type conversion happens - single source of truth
+ * 
+ * Note: These are conversion target interfaces (snake_case) used only for C API interop.
+ * The canonical types (camelCase) in rkllm-types/ are the single source of truth.
+ */
 
-// Complete RKLLMExtendParam structure
-export interface RKLLMExtendParam {
+// C API compatible interfaces (snake_case naming) - Used only for conversion targets
+export interface C_RKLLMExtendParam {
   base_domain_id: number;
   embed_flash: number;
   enabled_cpus_num: number;
@@ -52,8 +57,7 @@ export interface RKLLMExtendParam {
   reserved: Uint8Array;  // 104 bytes reserved
 }
 
-// Complete RKLLMParam structure with all fields
-export interface RKLLMParam {
+export interface C_RKLLMParam {
   model_path: string;
   max_context_len: number;
   max_new_tokens: number;
@@ -72,30 +76,26 @@ export interface RKLLMParam {
   img_start?: string;
   img_end?: string;
   img_content?: string;
-  extend_param: RKLLMExtendParam;
+  extend_param: C_RKLLMExtendParam;
 }
 
-// LoRA adapter configuration
-export interface RKLLMLoraAdapter {
+export interface C_RKLLMLoraAdapter {
   lora_adapter_path: string;
   lora_adapter_name: string;
   scale: number;
 }
 
-// Embedding input structure
-export interface RKLLMEmbedInput {
+export interface C_RKLLMEmbedInput {
   embed: Float32Array;
   n_tokens: number;
 }
 
-// Token input structure
-export interface RKLLMTokenInput {
+export interface C_RKLLMTokenInput {
   input_ids: Int32Array;
   n_tokens: number;
 }
 
-// Multimodal input structure
-export interface RKLLMMultiModelInput {
+export interface C_RKLLMMultiModelInput {
   prompt: string;
   image_embed: Float32Array;
   n_image_tokens: number;
@@ -104,30 +104,182 @@ export interface RKLLMMultiModelInput {
   image_height: number;
 }
 
-// Generic input structure with union type
-export interface RKLLMInput {
+export interface C_RKLLMInput {
   role?: string;
   enable_thinking?: boolean;
   input_type: RKLLMInputType;
   prompt_input?: string;
-  embed_input?: RKLLMEmbedInput;
-  token_input?: RKLLMTokenInput;
-  multimodal_input?: RKLLMMultiModelInput;
+  embed_input?: C_RKLLMEmbedInput;
+  token_input?: C_RKLLMTokenInput;
+  multimodal_input?: C_RKLLMMultiModelInput;
 }
 
-// LoRA parameters for inference
-export interface RKLLMLoraParam {
+// ============================================================================
+// Conversion Functions: Canonical Types → C API Types
+// ============================================================================
+
+/**
+ * Convert canonical TypeScript types to C API format
+ */
+export function toC_RKLLMExtendParam(canonical: CanonicalRKLLMExtendParam): C_RKLLMExtendParam {
+  return {
+    base_domain_id: canonical.baseDomainId,
+    embed_flash: canonical.embedFlash ? 1 : 0,
+    enabled_cpus_num: canonical.enabledCpusNum,
+    enabled_cpus_mask: canonical.enabledCpusMask,
+    n_batch: canonical.nBatch,
+    use_cross_attn: canonical.useCrossAttn ? 1 : 0,
+    reserved: new Uint8Array(104), // 104 bytes reserved
+  };
+}
+
+export function toC_RKLLMParam(canonical: CanonicalRKLLMParam): C_RKLLMParam {
+  const result: C_RKLLMParam = {
+    model_path: canonical.modelPath,
+    max_context_len: canonical.maxContextLen,
+    max_new_tokens: canonical.maxNewTokens,
+    top_k: canonical.topK,
+    n_keep: canonical.nKeep,
+    top_p: canonical.topP,
+    temperature: canonical.temperature,
+    repeat_penalty: canonical.repeatPenalty,
+    frequency_penalty: canonical.frequencyPenalty,
+    presence_penalty: canonical.presencePenalty,
+    mirostat: canonical.mirostat,
+    mirostat_tau: canonical.mirostatTau,
+    mirostat_eta: canonical.mirostatEta,
+    skip_special_token: canonical.skipSpecialToken,
+    is_async: canonical.isAsync,
+    extend_param: toC_RKLLMExtendParam(canonical.extendParam),
+  };
+
+  if (canonical.imgStart !== undefined) {
+    result.img_start = canonical.imgStart;
+  }
+  if (canonical.imgEnd !== undefined) {
+    result.img_end = canonical.imgEnd;
+  }
+  if (canonical.imgContent !== undefined) {
+    result.img_content = canonical.imgContent;
+  }
+
+  return result;
+}
+
+export function toC_RKLLMInput(canonical: CanonicalRKLLMInput): C_RKLLMInput {
+  const result: C_RKLLMInput = {
+    input_type: canonical.inputType,
+  };
+
+  if (canonical.role !== undefined) {
+    result.role = canonical.role;
+  }
+  if (canonical.enableThinking !== undefined) {
+    result.enable_thinking = canonical.enableThinking;
+  }
+  if (canonical.promptInput !== undefined) {
+    result.prompt_input = canonical.promptInput;
+  }
+  
+  if (canonical.embedInput) {
+    result.embed_input = {
+      embed: canonical.embedInput.embed,
+      n_tokens: canonical.embedInput.nTokens,
+    };
+  }
+  
+  if (canonical.tokenInput) {
+    result.token_input = {
+      input_ids: canonical.tokenInput.inputIds,
+      n_tokens: canonical.tokenInput.nTokens,
+    };
+  }
+  
+  if (canonical.multimodalInput) {
+    result.multimodal_input = {
+      prompt: canonical.multimodalInput.prompt,
+      image_embed: canonical.multimodalInput.imageEmbed,
+      n_image_tokens: canonical.multimodalInput.nImageTokens,
+      n_image: canonical.multimodalInput.nImage,
+      image_width: canonical.multimodalInput.imageWidth,
+      image_height: canonical.multimodalInput.imageHeight,
+    };
+  }
+
+  return result;
+}
+
+export function toC_RKLLMLoraAdapter(canonical: CanonicalRKLLMLoraAdapter): C_RKLLMLoraAdapter {
+  return {
+    lora_adapter_path: canonical.loraAdapterPath,
+    lora_adapter_name: canonical.loraAdapterName,
+    scale: canonical.scale,
+  };
+}
+
+export function toC_RKLLMLoraParam(canonical: CanonicalRKLLMLoraParam): C_RKLLMLoraParam {
+  return {
+    lora_adapter_name: canonical.loraAdapterName,
+  };
+}
+
+export function toC_RKLLMPromptCacheParam(canonical: CanonicalRKLLMPromptCacheParam): C_RKLLMPromptCacheParam {
+  return {
+    save_prompt_cache: canonical.savePromptCache ? 1 : 0,
+    prompt_cache_path: canonical.promptCachePath || '',
+  };
+}
+
+export function toC_RKLLMCrossAttnParam(canonical: CanonicalRKLLMCrossAttnParam): C_RKLLMCrossAttnParam {
+  return {
+    encoder_k_cache: canonical.encoderKCache,
+    encoder_v_cache: canonical.encoderVCache,
+    encoder_mask: canonical.encoderMask,
+    encoder_pos: canonical.encoderPos,
+    num_tokens: canonical.numTokens,
+  };
+}
+
+export function toC_RKLLMInferParam(canonical: CanonicalRKLLMInferParam): C_RKLLMInferParam {
+  const result: C_RKLLMInferParam = {
+    mode: canonical.mode,
+    keep_history: canonical.keepHistory ? 1 : 0,
+  };
+
+  if (canonical.loraParams) {
+    result.lora_params = [toC_RKLLMLoraParam(canonical.loraParams)];
+  }
+
+  if (canonical.promptCacheParams) {
+    result.prompt_cache_params = toC_RKLLMPromptCacheParam(canonical.promptCacheParams);
+  }
+
+  return result;
+}
+
+// ============================================================================
+// C API Specific Interfaces (conversion targets only)
+// ============================================================================
+
+/**
+ * C API compatible interfaces (snake_case naming) for conversion targets.
+ * These represent the exact structure expected by the C API.
+ * All canonical types are defined in rkllm-types/ module.
+ */
+
+// LoRA parameters for inference (C API format)
+export interface C_RKLLMLoraParam {
   lora_adapter_name: string;
 }
 
-// Prompt cache parameters
-export interface RKLLMPromptCacheParam {
+// Prompt cache parameters (C API format)
+export interface C_RKLLMPromptCacheParam {
   save_prompt_cache: number;
   prompt_cache_path: string;
 }
 
-// Cross-attention parameters
-export interface RKLLMCrossAttnParam {
+// Cross-attention parameters (C API format)
+export interface C_RKLLMCrossAttnParam {
   encoder_k_cache: Float32Array;
   encoder_v_cache: Float32Array;
   encoder_mask: Float32Array;
@@ -135,28 +287,28 @@ export interface RKLLMCrossAttnParam {
   num_tokens: number;
 }
 
-// Inference parameters
-export interface RKLLMInferParam {
+// Inference parameters (C API format)
+export interface C_RKLLMInferParam {
   mode: RKLLMInferMode;
-  lora_params?: RKLLMLoraParam[];
-  prompt_cache_params?: RKLLMPromptCacheParam;
+  lora_params?: C_RKLLMLoraParam[];
+  prompt_cache_params?: C_RKLLMPromptCacheParam;
   keep_history: number;
 }
 
-// Result structures
-export interface RKLLMResultLastHiddenLayer {
+// Result structures (C API format)
+export interface C_RKLLMResultLastHiddenLayer {
   hidden_states: Float32Array;
   embd_size: number;
   num_tokens: number;
 }
 
-export interface RKLLMResultLogits {
+export interface C_RKLLMResultLogits {
   logits: Float32Array;
   vocab_size: number;
   num_tokens: number;
 }
 
-export interface RKLLMPerfStat {
+export interface C_RKLLMPerfStat {
   prefill_time_ms: number;
   prefill_tokens: number;
   generate_time_ms: number;
@@ -164,15 +316,15 @@ export interface RKLLMPerfStat {
   memory_usage_mb: number;
 }
 
-export interface RKLLMResult {
+export interface C_RKLLMResult {
   text: string;
   token_id: number;
-  last_hidden_layer: RKLLMResultLastHiddenLayer;
-  logits: RKLLMResultLogits;
-  perf: RKLLMPerfStat;
+  last_hidden_layer: C_RKLLMResultLastHiddenLayer;
+  logits: C_RKLLMResultLogits;
+  perf: C_RKLLMPerfStat;
 }
 
-// Type definition for LLM handle
+// Type definition for LLM handle (C API specific)
 export interface LLMHandle {
   _handle: any; // Internal native handle - do not access directly
 }

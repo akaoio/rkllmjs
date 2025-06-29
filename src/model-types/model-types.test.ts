@@ -5,7 +5,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { TestLogger } from '../test-logger/test-logger.js';
+import { TestLogger } from '../testing/index.js';
 import type { ModelInfo, ModelConfig, ModelMetadata } from './model-types.js';
 
 const logger = TestLogger.createLogger('model-types');

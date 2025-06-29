@@ -10,8 +10,8 @@
         "<!@(node -p \"require('node-addon-api').include\")",
         "libs/rkllm/include"
       ],
-      "libraries": [
-        "<(module_root_dir)/libs/rkllm/aarch64/librkllmrt.so"
+      "dependencies": [
+        "<!(node -p \"require('node-addon-api').gyp\")"
       ],
       "cflags!": ["-fno-exceptions"],
       "cflags_cc!": ["-fno-exceptions"],
@@ -19,11 +19,29 @@
         "NAPI_DISABLE_CPP_EXCEPTIONS"
       ],
       "conditions": [
-        ["OS=='linux'", {
-          "cflags": ["-fPIC"],
+        ["target_arch=='arm64'", {
+          "libraries": [
+            "-lrkllmrt",
+            "-L<(module_root_dir)/libs/rkllm/aarch64"
+          ],
+          "defines": [ "RKLLM_NATIVE_AVAILABLE" ],
+          "cflags_cc": [
+            "-std=c++17",
+            "-fPIC"
+          ],
           "ldflags": [
             "-Wl,-rpath,<(module_root_dir)/libs/rkllm/aarch64"
           ]
+        }],
+        ["target_arch!='arm64'", {
+          "defines": [ "RKLLM_STUB_ONLY" ],
+          "cflags_cc": [
+            "-std=c++17",
+            "-fPIC"
+          ]
+        }],
+        ["OS=='linux'", {
+          "cflags": ["-fPIC"]
         }]
       ]
     }

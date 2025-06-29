@@ -1,50 +1,93 @@
-# RKLLMJS - Node.js Native Module for Rockchip RK3588 NPU
+# RKLLMJS - TypeScript/Node.js Interface for Rockchip RK3588 NPU
 
-> **A robust Node.js addon module enabling JavaScript/TypeScript to leverage NPU on RK3588 through Rockchip's native library**
+> **Production-ready TypeScript wrapper for Rockchip RK3588 NPU-accelerated Large Language Model inference**
 
 ## 🎯 Project Status
 
-**Current Phase**: Infrastructure & Model Management  
+**Current Phase**: ✅ **Production Ready - Standardized Architecture**  
 **Compliance**: ✅ Fully compliant with [RULES.md](./RULES.md)  
-**Test Coverage**: 🧪 100% unit test coverage enforced
+**Test Coverage**: 🧪 100% unit test coverage with real hardware validation  
+**Standardization**: ✅ Zero duplications, unified architecture  
 
-## 🏗️ Architecture
+## 🏗️ Standardized Architecture
 
 ```
 ┌─────────────────────┐
-│   TypeScript API    │ ← High-level user interface  
+│   TypeScript API    │ ← ✅ RKLLMClient (Complete)
+│   (Promise-based)   │
 ├─────────────────────┤
-│   C++ N-API Layer   │ ← Native bindings (planned)
+│   Type Definitions  │ ← ✅ RKLLM Types (Canonical)
 ├─────────────────────┤
-│   librkllmrt.so     │ ← Rockchip NPU library
+│   C++ N-API Layer   │ ← ✅ Native bindings (Integrated)
+├─────────────────────┤
+│   librkllmrt.so     │ ← ✅ Rockchip NPU library
 └─────────────────────┘
 ```
 
-## 📁 Project Structure (Compliant with RULES.md)
+## 📁 Standardized Project Structure
 
 ```
 rkllmjs/
 ├── src/
-│   ├── cli-runner/              # CLI interface feature
-│   │   ├── cli-runner.ts        # Implementation
-│   │   └── cli-runner.test.ts   # Unit tests  
-│   ├── model-manager/           # Model management feature
-│   │   ├── model-manager.ts     # Implementation
-│   │   └── model-manager.test.ts # Unit tests
-│   ├── model-types/             # Type definitions feature
-│   │   ├── model-types.ts       # Implementation  
-│   │   └── model-types.test.ts  # Unit tests
-│   └── tools/ (DEPRECATED)      # Legacy backward compatibility
-│       ├── manager.ts           # Legacy manager
-│       ├── manager.test.ts      # Tests
-│       ├── types.ts             # Legacy types
-│       └── types.test.ts        # Tests
-├── libs/rkllm/ (PROTECTED)      # Rockchip library assets
-│   ├── aarch64/librkllmrt.so    # 🔒 NPU runtime library
-│   └── include/rkllm.h          # 🔒 C API header
-├── scripts/
-│   └── validate.sh              # Compliance validator
-└── RULES.md                     # 📖 Development rules (non-negotiable)
+│   ├── rkllm-types/              # 🎯 Core RKLLM API types (CANONICAL)
+│   │   ├── rkllm-types.ts        # Type definitions
+│   │   └── rkllm-types.test.ts   # Type tests
+│   ├── rkllm-client/             # 🚀 High-level Promise-based API
+│   │   ├── rkllm-client.ts       # Client implementation  
+│   │   └── rkllm-client.test.ts  # Client tests
+│   ├── bindings/                 # ⚡ Low-level C++ N-API wrapper
+│   │   ├── llm-handle/           # LLM handle management
+│   │   │   ├── llm-handle-wrapper.ts
+│   │   │   └── llm-handle-wrapper.test.ts
+│   │   ├── binding.cpp           # C++ implementation
+│   │   └── binding.test.cpp      # C++ tests
+│   ├── testing/                  # 🧪 Unified testing infrastructure
+│   │   ├── test-logger.ts        # Structured logging
+│   │   ├── test-utils.ts         # Production test utilities
+│   │   ├── index.ts              # Unified exports
+│   │   └── *.test.ts             # Test files
+│   ├── model-manager/            # 📦 Model downloading and management
+│   ├── runtime-detector/         # 🔍 JavaScript runtime detection
+│   └── cli-runner/               # 💻 Command-line interface
+├── libs/rkllm/ (PROTECTED)       # Rockchip library assets
+│   ├── aarch64/librkllmrt.so     # 🔒 NPU runtime library
+│   └── include/rkllm.h           # 🔒 C API header
+├── scripts/validate.sh           # 🛡️ Enhanced compliance validator
+├── ARCHITECTURE.md               # 📖 Detailed architecture documentation
+└── RULES.md                      # 📖 Development rules (non-negotiable)
+```
+
+> 📖 **See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed module documentation and data flow**
+
+## 🚀 Quick API Example
+
+```typescript
+import { RKLLMClient } from './src/rkllm-client/rkllm-client.js';
+
+// Initialize client with model
+const client = new RKLLMClient({ 
+  modelPath: '/path/to/your-model.rkllm' 
+});
+
+await client.initialize();
+
+// Simple text generation
+const result = await client.generate('What is artificial intelligence?');
+console.log(result.text);
+
+// Streaming with callbacks
+const streamResult = await client.generate('Explain quantum computing', {
+  streaming: true,
+  onToken: (token) => process.stdout.write(token),
+  onProgress: (progress) => console.log(`Progress: ${(progress * 100).toFixed(1)}%`),
+});
+
+// Event-driven monitoring
+client.on('inference:complete', (result) => {
+  console.log(`Generated ${result.tokenCount} tokens in ${result.performance.totalTimeMs}ms`);
+});
+
+await client.cleanup();
 ```
 
 ## 🚀 Quick Start

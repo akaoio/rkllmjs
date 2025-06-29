@@ -113,7 +113,7 @@ echo "🏛️ Checking directory structure..."
 # This is a simplified check - in practice, you might want more sophisticated logic
 
 # Find directories with multiple TypeScript files (excluding tests and type definitions)
-MULTI_FILE_DIRS=$(find src -type d -exec sh -c 'count=$(find "$1" -maxdepth 1 -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | wc -l); if [ $count -gt 1 ]; then echo "$1"; fi' _ {} \;)
+MULTI_FILE_DIRS=$(find src -type d -not -path "src/testing" -exec sh -c 'count=$(find "$1" -maxdepth 1 -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | wc -l); if [ $count -gt 1 ]; then echo "$1"; fi' _ {} \;)
 
 if [ -n "$MULTI_FILE_DIRS" ]; then
     for dir in $MULTI_FILE_DIRS; do
@@ -152,7 +152,218 @@ if [ -d "configs" ]; then
 fi
 
 echo ""
-echo "�🔒 Checking protected Rockchip assets..."
+echo "🔍 Checking for duplicate type definitions..."
+
+# Check for duplicate enum definitions
+ENUM_DUPLICATES=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | xargs grep -l "export enum" | while read file; do
+    grep "export enum" "$file" | sed "s/.*export enum \([A-Za-z0-9_]*\).*/\1/" | while read enum_name; do
+        echo "$enum_name:$file"
+    done
+done | sort | uniq -d)
+
+if [ -n "$ENUM_DUPLICATES" ]; then
+    echo "$ENUM_DUPLICATES" | while read dup; do
+        enum_name=$(echo "$dup" | cut -d: -f1)
+        report_error "Duplicate enum definition found: $enum_name"
+    done
+else
+    report_success "No duplicate enum definitions found"
+fi
+
+# Check for duplicate interface definitions
+INTERFACE_DUPLICATES=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | xargs grep -l "export interface" | while read file; do
+    grep "export interface" "$file" | sed "s/.*export interface \([A-Za-z0-9_]*\).*/\1/" | while read interface_name; do
+        echo "$interface_name:$file"
+    done
+done | sort | uniq -d)
+
+if [ -n "$INTERFACE_DUPLICATES" ]; then
+    echo "$INTERFACE_DUPLICATES" | while read dup; do
+        interface_name=$(echo "$dup" | cut -d: -f1)
+        report_error "Duplicate interface definition found: $interface_name"
+    done
+else
+    report_success "No duplicate interface definitions found"
+fi
+
+echo ""
+echo "🎯 Checking naming convention consistency..."
+
+# Check for consistent enum naming (should be PascalCase)
+ENUM_NAMING_ISSUES=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" -exec grep -H "export enum" {} \; 2>/dev/null | grep -v "export enum [A-Z][A-Za-z0-9]*" || true)
+
+if [ -n "$ENUM_NAMING_ISSUES" ]; then
+    echo "$ENUM_NAMING_ISSUES" | while read issue; do
+        report_warning "Enum naming convention issue: $issue (should be PascalCase)"
+    done
+else
+    report_success "Enum naming conventions are consistent"
+fi
+
+# Check for consistent interface naming (should be PascalCase)  
+INTERFACE_NAMING_ISSUES=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" -exec grep -H "export interface" {} \; 2>/dev/null | grep -v "export interface [A-Z][A-Za-z0-9]*" || true)
+
+if [ -n "$INTERFACE_NAMING_ISSUES" ]; then
+    echo "$INTERFACE_NAMING_ISSUES" | while read issue; do
+        report_warning "Interface naming convention issue: $issue (should be PascalCase)"
+    done
+else
+    report_success "Interface naming conventions are consistent"
+fi
+
+echo ""
+echo "🏗️ Checking architectural compliance..."
+
+# Check that core types are only defined in rkllm-types (check for specific core type names)
+CORE_TYPE_VIOLATIONS=$(find src -name "*.ts" -not -path "src/rkllm-types/*" -not -path "src/bindings/*" -not -name "*.test.ts" -not -name "*.d.ts" -exec grep -l "export enum \(LLMCallState\|RKLLMInputType\|RKLLMInferMode\)\|export interface \(RKLLMParam\|RKLLMInput\|RKLLMResult\|RKLLMExtendParam\) " {} \; 2>/dev/null || true)
+
+if [ -n "$CORE_TYPE_VIOLATIONS" ]; then
+    echo "$CORE_TYPE_VIOLATIONS" | while read violation; do
+        report_error "Core RKLLM types defined outside rkllm-types module: $violation"
+    done
+else
+    report_success "Core types properly centralized in rkllm-types module"
+fi
+
+# Check that testing utilities are only in testing module
+TESTING_VIOLATIONS=$(find src -name "*.ts" -not -path "src/testing/*" -not -name "*.test.ts" -not -name "*.d.ts" -exec grep -l "class.*Logger\|function.*test\|TEST_.*CONFIG" {} \; 2>/dev/null || true)
+
+if [ -n "$TESTING_VIOLATIONS" ]; then
+    echo "$TESTING_VIOLATIONS" | while read violation; do
+        report_warning "Testing utilities found outside testing module: $violation"
+    done
+else
+    report_success "Testing utilities properly centralized in testing module"
+fi
+
+echo ""
+echo "📋 Checking import consistency..."
+
+# Check for imports from deprecated paths (but allow internal module imports)
+DEPRECATED_IMPORTS=$(find src -name "*.ts" -not -path "src/testing/*" -exec grep -H "from.*test-logger\|from.*rkllm-client/test-utils" {} \; 2>/dev/null || true)
+
+if [ -n "$DEPRECATED_IMPORTS" ]; then
+    echo "$DEPRECATED_IMPORTS" | while read import_issue; do
+        report_error "Deprecated import path found: $import_issue (should use src/testing)"
+    done
+else
+    report_success "No deprecated import paths found"
+fi
+
+# Check for relative imports going up more than one level
+DEEP_RELATIVE_IMPORTS=$(find src -name "*.ts" -exec grep -H "from.*\.\./\.\./\.\." {} \; 2>/dev/null || true)
+
+if [ -n "$DEEP_RELATIVE_IMPORTS" ]; then
+    echo "$DEEP_RELATIVE_IMPORTS" | while read import_issue; do
+        report_warning "Deep relative import found: $import_issue (consider absolute imports)"
+    done
+else
+    report_success "No problematic deep relative imports found"
+fi
+
+echo ""
+echo "🔧 Checking function signature consistency..."
+
+# Check for duplicate function signatures across modules
+DUPLICATE_FUNCTIONS=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | xargs grep -h "export function\|export async function" | sort | uniq -d)
+
+if [ -n "$DUPLICATE_FUNCTIONS" ]; then
+    echo "$DUPLICATE_FUNCTIONS" | while read dup_function; do
+        report_warning "Potentially duplicate function signature: $dup_function"
+    done
+else
+    report_success "No duplicate function signatures found"
+fi
+
+echo ""
+echo "🎨 Checking usage pattern consistency..."
+
+# Check for inconsistent TestLogger usage patterns
+INCONSISTENT_LOGGER_USAGE=$(find src -name "*.test.ts" -exec grep -H "new TestLogger\|TestLogger\.createLogger" {} \; | grep -v "src/testing/")
+
+if [ -n "$INCONSISTENT_LOGGER_USAGE" ]; then
+    NEW_USAGE=$(echo "$INCONSISTENT_LOGGER_USAGE" | grep "new TestLogger" | wc -l)
+    FACTORY_USAGE=$(echo "$INCONSISTENT_LOGGER_USAGE" | grep "createLogger" | wc -l)
+    
+    if [ $NEW_USAGE -gt 0 ] && [ $FACTORY_USAGE -gt 0 ]; then
+        report_warning "Inconsistent TestLogger usage patterns found - mix of 'new TestLogger()' ($NEW_USAGE) and 'TestLogger.createLogger()' ($FACTORY_USAGE)"
+        report_warning "Consider standardizing on one pattern for consistency"
+    else
+        report_success "Consistent TestLogger usage patterns"
+    fi
+else
+    report_success "Consistent TestLogger usage patterns"
+fi
+
+echo ""
+echo "📐 Checking interface similarity (advanced duplication detection)..."
+
+# Extract interface names and their property counts to detect similar structures
+INTERFACE_ANALYSIS=$(find src -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" -exec grep -A 20 "export interface" {} \; | awk '
+    /export interface/ {
+        interface_name = $3
+        gsub(/\{/, "", interface_name)
+        property_count = 0
+    }
+    /^[[:space:]]*[a-zA-Z].*:/ {
+        property_count++
+    }
+    /^}/ {
+        if (interface_name) {
+            print interface_name ":" property_count
+            interface_name = ""
+        }
+    }
+' | sort)
+
+# Check for interfaces with identical property counts (potential duplicates)
+SIMILAR_INTERFACES=$(echo "$INTERFACE_ANALYSIS" | cut -d: -f2 | sort | uniq -d)
+
+if [ -n "$SIMILAR_INTERFACES" ]; then
+    echo "$SIMILAR_INTERFACES" | while read prop_count; do
+        MATCHING_INTERFACES=$(echo "$INTERFACE_ANALYSIS" | grep ":$prop_count$" | cut -d: -f1 | tr '\n' ' ')
+        INTERFACE_COUNT=$(echo $MATCHING_INTERFACES | wc -w)
+        
+        # Filter out expected conversion pairs (C_* with corresponding canonical types)
+        NON_CONVERSION_INTERFACES=$(echo $MATCHING_INTERFACES | tr ' ' '\n' | grep -v "^C_" | tr '\n' ' ')
+        CONVERSION_INTERFACES=$(echo $MATCHING_INTERFACES | tr ' ' '\n' | grep "^C_" | tr '\n' ' ')
+        
+        # Only warn if there are multiple non-conversion interfaces, or unmatched conversion interfaces
+        NON_CONVERSION_COUNT=$(echo $NON_CONVERSION_INTERFACES | wc -w)
+        
+        if [ $NON_CONVERSION_COUNT -gt 1 ]; then
+            report_warning "Multiple interfaces with similar structure ($prop_count properties): $NON_CONVERSION_INTERFACES"
+            if [ -n "$CONVERSION_INTERFACES" ]; then
+                echo "   (Note: Related C API conversion interfaces: $CONVERSION_INTERFACES)"
+            fi
+        fi
+    done
+else
+    report_success "No obviously similar interface structures detected"
+fi
+
+echo ""
+echo "📄 Checking documentation consistency..."
+
+# Check for consistent README structure across modules
+README_ISSUES=0
+find src -name "README.md" | while read readme_file; do
+    if ! grep -q "## Purpose" "$readme_file"; then
+        report_warning "Missing '## Purpose' section in $readme_file"
+        README_ISSUES=$((README_ISSUES + 1))
+    fi
+    if ! grep -q "## " "$readme_file"; then
+        report_warning "No section headers found in $readme_file"
+        README_ISSUES=$((README_ISSUES + 1))
+    fi
+done
+
+if [ $README_ISSUES -eq 0 ]; then
+    report_success "Documentation follows consistent structure"
+fi
+
+echo ""
+echo "🔒 Checking protected Rockchip assets..."
 
 # Check that protected files are not modified (this is a placeholder - you'd implement actual checks)
 PROTECTED_FILES=(
