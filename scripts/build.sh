@@ -149,10 +149,33 @@ EOF
     report_success "Deno configuration created: deno.json"
 fi
 
-# Native module build (placeholder - to be implemented when C++ bindings are ready)
-report_status "Native module build (placeholder)..."
-report_warning "Native C++ bindings not yet implemented"
-report_warning "Will be built using N-API when ready"
+# Native module build
+report_status "Building native C++ N-API bindings..."
+
+if [ -f "binding.gyp" ]; then
+    # Clean previous builds
+    if [ -d "build" ]; then
+        rm -rf build
+        report_status "Cleaned previous native build"
+    fi
+
+    # Build native addon
+    if npx node-gyp configure build; then
+        report_success "Native C++ bindings compiled successfully"
+        
+        # Verify the .node file was created
+        if [ -f "build/Release/binding.node" ]; then
+            report_success "Native addon created: build/Release/binding.node"
+        else
+            report_warning "Native addon file not found after build"
+        fi
+    else
+        report_error "Failed to compile native C++ bindings"
+        report_warning "Continuing without native bindings..."
+    fi
+else
+    report_warning "No binding.gyp found - skipping native module build"
+fi
 
 # Generate package information
 report_status "Generating build information..."
@@ -180,7 +203,8 @@ cat > dist/build-info.json << EOF
     "typescript": true,
     "modelManagement": true,
     "runtimeDetection": true,
-    "nativeBindings": false
+    "nativeBindings": true,
+    "llmHandle": true
   }
 }
 EOF
