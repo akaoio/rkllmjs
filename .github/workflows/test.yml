@@ -190,7 +190,7 @@ jobs:
         bun-version: latest
         
     - name: Setup Deno (Orange Pi 5 compatible)
-      uses: denoland/setup-deno@v1
+      uses: denoland/setup-deno@v2
       with:
         deno-version: v1.x
         
