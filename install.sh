@@ -1,479 +1,418 @@
 #!/bin/bash
 
+# RKLLM.js Modular Installation Script
+# Modern, responsive, and modular installation system
+
 set -e  # Exit on any error
 
-echo "=== RKLLM.js Interactive Development Setup ==="
-echo ""
-echo "⚠️  WARNING: This script is intended for DEVELOPMENT ENVIRONMENT ONLY!"
-echo "⚠️  Do NOT run this script on production servers or systems!"
-echo ""
+# Script metadata
+readonly SCRIPT_VERSION="2.0.0"
+readonly SCRIPT_NAME="RKLLM.js Development Setup"
 
-# Detect OS for cross-platform support
-detect_os() {
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        if command -v apt &> /dev/null; then
-            echo "ubuntu"
-        elif command -v yum &> /dev/null; then
-            echo "rhel"
-        elif command -v pacman &> /dev/null; then
-            echo "arch"
-        else
-            echo "linux"
-        fi
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "macos"
-    else
-        echo "unknown"
-    fi
-}
+# Get script directory and load module system
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+MODULE_LIB_DIR="$SCRIPT_DIR/scripts/lib"
+MODULE_SYSTEM="$MODULE_LIB_DIR/module-loader.sh"
 
-OS=$(detect_os)
-echo "🖥️  Detected OS: $OS"
+# Check if module system exists
+if [[ ! -f "$MODULE_SYSTEM" ]]; then
+    echo "❌ Module system not found: $MODULE_SYSTEM"
+    echo "Please ensure the modular installation files are present."
+    exit 1
+fi
 
-# Function to install packages based on OS
-install_packages() {
-    local packages=("$@")
-    
-    case $OS in
-        "ubuntu")
-            sudo apt update
-            sudo apt install -y "${packages[@]}"
-            ;;
-        "rhel")
-            sudo yum install -y "${packages[@]}"
-            ;;
-        "arch")
-            sudo pacman -S --noconfirm "${packages[@]}"
-            ;;
-        "macos")
-            if command -v brew &> /dev/null; then
-                brew install "${packages[@]}"
-            else
-                echo "❌ Homebrew not found. Please install Homebrew first."
-                exit 1
-            fi
-            ;;
-        *)
-            echo "❌ Unsupported OS. Please install packages manually:"
-            echo "   ${packages[*]}"
-            exit 1
-            ;;
-    esac
-}
+# Load module system
+source "$MODULE_SYSTEM"
 
-# Check for required tools
-check_required_tools() {
-    local missing_tools=()
-    
-    if ! command -v curl &> /dev/null; then
-        missing_tools+=("curl")
-    fi
-    
-    if ! command -v git &> /dev/null; then
-        missing_tools+=("git")
-    fi
-    
-    if ! command -v unzip &> /dev/null; then
-        missing_tools+=("unzip")
-    fi
-    
-    # Check for whiptail/dialog for interactive prompts
-    if ! command -v whiptail &> /dev/null && ! command -v dialog &> /dev/null; then
-        case $OS in
-            "ubuntu")
-                missing_tools+=("whiptail")
-                ;;
-            "rhel")
-                missing_tools+=("dialog")
-                ;;
-            "arch")
-                missing_tools+=("dialog")
-                ;;
-            "macos")
-                missing_tools+=("dialog")
-                ;;
-        esac
-    fi
-    
-    if [ ${#missing_tools[@]} -gt 0 ]; then
-        echo "🔧 Installing required tools: ${missing_tools[*]}"
-        install_packages "${missing_tools[@]}"
-    fi
-}
+# Initialize module system
+if ! init_module_system; then
+    echo "❌ Failed to initialize module system"
+    exit 1
+fi
 
-# Interactive runtime selection using whiptail or dialog
-select_runtimes() {
-    local DIALOG_CMD=""
-    if command -v whiptail &> /dev/null; then
-        DIALOG_CMD="whiptail"
-    elif command -v dialog &> /dev/null; then
-        DIALOG_CMD="dialog"
-    else
-        echo "❌ No dialog tool available. Installing all runtimes by default."
-        INSTALL_NODEJS=true
-        INSTALL_BUN=false
-        INSTALL_DENO=false
-        INSTALL_YARN=false
-        return
+# Load required modules in dependency order
+REQUIRED_MODULES=(
+    "core"           # Core utilities and logging
+    "ui-responsive"  # Responsive UI system
+    "os-detection"   # OS detection and package management
+    "runtime-node"   # Node.js installation
+    "runtime-bun"    # Bun installation
+    "runtime-deno"   # Deno installation
+    "runtime-yarn"   # Yarn installation
+    "build-tools"    # C++ build essentials
+)
+
+if ! load_modules "${REQUIRED_MODULES[@]}"; then
+    echo "❌ Failed to load required modules"
+    exit 1
+fi
+
+# Global installation state
+declare -A RUNTIME_SELECTION
+declare -A RUNTIME_INSTALLED
+
+# Main installation function
+main() {
+    # Show header
+    show_header
+    
+    # Check system requirements
+    if ! check_system_requirements; then
+        log_error "System requirements not met"
+        show_system_requirements_help
+        exit 1
     fi
     
-    echo "🎯 Interactive Runtime Selection"
-    echo ""
-    
-    # Create checklist for runtime selection
-    if [ "$DIALOG_CMD" = "whiptail" ]; then
-        CHOICES=$(whiptail --title "RKLLM.js Runtime Selection" \
-            --checklist "Select JavaScript runtimes to install (Node.js is required):" \
-            15 60 4 \
-            "nodejs" "Node.js (Required - Primary runtime)" ON \
-            "bun" "Bun (Optional - Fast runtime & package manager)" OFF \
-            "deno" "Deno (Optional - Secure TypeScript runtime)" OFF \
-            "yarn" "Yarn (Optional - Alternative package manager)" OFF \
-            3>&1 1>&2 2>&3)
-    else
-        CHOICES=$(dialog --stdout --title "RKLLM.js Runtime Selection" \
-            --checklist "Select JavaScript runtimes to install (Node.js is required):" \
-            15 60 4 \
-            "nodejs" "Node.js (Required - Primary runtime)" on \
-            "bun" "Bun (Optional - Fast runtime & package manager)" off \
-            "deno" "Deno (Optional - Secure TypeScript runtime)" off \
-            "yarn" "Yarn (Optional - Alternative package manager)" off)
+    # Install required tools first
+    if ! install_required_tools; then
+        log_error "Failed to install required tools"
+        exit 1
     fi
     
-    # Check if user cancelled
-    if [ $? -ne 0 ]; then
-        echo "❌ Setup cancelled by user."
+    # Show interactive runtime selection
+    if ! select_runtimes_interactive; then
+        log_info "Setup cancelled by user"
         exit 0
     fi
     
-    # Parse selections
-    INSTALL_NODEJS=false
-    INSTALL_BUN=false
-    INSTALL_DENO=false
-    INSTALL_YARN=false
+    # Install selected runtimes
+    install_selected_runtimes
     
-    for choice in $CHOICES; do
-        case $choice in
-            '"nodejs"'|'nodejs')
-                INSTALL_NODEJS=true
-                ;;
-            '"bun"'|'bun')
-                INSTALL_BUN=true
-                ;;
-            '"deno"'|'deno')
-                INSTALL_DENO=true
-                ;;
-            '"yarn"'|'yarn')
-                INSTALL_YARN=true
-                ;;
-        esac
-    done
-    
-    # Ensure Node.js is always installed (required)
-    if [ "$INSTALL_NODEJS" = false ]; then
-        echo "⚠️  Node.js is required as the primary runtime. Enabling Node.js installation."
-        INSTALL_NODEJS=true
+    # Install build essentials
+    if ! install_build_essentials; then
+        log_warning "Build essentials installation failed - some features may not work"
     fi
     
-    echo ""
-    echo "📋 Selected runtimes:"
-    echo "   ✅ Node.js (Primary runtime)"
-    [ "$INSTALL_BUN" = true ] && echo "   ✅ Bun (Fast runtime)"
-    [ "$INSTALL_DENO" = true ] && echo "   ✅ Deno (Secure runtime)"  
-    [ "$INSTALL_YARN" = true ] && echo "   ✅ Yarn (Package manager)"
-    echo ""
+    # Configure environments
+    configure_runtime_environments
+    
+    # Show completion summary
+    show_completion_summary
 }
 
-# Install build essentials for C++ compilation
-install_build_essentials() {
-    echo "🔨 Installing C++ build essentials..."
+# Interactive runtime selection with responsive UI
+select_runtimes_interactive() {
+    log_step "Runtime Selection"
     
-    case $OS in
-        "ubuntu")
-            local build_packages=("build-essential" "cmake" "make" "g++" "unzip")
-            install_packages "${build_packages[@]}"
+    # Prepare runtime options for dialog
+    local runtime_options=(
+        "nodejs" "Node.js (Required - Primary runtime)" "ON"
+        "bun" "Bun (Optional - Fast runtime & package manager)" "OFF"
+        "deno" "Deno (Optional - Secure TypeScript runtime)" "OFF"
+        "yarn" "Yarn (Optional - Alternative package manager)" "OFF"
+    )
+    
+    # Show selection dialog
+    local choices
+    choices=$(show_responsive_checklist \
+        "RKLLM.js Runtime Selection" \
+        "Select JavaScript runtimes to install:\n\nNode.js is required as the primary runtime.\nOther runtimes are optional but recommended for development." \
+        "${runtime_options[@]}")
+    
+    local dialog_result=$?
+    
+    # Handle dialog result
+    case $dialog_result in
+        0)
+            # User made selections
+            parse_runtime_selections "$choices"
             ;;
-        "rhel")
-            local build_packages=("gcc-c++" "cmake" "make" "unzip")
-            install_packages "${build_packages[@]}"
+        1)
+            # User cancelled
+            return 1
             ;;
-        "arch")
-            local build_packages=("base-devel" "cmake" "unzip")
-            install_packages "${build_packages[@]}"
-            ;;
-        "macos")
-            # Check if Xcode command line tools are installed
-            if ! xcode-select -p &> /dev/null; then
-                echo "Installing Xcode command line tools..."
-                xcode-select --install
-                echo "⚠️  Please complete Xcode installation and run this script again."
-                exit 1
-            fi
-            local build_packages=("cmake" "unzip")
-            install_packages "${build_packages[@]}"
+        2)
+            # Terminal too small - use fallback
+            select_runtimes_fallback
             ;;
         *)
-            echo "❌ Please install C++ build tools manually for your OS"
+            log_error "Unexpected dialog result: $dialog_result"
+            return 1
             ;;
     esac
     
-    echo "✅ Build essentials installed"
+    # Ensure Node.js is always selected
+    if [[ "${RUNTIME_SELECTION[nodejs]:-false}" != "true" ]]; then
+        log_warning "Node.js is required as the primary runtime. Enabling Node.js installation."
+        RUNTIME_SELECTION[nodejs]=true
+    fi
+    
+    # Show selected runtimes
+    show_runtime_selections
+    
+    # Final confirmation
+    if show_responsive_yesno "Confirm Installation" "Proceed with the installation of selected runtimes?"; then
+        return 0
+    else
+        return 1
+    fi
 }
 
-# Install Node.js
-install_nodejs() {
-    if ! command -v node &> /dev/null; then
-        echo "📦 Installing Node.js..."
-        case $OS in
-            "ubuntu")
-                # Install Node.js 18+ from NodeSource repository
-                curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-                sudo apt-get install -y nodejs
-                ;;
-            "macos")
-                install_packages "node"
-                ;;
-            *)
-                local node_packages=("nodejs" "npm")
-                install_packages "${node_packages[@]}"
-                ;;
+# Fallback runtime selection for small terminals
+select_runtimes_fallback() {
+    log_info "Using fallback selection method for small terminal"
+    
+    echo "Available runtimes:"
+    echo "  1. Node.js (Required)"
+    echo "  2. Bun (Optional)"
+    echo "  3. Deno (Optional)"
+    echo "  4. Yarn (Optional)"
+    echo
+    
+    # Set defaults
+    RUNTIME_SELECTION[nodejs]=true
+    RUNTIME_SELECTION[bun]=false
+    RUNTIME_SELECTION[deno]=false
+    RUNTIME_SELECTION[yarn]=false
+    
+    # Ask for each optional runtime
+    for runtime in bun deno yarn; do
+        local runtime_name
+        case $runtime in
+            bun) runtime_name="Bun" ;;
+            deno) runtime_name="Deno" ;;
+            yarn) runtime_name="Yarn" ;;
         esac
-        echo "✅ Node.js installed"
-    else
-        echo "✅ Node.js already installed: $(node --version)"
-    fi
-}
-
-# Install Bun
-install_bun() {
-    if ! command -v bun &> /dev/null; then
-        echo "📦 Installing Bun..."
-        curl -fsSL https://bun.sh/install | bash
         
-        # Add Bun to PATH
-        export PATH="$HOME/.bun/bin:$PATH"
-        
-        # Add to shell profiles
-        for profile in ~/.bashrc ~/.zshrc ~/.profile; do
-            if [ -f "$profile" ]; then
-                if ! grep -q "/.bun/bin" "$profile"; then
-                    echo 'export PATH="$HOME/.bun/bin:$PATH"' >> "$profile"
-                fi
-            fi
-        done
-        
-        echo "✅ Bun installed"
-    else
-        echo "✅ Bun already installed: v$(bun --version)"
-    fi
-}
-
-# Install Deno  
-install_deno() {
-    if ! command -v deno &> /dev/null; then
-        echo "📦 Installing Deno..."
-        curl -fsSL https://deno.land/install.sh | sh
-        
-        # Add Deno to PATH
-        export PATH="$HOME/.deno/bin:$PATH"
-        
-        # Add to shell profiles
-        for profile in ~/.bashrc ~/.zshrc ~/.profile; do
-            if [ -f "$profile" ]; then
-                if ! grep -q "/.deno/bin" "$profile"; then
-                    echo 'export PATH="$HOME/.deno/bin:$PATH"' >> "$profile"
-                fi
-            fi
-        done
-        
-        echo "✅ Deno installed"
-    else
-        echo "✅ Deno already installed: $(deno --version | head -n1)"
-    fi
-}
-
-# Install Yarn
-install_yarn() {
-    if ! command -v yarn &> /dev/null; then
-        echo "📦 Installing Yarn..."
-        case $OS in
-            "ubuntu")
-                curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-                echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-                sudo apt update
-                sudo apt install -y yarn
-                ;;
-            "macos")
-                install_packages "yarn"
-                ;;
-            *)
-                # Fallback to npm installation
-                npm install -g yarn
-                ;;
+        echo -n "Install $runtime_name? (y/N): "
+        read -r response
+        case $response in
+            [Yy]*) RUNTIME_SELECTION[$runtime]=true ;;
+            *) RUNTIME_SELECTION[$runtime]=false ;;
         esac
-        echo "✅ Yarn installed"
-    else
-        echo "✅ Yarn already installed: $(yarn --version)"
-    fi
+    done
 }
 
-# Setup RKLLM native libraries
-setup_rkllm_libs() {
-    local LIBS_DIR="./libs/rkllm"
-    local REQUIRED_DIRS=("aarch64" "armhf" "include")
-    local MISSING_DIRS=()
+# Parse runtime selections from dialog
+parse_runtime_selections() {
+    local choices="$1"
+    
+    # Initialize all to false
+    RUNTIME_SELECTION[nodejs]=false
+    RUNTIME_SELECTION[bun]=false
+    RUNTIME_SELECTION[deno]=false
+    RUNTIME_SELECTION[yarn]=false
+    
+    # Parse selections
+    for choice in $choices; do
+        case $choice in
+            '"nodejs"'|'nodejs') RUNTIME_SELECTION[nodejs]=true ;;
+            '"bun"'|'bun') RUNTIME_SELECTION[bun]=true ;;
+            '"deno"'|'deno') RUNTIME_SELECTION[deno]=true ;;
+            '"yarn"'|'yarn') RUNTIME_SELECTION[yarn]=true ;;
+        esac
+    done
+}
 
-    echo "🔍 Checking RKLLM library structure..."
+# Show selected runtimes
+show_runtime_selections() {
+    echo
+    log_info "Selected runtimes:"
+    [[ "${RUNTIME_SELECTION[nodejs]}" == "true" ]] && echo "  ✅ Node.js (Primary runtime)"
+    [[ "${RUNTIME_SELECTION[bun]}" == "true" ]] && echo "  ✅ Bun (Fast runtime)"
+    [[ "${RUNTIME_SELECTION[deno]}" == "true" ]] && echo "  ✅ Deno (Secure runtime)"
+    [[ "${RUNTIME_SELECTION[yarn]}" == "true" ]] && echo "  ✅ Yarn (Package manager)"
+    echo
+}
 
-    if [ ! -d "$LIBS_DIR" ]; then
-        echo "libs/rkllm directory not found"
-        MISSING_DIRS=("${REQUIRED_DIRS[@]}")
-    else
-        for dir in "${REQUIRED_DIRS[@]}"; do
-            if [ ! -d "$LIBS_DIR/$dir" ]; then
-                echo "Missing directory: $LIBS_DIR/$dir"
-                MISSING_DIRS+=("$dir")
-            fi
-        done
-    fi
-
-    # If any required directories are missing, clone and setup
-    if [ ${#MISSING_DIRS[@]} -gt 0 ]; then
-        echo "🔧 Setting up RKLLM native libraries..."
-        
-        # Clone rknn-llm repository if it doesn't exist
-        if [ ! -d "rknn-llm" ]; then
-            echo "📥 Cloning rknn-llm repository..."
-            git clone https://github.com/airockchip/rknn-llm
-        fi
-        
-        # Create libs/rkllm directory
-        mkdir -p "$LIBS_DIR"
-        
-        # Copy librkllm_api contents
-        local LIBRKLLM_API_DIR="./rknn-llm/rkllm-runtime/Linux/librkllm_api"
-        
-        if [ -d "$LIBRKLLM_API_DIR" ]; then
-            echo "📋 Copying RKLLM API files..."
-            cp -r "$LIBRKLLM_API_DIR"/* "$LIBS_DIR/"
-            echo "✅ RKLLM libraries setup completed"
+# Install selected runtimes
+install_selected_runtimes() {
+    log_step "Installing selected runtimes..."
+    
+    # Install Node.js (required)
+    if [[ "${RUNTIME_SELECTION[nodejs]}" == "true" ]]; then
+        if install_nodejs; then
+            RUNTIME_INSTALLED[nodejs]=true
+            log_success "Node.js installation completed"
         else
-            echo "❌ Error: librkllm_api directory not found"
+            log_error "Node.js installation failed"
             exit 1
         fi
-        
-        # Cleanup
-        echo "🧹 Cleaning up temporary files..."
-        rm -rf rknn-llm
-    else
-        echo "✅ RKLLM library structure is complete"
+    fi
+    
+    # Install Bun (optional)
+    if [[ "${RUNTIME_SELECTION[bun]}" == "true" ]]; then
+        if install_bun; then
+            RUNTIME_INSTALLED[bun]=true
+            log_success "Bun installation completed"
+        else
+            log_warning "Bun installation failed - continuing with other runtimes"
+            RUNTIME_INSTALLED[bun]=false
+        fi
+    fi
+    
+    # Install Deno (optional)
+    if [[ "${RUNTIME_SELECTION[deno]}" == "true" ]]; then
+        if install_deno; then
+            RUNTIME_INSTALLED[deno]=true
+            log_success "Deno installation completed"
+        else
+            log_warning "Deno installation failed - continuing with other runtimes"
+            RUNTIME_INSTALLED[deno]=false
+        fi
+    fi
+    
+    # Install Yarn (optional)
+    if [[ "${RUNTIME_SELECTION[yarn]}" == "true" ]]; then
+        if install_yarn; then
+            RUNTIME_INSTALLED[yarn]=true
+            log_success "Yarn installation completed"
+        else
+            log_warning "Yarn installation failed - continuing with setup"
+            RUNTIME_INSTALLED[yarn]=false
+        fi
     fi
 }
 
-# Download standard model using CLI
-download_standard_model() {
-    echo "🤖 Setting up standard RKLLM model..."
+# Configure runtime environments
+configure_runtime_environments() {
+    log_step "Configuring runtime environments..."
     
-    # Build the project first
-    echo "🔨 Building project..."
-    npm install
-    npm run build
+    # Configure Node.js environment
+    if [[ "${RUNTIME_INSTALLED[nodejs]}" == "true" ]]; then
+        configure_nodejs
+    fi
     
-    # Download the standard model
-    echo "📥 Downloading standard model (dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1)..."
-    echo "   Model file: Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm"
+    # Configure Bun environment
+    if [[ "${RUNTIME_INSTALLED[bun]}" == "true" ]]; then
+        configure_bun
+    fi
     
-    # Use the CLI to pull the model
-    npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm
+    # Configure Deno environment
+    if [[ "${RUNTIME_INSTALLED[deno]}" == "true" ]]; then
+        configure_deno
+    fi
     
-    echo "✅ Standard model setup completed"
+    # Configure Yarn environment
+    if [[ "${RUNTIME_INSTALLED[yarn]}" == "true" ]]; then
+        configure_yarn
+    fi
+    
+    # Configure build environment
+    configure_build_environment
 }
 
-# Main installation flow
-main() {
-    echo "🚀 Starting RKLLM.js interactive setup..."
-    echo ""
+# Show system requirements help
+show_system_requirements_help() {
+    echo
+    echo "📋 System Requirements:"
+    echo "  • Supported OS: Ubuntu, Debian, RHEL/CentOS, Arch Linux, macOS"
+    echo "  • Minimum 1GB RAM (recommended: 2GB+)"
+    echo "  • Minimum 1GB free disk space"
+    echo "  • Internet connection for downloads"
+    echo "  • Terminal size: minimum 80x24 characters"
+    echo
+    echo "💡 Tips:"
+    echo "  • Ensure your package manager is working"
+    echo "  • Run 'sudo apt update' (Ubuntu) or equivalent before running this script"
+    echo "  • Close other applications to free up memory"
+    echo
+}
+
+# Show completion summary
+show_completion_summary() {
+    echo
+    log_success "🎉 RKLLM.js Development Setup Complete!"
+    echo
     
-    # Check for required tools first
-    check_required_tools
-    
-    # Interactive runtime selection
-    select_runtimes
-    
-    # Install build essentials
-    install_build_essentials
-    
-    # Install selected runtimes
-    echo "📦 Installing selected runtimes..."
-    
-    if [ "$INSTALL_NODEJS" = true ]; then
-        install_nodejs
+    # Show installed runtimes
+    log_info "✅ Installed runtimes:"
+    if [[ "${RUNTIME_INSTALLED[nodejs]}" == "true" ]]; then
+        show_nodejs_info | sed 's/^/  /'
+    fi
+    if [[ "${RUNTIME_INSTALLED[bun]}" == "true" ]]; then
+        show_bun_info | sed 's/^/  /'
+    fi
+    if [[ "${RUNTIME_INSTALLED[deno]}" == "true" ]]; then
+        show_deno_info | sed 's/^/  /'
+    fi
+    if [[ "${RUNTIME_INSTALLED[yarn]}" == "true" ]]; then
+        show_yarn_info | sed 's/^/  /'
     fi
     
-    if [ "$INSTALL_BUN" = true ]; then
-        install_bun
-    fi
+    echo
+    show_build_info | sed 's/^/  /'
     
-    if [ "$INSTALL_DENO" = true ]; then
-        install_deno
-    fi
+    echo
+    log_info "🎯 Next steps:"
+    echo "  1. Restart your terminal or run: source ~/.bashrc"
+    echo "  2. Navigate to your RKLLM.js project directory"
+    echo "  3. Install project dependencies: npm install"
+    echo "  4. Run tests: npm test"
+    echo "  5. Start development: npm run dev"
+    echo
     
-    if [ "$INSTALL_YARN" = true ]; then
-        install_yarn
-    fi
+    log_info "📖 Documentation:"
+    echo "  • Project README: README.md"
+    echo "  • Development rules: RULES.md"
+    echo "  • Module documentation: scripts/modules/*/README.md"
+    echo
     
-    # Setup RKLLM libraries
-    setup_rkllm_libs
-    
-    # Download standard model
-    download_standard_model
-    
-    echo ""
-    echo "🎉 RKLLM.js Development Setup Complete!"
-    echo ""
-    echo "✅ Installed runtimes:"
-    [ "$INSTALL_NODEJS" = true ] && echo "   🟢 Node.js: $(node --version)"
-    [ "$INSTALL_BUN" = true ] && [ -x "$(command -v bun)" ] && echo "   🟠 Bun: v$(bun --version)"
-    [ "$INSTALL_DENO" = true ] && [ -x "$(command -v deno)" ] && echo "   🔵 Deno: $(deno --version | head -n1)"
-    [ "$INSTALL_YARN" = true ] && [ -x "$(command -v yarn)" ] && echo "   🟡 Yarn: $(yarn --version)"
-    echo ""
-    echo "✅ Standard model: dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1"
-    echo "✅ C++ build essentials configured"
-    echo ""
-    echo "🎯 Next steps:"
-    echo "   1. Restart your terminal or run: source ~/.bashrc"  
-    echo "   2. Start developing with RKLLM.js!"
-    echo "   3. List models: npm run cli list"
-    echo "   4. Run tests: npm test"
-    echo ""
     echo "⚠️  REMINDER: This setup is for DEVELOPMENT ONLY!"
 }
 
-# Confirmation prompt
-echo "This script will:"
-echo "  • Detect your OS and install appropriate packages"
-echo "  • Let you choose which JavaScript runtimes to install"
-echo "  • Install C++ build essentials for your platform"
-echo "  • Setup RKLLM native libraries"
-echo "  • Download the standard RKLLM model"
-echo "  • Modify your shell profile for PATH updates"
-echo ""
-
-while true; do
-    read -p "Do you want to continue with interactive setup? (Y/N): " yn
-    case $yn in
-        [Yy]* ) 
-            echo "✅ Proceeding with interactive setup..."
-            main
-            break
-            ;;
-        [Nn]* ) 
-            echo "❌ Setup cancelled by user."
-            echo "To run this script later, execute: bash install.sh"
+# Handle script arguments
+handle_arguments() {
+    case "${1:-}" in
+        --help|-h)
+            show_help
             exit 0
             ;;
-        * ) 
-            echo "Please answer Y (yes) or N (no)."
+        --version|-v)
+            echo "$SCRIPT_NAME v$SCRIPT_VERSION"
+            exit 0
+            ;;
+        --test)
+            echo "Running module system test..."
+            scripts/test-modules.sh
+            exit $?
+            ;;
+        --non-interactive)
+            log_info "Non-interactive mode - installing Node.js only"
+            RUNTIME_SELECTION[nodejs]=true
+            RUNTIME_SELECTION[bun]=false
+            RUNTIME_SELECTION[deno]=false
+            RUNTIME_SELECTION[yarn]=false
+            ;;
+        *)
+            # Interactive mode (default)
             ;;
     esac
-done
+}
+
+# Show help
+show_help() {
+    echo "$SCRIPT_NAME v$SCRIPT_VERSION"
+    echo
+    echo "A modern, modular installation system for RKLLM.js development environment."
+    echo
+    echo "Usage: $0 [OPTIONS]"
+    echo
+    echo "Options:"
+    echo "  -h, --help              Show this help message"
+    echo "  -v, --version           Show version information"
+    echo "      --test              Test the module system"
+    echo "      --non-interactive   Install Node.js only (no prompts)"
+    echo
+    echo "Interactive mode (default):"
+    echo "  • Responsive UI that adapts to terminal size"
+    echo "  • Interactive runtime selection"
+    echo "  • Progress feedback and error handling"
+    echo
+    echo "Supported runtimes:"
+    echo "  • Node.js (required)"
+    echo "  • Bun (optional)"
+    echo "  • Deno (optional)"
+    echo "  • Yarn (optional)"
+    echo
+    echo "For more information, see: README.md"
+}
+
+# Entry point
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # Handle command line arguments
+    handle_arguments "$@"
+    
+    # Run main installation
+    main
+fi
