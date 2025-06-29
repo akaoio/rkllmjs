@@ -26,6 +26,14 @@ import {
   RKLLMError,
 } from '../rkllm-types/rkllm-types.js';
 
+// Import the main branch's LLM Handle Wrapper
+import { 
+  LLMHandleWrapper,
+  type RKLLMParam as MainRKLLMParam,
+  type RKLLMInput as MainRKLLMInput,
+  type LLMHandle 
+} from '../bindings/llm-handle/llm-handle-wrapper.js';
+
 // ============================================================================
 // Client Configuration and Options
 // ============================================================================
@@ -131,7 +139,7 @@ export class RKLLMClient extends EventEmitter {
   private isRunning: boolean = false;
   private currentAbortController: AbortController | null = null;
   private modelPath: string;
-  private nativeHandle: any = null; // Handle from PR #34's native bindings
+  private llmHandle: LLMHandle | null = null; // Use main branch's LLMHandle type
   private loadedLoraAdapters: Set<string> = new Set();
 
   // ============================================================================
@@ -199,14 +207,12 @@ export class RKLLMClient extends EventEmitter {
     try {
       this.debugLog('Initializing RKLLM client', { modelPath: this.modelPath });
 
-      // Call native rkllm_init when available (PR #34 integration)
-      const result = await this.callNativeFunction('rkllm_init', this.config);
+      // Convert config to main branch's format
+      const mainParam = this.convertToMainParam(this.config);
       
-      // Store native handle if returned
-      if (result.handle) {
-        this.nativeHandle = result.handleId;
-        this.debugLog('Native handle obtained', { handle: this.nativeHandle });
-      }
+      // Use main branch's LLMHandleWrapper
+      this.llmHandle = await LLMHandleWrapper.init(mainParam);
+      this.debugLog('LLM Handle initialized successfully', { handle: this.llmHandle });
 
       this.isInitialized = true;
       
@@ -242,12 +248,10 @@ export class RKLLMClient extends EventEmitter {
       // Clear any loaded LoRA adapters
       this.loadedLoraAdapters.clear();
 
-      // Call native rkllm_destroy when available (PR #34 integration)
-      if (this.nativeHandle) {
-        await this.callNativeFunction('rkllm_destroy', { handleId: this.nativeHandle });
-        this.nativeHandle = null;
-      } else {
-        await this.callNativeFunction('rkllm_destroy');
+      // Call LLMHandleWrapper to destroy the handle
+      if (this.llmHandle) {
+        await LLMHandleWrapper.destroy(this.llmHandle);
+        this.llmHandle = null;
       }
 
       this.isInitialized = false;
@@ -450,8 +454,10 @@ export class RKLLMClient extends EventEmitter {
         this.currentAbortController.abort();
       }
 
-      // TODO: Call native rkllm_abort when C++ bindings are available
-      await this.callNativeFunction('rkllm_abort', { handleId: this.nativeHandle });
+      // Call LLMHandleWrapper abort method  
+      if (this.llmHandle) {
+        await LLMHandleWrapper.abort(this.llmHandle);
+      }
 
       this.emit('inference:abort');
       this.debugLog('Inference aborted successfully');
@@ -485,8 +491,15 @@ export class RKLLMClient extends EventEmitter {
     try {
       this.debugLog('Loading LoRA adapter', { adapter });
 
-      // TODO: Call native rkllm_load_lora when C++ bindings are available
-      await this.callNativeFunction('rkllm_load_lora', this.nativeHandle, adapter);
+      // Convert to main branch's LoRA adapter format and call LLMHandleWrapper
+      if (this.llmHandle) {
+        const mainAdapter = {
+          lora_adapter_path: adapter.loraAdapterPath,
+          lora_adapter_name: adapter.loraAdapterName,
+          scale: adapter.scale || 1.0
+        };
+        await LLMHandleWrapper.loadLora(this.llmHandle, mainAdapter);
+      }
 
       this.loadedLoraAdapters.add(adapter.loraAdapterName);
       this.emit('lora:loaded', adapter.loraAdapterName);
@@ -510,8 +523,15 @@ export class RKLLMClient extends EventEmitter {
     try {
       this.debugLog('Setting chat template', { config });
 
-      // TODO: Call native rkllm_set_chat_template when C++ bindings are available
-      await this.callNativeFunction('rkllm_set_chat_template', this.nativeHandle, config);
+      // Call LLMHandleWrapper setChatTemplate method
+      if (this.llmHandle) {
+        await LLMHandleWrapper.setChatTemplate(
+          this.llmHandle, 
+          config.systemPrompt || '', 
+          config.promptPrefix || '[INST]', 
+          config.promptPostfix || '[/INST]'
+        );
+      }
 
       this.debugLog('Chat template set successfully');
 
@@ -533,8 +553,15 @@ export class RKLLMClient extends EventEmitter {
     try {
       this.debugLog('Setting function tools', { config });
 
-      // TODO: Call native rkllm_set_function_tools when C++ bindings are available
-      await this.callNativeFunction('rkllm_set_function_tools', this.nativeHandle, config);
+      // Call LLMHandleWrapper setFunctionTools method
+      if (this.llmHandle) {
+        await LLMHandleWrapper.setFunctionTools(
+          this.llmHandle, 
+          config.systemPrompt || '',
+          JSON.stringify(config.tools),
+          config.toolResponseStr || ''
+        );
+      }
 
       this.debugLog('Function tools set successfully');
 
@@ -560,8 +587,10 @@ export class RKLLMClient extends EventEmitter {
     try {
       this.debugLog('Loading prompt cache', { cachePath });
 
-      // TODO: Call native rkllm_load_prompt_cache when C++ bindings are available
-      await this.callNativeFunction('rkllm_load_prompt_cache', this.nativeHandle, cachePath);
+      // Call LLMHandleWrapper loadPromptCache method
+      if (this.llmHandle) {
+        await LLMHandleWrapper.loadPromptCache(this.llmHandle, cachePath);
+      }
 
       this.emit('cache:loaded', cachePath);
       this.debugLog('Prompt cache loaded successfully');
@@ -584,8 +613,10 @@ export class RKLLMClient extends EventEmitter {
     try {
       this.debugLog('Releasing prompt cache');
 
-      // TODO: Call native rkllm_release_prompt_cache when C++ bindings are available
-      await this.callNativeFunction('rkllm_release_prompt_cache', this.nativeHandle);
+      // Call LLMHandleWrapper releasePromptCache method
+      if (this.llmHandle) {
+        await LLMHandleWrapper.releasePromptCache(this.llmHandle);
+      }
 
       this.emit('cache:cleared');
       this.debugLog('Prompt cache released successfully');
@@ -656,43 +687,45 @@ export class RKLLMClient extends EventEmitter {
   }
 
   /**
-   * Get default parameters from native binding (aligned with PR #34)
-   * Falls back to hardcoded defaults if native binding not available
+   * Get default parameters from LLMHandleWrapper (main branch integration)
+   * Falls back to hardcoded defaults if not available
    */
   static async getDefaultParameters(modelPath?: string): Promise<RKLLMParam> {
     try {
-      // Try to load native binding from PR #34
-      const binding = require('../../build/Release/binding.node');
-      const nativeParam = await binding.createDefaultParam();
+      // Use main branch's LLMHandleWrapper to get default parameters
+      const mainParam = await LLMHandleWrapper.createDefaultParam();
       
-      // Convert from PR #34's format to our format
+      // Convert from main branch's format to our format
       return {
-        modelPath: modelPath || nativeParam.model_path || '',
-        maxContextLen: nativeParam.max_context_len,
-        maxNewTokens: nativeParam.max_new_tokens,
-        topK: nativeParam.top_k,
-        topP: nativeParam.top_p,
-        temperature: nativeParam.temperature,
-        repeatPenalty: nativeParam.repeat_penalty || 1.1,
-        frequencyPenalty: nativeParam.frequency_penalty || 0.0,
-        presencePenalty: nativeParam.presence_penalty || 0.0,
-        mirostat: nativeParam.mirostat || 0,
-        mirostatTau: nativeParam.mirostat_tau || 5.0,
-        mirostatEta: nativeParam.mirostat_eta || 0.1,
-        skipSpecialToken: nativeParam.skip_special_token || false,
-        isAsync: nativeParam.is_async !== undefined ? nativeParam.is_async : true,
-        nKeep: 0, // Not in native param, use default
+        modelPath: modelPath || mainParam.model_path || '',
+        maxContextLen: mainParam.max_context_len,
+        maxNewTokens: mainParam.max_new_tokens,
+        topK: mainParam.top_k,
+        topP: mainParam.top_p,
+        temperature: mainParam.temperature,
+        repeatPenalty: mainParam.repeat_penalty || 1.1,
+        frequencyPenalty: mainParam.frequency_penalty || 0.0,
+        presencePenalty: mainParam.presence_penalty || 0.0,
+        mirostat: mainParam.mirostat || 0,
+        mirostatTau: mainParam.mirostat_tau || 5.0,
+        mirostatEta: mainParam.mirostat_eta || 0.1,
+        skipSpecialToken: mainParam.skip_special_token || false,
+        isAsync: mainParam.is_async !== undefined ? mainParam.is_async : true,
+        nKeep: 0, // Not in main param, use default
+        imgStart: mainParam.img_start,
+        imgEnd: mainParam.img_end,
+        imgContent: mainParam.img_content,
         extendParam: {
-          baseDomainId: 0,
-          embedFlash: false,
-          enabledCpusNum: 4,
-          enabledCpusMask: 0x0F,
-          nBatch: 1,
-          useCrossAttn: false,
+          baseDomainId: mainParam.extend_param.base_domain_id,
+          embedFlash: mainParam.extend_param.embed_flash !== 0,
+          enabledCpusNum: mainParam.extend_param.enabled_cpus_num,
+          enabledCpusMask: mainParam.extend_param.enabled_cpus_mask,
+          nBatch: mainParam.extend_param.n_batch,
+          useCrossAttn: mainParam.extend_param.use_cross_attn !== 0,
         },
       };
     } catch (error) {
-      // Fallback to hardcoded defaults if native binding not available
+      // Fallback to hardcoded defaults if LLMHandleWrapper not available
       return {
         modelPath: modelPath || '',
         maxContextLen: 4096,
@@ -737,135 +770,11 @@ export class RKLLMClient extends EventEmitter {
     }
   }
 
-  /**
-   * Load native binding - required for production use
-   */
-  private loadNativeBinding(): any {
-    try {
-      // Load the compiled binding
-      const binding = require('../../build/Release/binding.node');
-      this.debugLog('Loaded native RKLLM binding successfully');
-      return binding;
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      this.debugLog('Failed to load native binding', { error: errorMsg });
-      throw new RKLLMError(
-        `Native RKLLM binding not available: ${errorMsg}. Please build the native module first.`,
-        RKLLMStatusCode.ERROR_NATIVE_BINDING_NOT_AVAILABLE
-      );
-    }
-  }
 
-  /**
-   * Call native function - no mock fallback for production
-   */
-  private async callNativeFunction(functionName: string, ...args: any[]): Promise<any> {
-    const nativeBinding = this.loadNativeBinding();
-    
-    try {
-      switch (functionName) {
-        case 'rkllm_init': {
-          const param = this.convertToRKLLMParam(args[0]);
-          const handleId = await nativeBinding.init(param);
-          this.debugLog(`Native call successful: ${functionName}`, { handleId });
-          return { status: RKLLMStatusCode.SUCCESS, handleId };
-        }
-        
-        case 'rkllm_destroy': {
-          if (args[0] && args[0].handleId) {
-            const result = await nativeBinding.destroy(args[0].handleId);
-            this.debugLog(`Native call successful: ${functionName}`, { result });
-            return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
-          }
-          throw new Error('Handle ID required for destroy operation');
-        }
-        
-        case 'rkllm_run': {
-          const [handleId, input, inferParams] = args;
-          const result = await nativeBinding.run(handleId, input, inferParams);
-          this.debugLog(`Native call successful: ${functionName}`, { result });
-          return { status: RKLLMStatusCode.SUCCESS, result };
-        }
-        
-        case 'rkllm_abort': {
-          if (args[0] && args[0].handleId) {
-            const result = await nativeBinding.abort(args[0].handleId);
-            this.debugLog(`Native call successful: ${functionName}`, { result });
-            return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
-          }
-          throw new Error('Handle ID required for abort operation');
-        }
-        
-        case 'rkllm_load_lora': {
-          const [handleId, adapter] = args;
-          const result = await nativeBinding.loadLora(handleId, adapter);
-          this.debugLog(`Native call successful: ${functionName}`, { result });
-          return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
-        }
-        
-        case 'rkllm_set_chat_template': {
-          const [handleId, config] = args;
-          const result = await nativeBinding.setChatTemplate(handleId, config);
-          this.debugLog(`Native call successful: ${functionName}`, { result });
-          return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
-        }
-        
-        case 'rkllm_set_function_tools': {
-          const [handleId, config] = args;
-          const result = await nativeBinding.setFunctionTools(handleId, config);
-          this.debugLog(`Native call successful: ${functionName}`, { result });
-          return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
-        }
-        
-        case 'rkllm_load_prompt_cache': {
-          const [handleId, cachePath] = args;
-          const result = await nativeBinding.loadPromptCache(handleId, cachePath);
-          this.debugLog(`Native call successful: ${functionName}`, { result });
-          return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
-        }
-        
-        case 'rkllm_release_prompt_cache': {
-          const [handleId] = args;
-          const result = await nativeBinding.releasePromptCache(handleId);
-          this.debugLog(`Native call successful: ${functionName}`, { result });
-          return { status: result === 0 ? RKLLMStatusCode.SUCCESS : RKLLMStatusCode.ERROR_UNKNOWN };
-        }
-        
-        default:
-          throw new Error(`Unknown native function: ${functionName}`);
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      this.debugLog(`Native call failed: ${functionName}`, { error: errorMsg });
-      throw new RKLLMError(
-        `Native call ${functionName} failed: ${errorMsg}`,
-        RKLLMStatusCode.ERROR_NATIVE_CALL_FAILED
-      );
-    }
-  }
 
-  /**
-   * Convert RKLLMClientConfig to RKLLMParam format expected by PR #34 bindings
-   */
-  private convertToRKLLMParam(config: any): any {
-    // Align with PR #34's RKLLMParam interface
-    return {
-      model_path: this.modelPath,
-      max_context_len: config.maxContextLen || this.config.maxContextLen,
-      max_new_tokens: config.maxNewTokens || this.config.maxNewTokens,
-      top_k: config.topK || this.config.topK,
-      top_p: config.topP || this.config.topP,
-      temperature: config.temperature || this.config.temperature,
-      repeat_penalty: config.repeatPenalty || this.config.repeatPenalty,
-      frequency_penalty: config.frequencyPenalty || this.config.frequencyPenalty,
-      presence_penalty: config.presencePenalty || this.config.presencePenalty,
-      mirostat: config.mirostat || this.config.mirostat,
-      mirostat_tau: config.mirostatTau || this.config.mirostatTau,
-      mirostat_eta: config.mirostatEta || this.config.mirostatEta,
-      skip_special_token: config.skipSpecialToken || this.config.skipSpecialToken,
-      is_async: config.isAsync !== undefined ? config.isAsync : this.config.isAsync,
-    };
-  }
+
+
+
 
   /**
    * Run inference using native RKLLM library
@@ -876,22 +785,28 @@ export class RKLLMClient extends EventEmitter {
     callback: LLMResultCallback,
     _options: InferenceOptions
   ): Promise<RKLLMResult> {
-    if (!this.nativeHandle) {
+    if (!this.llmHandle) {
       throw new RKLLMError('RKLLM not initialized', RKLLMStatusCode.ERROR_INVALID_HANDLE);
     }
 
     try {
-      const result = await this.callNativeFunction('rkllm_run', this.nativeHandle, input, inferParams);
+      // Convert to main branch formats
+      const mainInput = this.convertToMainInput(input);
+      const mainInferParams = this.convertToMainInferParams(inferParams);
       
-      if (result.status !== RKLLMStatusCode.SUCCESS) {
-        throw new RKLLMError('Inference failed', result.status);
+      // Run inference using LLMHandleWrapper
+      const statusCode = await LLMHandleWrapper.run(this.llmHandle, mainInput, mainInferParams);
+      
+      // Check status code
+      if (statusCode !== 0) {
+        throw new RKLLMError('Inference failed', statusCode);
       }
 
-      // Convert native result to RKLLMResult format
+      // Create a result object (simplified since main branch doesn't return rich results yet)
       const rkllmResult: RKLLMResult = {
-        text: result.result.text || '',
-        tokenId: result.result.tokenId || 0,
-        perf: result.result.perf || {
+        text: '', // Will be populated by callback
+        tokenId: 0,
+        perf: {
           prefillTimeMs: 0,
           prefillTokens: 0,
           generateTimeMs: 0,
@@ -908,6 +823,111 @@ export class RKLLMClient extends EventEmitter {
       const errorMsg = error instanceof Error ? error.message : String(error);
       throw new RKLLMError(`Inference failed: ${errorMsg}`, RKLLMStatusCode.ERROR_INFERENCE_FAILED);
     }
+  }
+
+  // ============================================================================
+  // Parameter Conversion Methods
+  // ============================================================================
+
+  /**
+   * Convert client config to main branch's RKLLMParam format
+   */
+  private convertToMainParam(config: RKLLMClientConfig): MainRKLLMParam {
+    return {
+      model_path: config.modelPath,
+      max_context_len: config.maxContextLen ?? 4096,
+      max_new_tokens: config.maxNewTokens ?? 512,
+      top_k: config.topK ?? 40,
+      n_keep: config.nKeep ?? 0,
+      top_p: config.topP ?? 0.9,
+      temperature: config.temperature ?? 0.7,
+      repeat_penalty: config.repeatPenalty ?? 1.1,
+      frequency_penalty: config.frequencyPenalty ?? 0.0,
+      presence_penalty: config.presencePenalty ?? 0.0,
+      mirostat: config.mirostat ?? 0,
+      mirostat_tau: config.mirostatTau ?? 5.0,
+      mirostat_eta: config.mirostatEta ?? 0.1,
+      skip_special_token: config.skipSpecialToken ?? false,
+      is_async: config.isAsync ?? true,
+      img_start: config.imgStart,
+      img_end: config.imgEnd,
+      img_content: config.imgContent,
+      extend_param: {
+        base_domain_id: config.extendParam?.baseDomainId ?? 0,
+        embed_flash: config.extendParam?.embedFlash ? 1 : 0,
+        enabled_cpus_num: config.extendParam?.enabledCpusNum ?? 4,
+        enabled_cpus_mask: config.extendParam?.enabledCpusMask ?? 0xFF,
+        n_batch: config.extendParam?.nBatch ?? 512,
+        use_cross_attn: config.extendParam?.useCrossAttn ? 1 : 0,
+        reserved: new Uint8Array(104) // 104 bytes reserved
+      }
+    };
+  }
+
+  /**
+   * Convert client input to main branch's RKLLMInput format
+   */
+  private convertToMainInput(input: RKLLMInput): MainRKLLMInput {
+    return {
+      input_type: this.convertInputType(input.inputType),
+      prompt_input: input.promptInput,
+      embed_input: input.embedInput ? {
+        embed: input.embedInput.embed,
+        n_tokens: input.embedInput.nTokens
+      } : undefined,
+      token_input: input.tokenInput ? {
+        input_ids: input.tokenInput.inputIds,
+        n_tokens: input.tokenInput.nTokens
+      } : undefined,
+      multimodal_input: input.multimodalInput ? {
+        prompt: input.multimodalInput.prompt,
+        image_embed: input.multimodalInput.imageEmbed,
+        n_image_tokens: input.multimodalInput.nImageTokens,
+        n_image: input.multimodalInput.nImage,
+        image_width: input.multimodalInput.imageWidth,
+        image_height: input.multimodalInput.imageHeight
+      } : undefined
+    };
+  }
+
+  /**
+   * Convert input type enums between implementations
+   */
+  private convertInputType(inputType: RKLLMInputType): import('../bindings/llm-handle/llm-handle-wrapper.js').RKLLMInputType {
+    const { RKLLMInputType: MainRKLLMInputType } = require('../bindings/llm-handle/llm-handle-wrapper.js');
+    
+    switch (inputType) {
+      case RKLLMInputType.PROMPT:
+        return MainRKLLMInputType.RKLLM_INPUT_PROMPT;
+      case RKLLMInputType.TOKEN:
+        return MainRKLLMInputType.RKLLM_INPUT_TOKEN;
+      case RKLLMInputType.EMBED:
+        return MainRKLLMInputType.RKLLM_INPUT_EMBED;
+      case RKLLMInputType.MULTIMODAL:
+        return MainRKLLMInputType.RKLLM_INPUT_MULTIMODAL;
+      default:
+        return MainRKLLMInputType.RKLLM_INPUT_PROMPT;
+    }
+  }
+
+  /**
+   * Convert client infer params to main branch's format
+   */
+  private convertToMainInferParams(inferParams: RKLLMInferParam): import('../bindings/llm-handle/llm-handle-wrapper.js').RKLLMInferParam {
+    const { RKLLMInferMode: MainRKLLMInferMode } = require('../bindings/llm-handle/llm-handle-wrapper.js');
+    
+    // Convert mode enum
+    let mainMode = MainRKLLMInferMode.RKLLM_INFER_GENERATE; // default
+    if (inferParams.mode === RKLLMInferMode.GET_LAST_HIDDEN_LAYER) {
+      mainMode = MainRKLLMInferMode.RKLLM_INFER_GET_LAST_HIDDEN_LAYER;
+    } else if (inferParams.mode === RKLLMInferMode.GET_LOGITS) {
+      mainMode = MainRKLLMInferMode.RKLLM_INFER_GET_LOGITS;
+    }
+
+    return {
+      mode: mainMode,
+      lora_adapter_name: inferParams.loraParams?.loraAdapterName
+    };
   }
 }
 
