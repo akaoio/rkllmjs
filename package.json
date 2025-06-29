@@ -59,7 +59,7 @@
     "eslint": "^8.0.0",
     "node-addon-api": "^8.4.0",
     "node-gyp": "^11.2.0",
-    "prettier": "^3.0.0",
+    "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
     "typedoc": "^0.25.0",
