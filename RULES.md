@@ -123,6 +123,27 @@ src/bindings/
 - ✅ **Dynamic configuration** - Store paths in `configs/` directory
 - ✅ **Runtime resolution** - Resolve paths at runtime, not compile time
 
+### 📂 Folder Organization Limits
+
+**CRITICAL**: Strict limits to prevent management complexity and debugging issues.
+
+#### Directory Size Limits
+- ✅ **Root level maximum**: 15 files/directories (excluding .git, node_modules)
+- ✅ **Source modules maximum**: 8 subdirectories per `src/` module folder  
+- ✅ **C++ bindings maximum**: 8 operational modules in `src/bindings/`
+- ✅ **Empty directories prohibited**: All directories MUST contain implementation files (.cpp/.ts), not just README.md
+
+#### Implementation Requirements  
+- ✅ **Every directory with README.md MUST have**: At least 1 source file (.cpp/.ts) AND 1 test file
+- ✅ **No placeholder directories**: Directories exist only when implementation begins
+- ✅ **Clean removal**: Remove directories when all implementation files are deleted
+
+#### Test File Placement Rules
+- ❌ **Prohibited in root**: No .test.* files or test-*.* files in project root
+- ✅ **Script directory only**: Test orchestration scripts belong in `scripts/`
+- ✅ **Co-located unit tests**: Test files alongside source in same directory
+- ✅ **Centralized integration**: System/integration tests in `tests/` hierarchy
+
 ---
 
 ## 🔍 Validator Script

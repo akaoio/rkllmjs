@@ -4,8 +4,8 @@
     "module": "ES2020",
     "moduleResolution": "node",
     "lib": ["ES2020"],
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "outDir": "../dist",
+    "rootDir": "../src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -23,17 +23,17 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "types": ["node"],
-    "typeRoots": ["./node_modules/@types", "./src/runtime-detector"]
+    "typeRoots": ["../node_modules/@types"]
   },
   "include": [
-    "src/**/*"
+    "../src/**/*"
   ],
   "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    "tmp",
-    "tests"
+    "../node_modules",
+    "../dist",
+    "../build",
+    "../tmp",
+    "../tests"
   ],
   "ts-node": {
     "esm": true

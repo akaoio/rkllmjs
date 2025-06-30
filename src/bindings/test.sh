@@ -19,8 +19,8 @@ echo "=================================="
 echo
 
 # Check if we're in the right directory
-if [[ ! -f "$PROJECT_ROOT/test-all-modules.sh" ]]; then
-    echo "❌ Error: Main test script not found at $PROJECT_ROOT/test-all-modules.sh"
+if [[ ! -f "$PROJECT_ROOT/scripts/test-all-modules.sh" ]]; then
+    echo "❌ Error: Main test script not found at $PROJECT_ROOT/scripts/test-all-modules.sh"
     exit 1
 fi
 
@@ -31,4 +31,4 @@ echo
 
 echo -e "${BLUE}🚀 Executing main test runner...${NC}"
 cd "$PROJECT_ROOT"
-exec ./test-all-modules.sh "$@"
+exec ./scripts/test-all-modules.sh "$@"

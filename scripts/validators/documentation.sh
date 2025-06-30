@@ -23,6 +23,53 @@ validate_naming_conventions() {
 validate_directory_structure() {
     print_section "🏛️ Checking directory structure..."
 
+    # Check root directory file/folder count (max 15, excluding .git, node_modules)  
+    root_count=$(find . -maxdepth 1 -not -name "." -not -name ".git" -not -name "node_modules" | wc -l)
+    if [ "$root_count" -gt 15 ]; then
+        report_error "Root directory contains $root_count items (max 15 allowed) - violates RULES.md folder organization limits"
+    else
+        report_success "Root directory count OK: $root_count/15 items"
+    fi
+
+    # Check C++ bindings module count (max 8 operational modules)
+    if [ -d "src/bindings" ]; then
+        bindings_modules=$(find src/bindings -maxdepth 1 -type d -not -name "bindings" | wc -l)
+        if [ "$bindings_modules" -gt 8 ]; then
+            report_error "C++ bindings contains $bindings_modules modules (max 8 allowed) - violates RULES.md folder organization limits"
+        else
+            report_success "C++ bindings module count OK: $bindings_modules/8 modules"
+        fi
+    fi
+
+    # Check for empty directories (only README.md)
+    print_section "🗂️ Checking for empty directories..."
+    empty_dirs=$(find src -type d -exec sh -c '
+        dir="$1"
+        files=$(find "$dir" -maxdepth 1 -type f -not -name "README.md" -not -name "Makefile" | wc -l)
+        if [ $files -eq 0 ] && [ -f "$dir/README.md" ]; then
+            echo "$dir"
+        fi
+    ' _ {} \;)
+
+    if [ -n "$empty_dirs" ]; then
+        for dir in $empty_dirs; do
+            report_error "Empty directory found: $dir (contains only README.md) - violates RULES.md implementation requirements"
+        done
+    else
+        report_success "No empty directories found"
+    fi
+
+    # Check for test files in root (prohibited)
+    print_section "🚫 Checking for prohibited test files in root..."
+    root_test_files=$(find . -maxdepth 1 -name "*.test.*" -o -name "test-*" | grep -v "scripts/")
+    if [ -n "$root_test_files" ]; then
+        for file in $root_test_files; do
+            report_error "Test file in root directory: $file - violates RULES.md test placement rules"
+        done
+    else
+        report_success "No prohibited test files in root"
+    fi
+
     # Find directories with multiple TypeScript files (excluding tests and type definitions)
     MULTI_FILE_DIRS=$(find src -type d -not -path "src/testing" -exec sh -c 'count=$(find "$1" -maxdepth 1 -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | wc -l); if [ $count -gt 1 ]; then echo "$1"; fi' _ {} \;)
 
