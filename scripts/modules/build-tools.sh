@@ -71,6 +71,17 @@ check_build_tools() {
         missing_tools+=("pkg-config")
     fi
     
+    # Check Google Test
+    if pkg-config --exists gtest 2>/dev/null; then
+        local gtest_version
+        gtest_version=$(pkg-config --modversion gtest 2>/dev/null || echo "unknown")
+        tools_info+=("Google Test: v$gtest_version")
+    elif [[ -f "/usr/include/gtest/gtest.h" || -f "/usr/local/include/gtest/gtest.h" ]]; then
+        tools_info+=("Google Test: installed (headers found)")
+    else
+        missing_tools+=("Google Test")
+    fi
+    
     # Show what's available
     if [[ ${#tools_info[@]} -gt 0 ]]; then
         log_success "Available build tools:"
@@ -103,6 +114,8 @@ get_build_packages() {
                 "libssl-dev"
                 "libffi-dev"
                 "python3-dev"
+                "libgtest-dev"
+                "googletest"
             )
             
             # Add ARM64/RK3588 specific packages for better performance
@@ -112,15 +125,19 @@ get_build_packages() {
                     "g++-aarch64-linux-gnu"
                     "libc6-dev-arm64-cross"
                 )
-                log_info "Adding ARM64 cross-compilation tools for optimized builds"
                 
                 if [[ "$SYSTEM_ARCH" == "rk3588" ]]; then
-                    log_info "RK3588 detected - adding additional optimization packages"
                     packages+=(
                         "linux-libc-dev"
                         "libdrm-dev"
                         "libgbm-dev"
                     )
+                fi
+                
+                # Log messages after package array construction
+                log_info "Adding ARM64 cross-compilation tools for optimized builds"
+                if [[ "$SYSTEM_ARCH" == "rk3588" ]]; then
+                    log_info "RK3588 detected - adding additional optimization packages"
                 fi
             fi
             ;;
@@ -134,6 +151,7 @@ get_build_packages() {
                 "openssl-devel"
                 "libffi-devel"
                 "python3-devel"
+                "gtest-devel"
             )
             
             # Additional packages for newer RHEL/CentOS
@@ -150,6 +168,7 @@ get_build_packages() {
                 "openssl"
                 "libffi"
                 "python"
+                "gtest"
             )
             ;;
         suse)
@@ -267,6 +286,11 @@ install_build_essentials() {
     if check_build_tools; then
         log_success "Build tools installation completed and verified"
         
+        # Install Google Test separately if needed
+        if ! install_google_test; then
+            log_warning "Google Test installation failed - C++ unit tests may not work"
+        fi
+        
         # Setup architecture-specific build environment
         setup_build_environment
         
@@ -275,6 +299,87 @@ install_build_essentials() {
         log_error "Build tools installation verification failed"
         return 1
     fi
+}
+
+# Install Google Test if not available
+install_google_test() {
+    log_step "Installing Google Test..."
+    
+    # Check if already installed
+    if pkg-config --exists gtest 2>/dev/null || [[ -f "/usr/include/gtest/gtest.h" ]]; then
+        log_success "Google Test is already installed"
+        return 0
+    fi
+    
+    case "$OS" in
+        ubuntu|debian|armbian)
+            log_info "Installing Google Test via package manager..."
+            if install_packages "libgtest-dev" "googletest"; then
+                # On Ubuntu, we may need to build the libraries
+                if [[ ! -f "/usr/lib/libgtest.a" && ! -f "/usr/lib/x86_64-linux-gnu/libgtest.a" && ! -f "/usr/lib/aarch64-linux-gnu/libgtest.a" ]]; then
+                    log_info "Building Google Test libraries..."
+                    if command -v cmake &> /dev/null; then
+                        (
+                            cd /usr/src/gtest 2>/dev/null || cd /usr/src/googletest/googletest 2>/dev/null || {
+                                log_warning "Google Test source not found in expected locations"
+                                return 1
+                            }
+                            sudo cmake . || return 1
+                            sudo make || return 1
+                            sudo cp lib/*.a /usr/lib/ 2>/dev/null || sudo cp *.a /usr/lib/ 2>/dev/null || {
+                                log_warning "Failed to install Google Test libraries"
+                                return 1
+                            }
+                        )
+                    else
+                        log_warning "cmake not available for building Google Test"
+                        return 1
+                    fi
+                fi
+                log_success "Google Test installation completed"
+                return 0
+            else
+                log_warning "Failed to install Google Test via package manager"
+                return 1
+            fi
+            ;;
+        rhel|arch|suse)
+            log_info "Installing Google Test via package manager..."
+            local gtest_package
+            case "$OS" in
+                rhel) gtest_package="gtest-devel" ;;
+                arch) gtest_package="gtest" ;;
+                suse) gtest_package="gtest-devel" ;;
+            esac
+            
+            if install_packages "$gtest_package"; then
+                log_success "Google Test installation completed"
+                return 0
+            else
+                log_warning "Failed to install Google Test via package manager"
+                return 1
+            fi
+            ;;
+        macos)
+            log_info "Installing Google Test via Homebrew..."
+            if command -v brew &> /dev/null; then
+                if brew install googletest; then
+                    log_success "Google Test installation completed"
+                    return 0
+                else
+                    log_warning "Failed to install Google Test via Homebrew"
+                    return 1
+                fi
+            else
+                log_warning "Homebrew not available for Google Test installation"
+                return 1
+            fi
+            ;;
+        *)
+            log_warning "Unsupported OS for automatic Google Test installation: $OS"
+            return 1
+            ;;
+    esac
 }
 
 # Install Python development headers (needed for some native modules)

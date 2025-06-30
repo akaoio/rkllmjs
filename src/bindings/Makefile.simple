@@ -1,0 +1,37 @@
+# Simple Real Model Test Makefile
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -DNDEBUG
+INCLUDES = -I../../libs/rkllm/include -I.
+LIBS = -L../../libs/rkllm/aarch64 -lrkllmrt -lpthread
+RPATH = -Wl,-rpath,'$$ORIGIN/../../libs/rkllm/aarch64'
+
+TARGET = real-test-simple
+SOURCES = real-test-simple.cpp
+OBJECTS = $(SOURCES:.cpp=.o)
+
+# Link with core module
+CORE_LIB = core/librkllm-manager.a
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS) $(CORE_LIB)
+	@echo "Building simple real test..."
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS) $(RPATH)
+
+%.o: %.cpp
+	@echo "Compiling $<..."
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+# Ensure core module is built first
+$(CORE_LIB):
+	@echo "Building core module..."
+	cd core && make
+
+test: $(TARGET)
+	@echo "Running real model test..."
+	./$(TARGET)
+
+clean:
+	rm -f $(OBJECTS) $(TARGET)
+
+.PHONY: all test clean

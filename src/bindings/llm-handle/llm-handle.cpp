@@ -150,12 +150,30 @@ napi_value LLMHandleBinding::Init(napi_env env, napi_callback_info info) {
 
     // Initialize RKLLM - note: LLMHandle is typedef void* in rkllm.h
     ::LLMHandle native_handle = nullptr;
+    
+    // Add error logging before initialization
+    printf("🔧 Attempting RKLLM initialization...\n");
+    printf("📁 Model path: %s\n", param.model_path);
+    printf("🧠 Context length: %d\n", param.max_context_len);
+    printf("🎯 Max tokens: %d\n", param.max_new_tokens);
+    
     int init_result = rkllm_init(&native_handle, &param, InternalResultCallback);
     
+    printf("📊 RKLLM init result: %d\n", init_result);
+    
     if (init_result != 0) {
-        napi_throw_error(env, nullptr, "Failed to initialize RKLLM");
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "Failed to initialize RKLLM (error code: %d)", init_result);
+        napi_throw_error(env, nullptr, error_msg);
         return nullptr;
     }
+    
+    if (native_handle == nullptr) {
+        napi_throw_error(env, nullptr, "RKLLM initialization returned null handle");
+        return nullptr;
+    }
+    
+    printf("✅ RKLLM initialized successfully!\n");
 
     // Create JavaScript object to hold the handle
     napi_value js_handle;
@@ -1185,73 +1203,175 @@ napi_status LLMHandleBinding::ValidateHandle(napi_env env, napi_value js_handle,
 // === Additional Helper Functions (Placeholders for complex types) ===
 
 napi_status LLMHandleBinding::JSToRKLLMInput(napi_env env, napi_value js_input, RKLLMInput* input) {
-    // TODO: Implement full conversion from JavaScript RKLLMInput to C struct
-    // For now, initialize with basic prompt input
     napi_status status;
     napi_value prop;
+    bool has_prop;
+    
+    // Initialize structure with defaults
+    memset(input, 0, sizeof(RKLLMInput));
+    input->input_type = RKLLM_INPUT_PROMPT; // Default
+    
+    // Debug: Check if js_input is an object
+    napi_valuetype valuetype;
+    status = napi_typeof(env, js_input, &valuetype);
+    if (status != napi_ok || valuetype != napi_object) {
+        printf("DEBUG: JSToRKLLMInput - input is not an object, type: %d\n", valuetype);
+        return napi_invalid_arg;
+    }
     
     // Get input_type
-    status = napi_get_named_property(env, js_input, "input_type", &prop);
-    if (status == napi_ok) {
-        int32_t input_type;
-        status = napi_get_value_int32(env, prop, &input_type);
+    status = napi_has_named_property(env, js_input, "input_type", &has_prop);
+    if (status == napi_ok && has_prop) {
+        status = napi_get_named_property(env, js_input, "input_type", &prop);
         if (status == napi_ok) {
-            input->input_type = static_cast<RKLLMInputType>(input_type);
+            int32_t input_type;
+            status = napi_get_value_int32(env, prop, &input_type);
+            if (status == napi_ok) {
+                input->input_type = static_cast<RKLLMInputType>(input_type);
+                printf("DEBUG: JSToRKLLMInput - input_type: %d\n", input_type);
+            } else {
+                printf("DEBUG: JSToRKLLMInput - failed to get input_type value\n");
+            }
+        }
+    } else {
+        printf("DEBUG: JSToRKLLMInput - input_type property not found\n");
+    }
+    
+    // Get role (optional)
+    status = napi_has_named_property(env, js_input, "role", &has_prop);
+    if (status == napi_ok && has_prop) {
+        status = napi_get_named_property(env, js_input, "role", &prop);
+        if (status == napi_ok) {
+            size_t str_size;
+            status = napi_get_value_string_utf8(env, prop, nullptr, 0, &str_size);
+            if (status == napi_ok && str_size > 0) {
+                char* role = new char[str_size + 1];
+                status = napi_get_value_string_utf8(env, prop, role, str_size + 1, nullptr);
+                if (status == napi_ok) {
+                    input->role = role;
+                    printf("DEBUG: JSToRKLLMInput - role: %s\n", role);
+                } else {
+                    delete[] role;
+                }
+            }
+        }
+    }
+    
+    // Get enable_thinking (optional)
+    status = napi_has_named_property(env, js_input, "enable_thinking", &has_prop);
+    if (status == napi_ok && has_prop) {
+        status = napi_get_named_property(env, js_input, "enable_thinking", &prop);
+        if (status == napi_ok) {
+            bool enable_thinking;
+            status = napi_get_value_bool(env, prop, &enable_thinking);
+            if (status == napi_ok) {
+                input->enable_thinking = enable_thinking;
+                printf("DEBUG: JSToRKLLMInput - enable_thinking: %s\n", enable_thinking ? "true" : "false");
+            }
         }
     }
     
     // For prompt input type, get the prompt string
     if (input->input_type == RKLLM_INPUT_PROMPT) {
-        status = napi_get_named_property(env, js_input, "prompt_input", &prop);
-        if (status == napi_ok) {
-            size_t str_size;
-            status = napi_get_value_string_utf8(env, prop, nullptr, 0, &str_size);
-            if (status != napi_ok) return status;
-            
-            char* prompt = new char[str_size + 1];
-            status = napi_get_value_string_utf8(env, prop, prompt, str_size + 1, nullptr);
-            if (status != napi_ok) {
-                delete[] prompt;
+        status = napi_has_named_property(env, js_input, "prompt_input", &has_prop);
+        if (status == napi_ok && has_prop) {
+            status = napi_get_named_property(env, js_input, "prompt_input", &prop);
+            if (status == napi_ok) {
+                size_t str_size;
+                status = napi_get_value_string_utf8(env, prop, nullptr, 0, &str_size);
+                if (status == napi_ok && str_size > 0) {
+                    char* prompt = new char[str_size + 1];
+                    status = napi_get_value_string_utf8(env, prop, prompt, str_size + 1, nullptr);
+                    if (status == napi_ok) {
+                        input->prompt_input = prompt;
+                        printf("DEBUG: JSToRKLLMInput - prompt_input: %.50s%s\n", 
+                               prompt, strlen(prompt) > 50 ? "..." : "");
+                    } else {
+                        delete[] prompt;
+                        printf("DEBUG: JSToRKLLMInput - failed to get prompt_input string\n");
+                        return status;
+                    }
+                } else {
+                    printf("DEBUG: JSToRKLLMInput - prompt_input is empty\n");
+                    return napi_invalid_arg;
+                }
+            } else {
+                printf("DEBUG: JSToRKLLMInput - failed to get prompt_input property\n");
                 return status;
             }
-            input->prompt_input = prompt;
+        } else {
+            printf("DEBUG: JSToRKLLMInput - prompt_input property not found for PROMPT input type\n");
+            return napi_invalid_arg;
         }
     }
     
+    printf("DEBUG: JSToRKLLMInput - conversion completed successfully\n");
     return napi_ok;
 }
 
 napi_status LLMHandleBinding::JSToRKLLMInferParam(napi_env env, napi_value js_infer_param, RKLLMInferParam* infer_param) {
-    // TODO: Implement full conversion from JavaScript RKLLMInferParam to C struct
     napi_status status;
     napi_value prop;
+    bool has_prop;
     
     // Initialize with defaults
-    infer_param->mode = RKLLM_INFER_GENERATE;
+    memset(infer_param, 0, sizeof(RKLLMInferParam));
+    infer_param->mode = RKLLM_INFER_GENERATE; // Default
     infer_param->lora_params = nullptr;
     infer_param->prompt_cache_params = nullptr;
-    infer_param->keep_history = 1;
+    infer_param->keep_history = 1; // Default to keep history
+    
+    // Debug: Check if js_infer_param is an object
+    napi_valuetype valuetype;
+    status = napi_typeof(env, js_infer_param, &valuetype);
+    if (status != napi_ok || valuetype != napi_object) {
+        printf("DEBUG: JSToRKLLMInferParam - input is not an object, type: %d\n", valuetype);
+        return napi_invalid_arg;
+    }
     
     // Get mode
-    status = napi_get_named_property(env, js_infer_param, "mode", &prop);
-    if (status == napi_ok) {
-        int32_t mode;
-        status = napi_get_value_int32(env, prop, &mode);
+    status = napi_has_named_property(env, js_infer_param, "mode", &has_prop);
+    if (status == napi_ok && has_prop) {
+        status = napi_get_named_property(env, js_infer_param, "mode", &prop);
         if (status == napi_ok) {
-            infer_param->mode = static_cast<RKLLMInferMode>(mode);
+            int32_t mode;
+            status = napi_get_value_int32(env, prop, &mode);
+            if (status == napi_ok) {
+                infer_param->mode = static_cast<RKLLMInferMode>(mode);
+                printf("DEBUG: JSToRKLLMInferParam - mode: %d\n", mode);
+            } else {
+                printf("DEBUG: JSToRKLLMInferParam - failed to get mode value\n");
+            }
         }
+    } else {
+        printf("DEBUG: JSToRKLLMInferParam - mode property not found, using default\n");
     }
     
     // Get keep_history
-    status = napi_get_named_property(env, js_infer_param, "keep_history", &prop);
-    if (status == napi_ok) {
-        int32_t keep_history;
-        status = napi_get_value_int32(env, prop, &keep_history);
+    status = napi_has_named_property(env, js_infer_param, "keep_history", &has_prop);
+    if (status == napi_ok && has_prop) {
+        status = napi_get_named_property(env, js_infer_param, "keep_history", &prop);
         if (status == napi_ok) {
-            infer_param->keep_history = keep_history;
+            int32_t keep_history;
+            status = napi_get_value_int32(env, prop, &keep_history);
+            if (status == napi_ok) {
+                infer_param->keep_history = keep_history;
+                printf("DEBUG: JSToRKLLMInferParam - keep_history: %d\n", keep_history);
+            } else {
+                // Try boolean conversion
+                bool keep_history_bool;
+                status = napi_get_value_bool(env, prop, &keep_history_bool);
+                if (status == napi_ok) {
+                    infer_param->keep_history = keep_history_bool ? 1 : 0;
+                    printf("DEBUG: JSToRKLLMInferParam - keep_history (bool): %s\n", keep_history_bool ? "true" : "false");
+                }
+            }
         }
+    } else {
+        printf("DEBUG: JSToRKLLMInferParam - keep_history property not found, using default\n");
     }
     
+    printf("DEBUG: JSToRKLLMInferParam - conversion completed successfully\n");
     return napi_ok;
 }
 

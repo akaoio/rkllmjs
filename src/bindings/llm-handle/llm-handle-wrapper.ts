@@ -581,7 +581,11 @@ export class LLMHandleWrapper {
     }
 
     try {
-      const result = this.nativeBinding.run(handle, input, infer_params, userdata);
+      // Convert canonical types to C API types before calling native binding
+      const c_input = toC_RKLLMInput(input);
+      const c_infer_params = toC_RKLLMInferParam(infer_params);
+      
+      const result = this.nativeBinding.run(handle, c_input, c_infer_params, userdata);
       return result as number;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -611,7 +615,11 @@ export class LLMHandleWrapper {
     }
 
     try {
-      const result = this.nativeBinding.runAsync(handle, input, infer_params, userdata);
+      // Convert canonical types to C API types before calling native binding
+      const c_input = toC_RKLLMInput(input);
+      const c_infer_params = toC_RKLLMInferParam(infer_params);
+      
+      const result = this.nativeBinding.runAsync(handle, c_input, c_infer_params, userdata);
       return result as number;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);

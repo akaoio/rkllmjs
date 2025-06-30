@@ -35,12 +35,22 @@ rkllmjs/
 │   ├── rkllm-client/             # 🚀 High-level Promise-based API
 │   │   ├── rkllm-client.ts       # Client implementation  
 │   │   └── rkllm-client.test.ts  # Client tests
-│   ├── bindings/                 # ⚡ Low-level C++ N-API wrapper
-│   │   ├── llm-handle/           # LLM handle management
-│   │   │   ├── llm-handle-wrapper.ts
-│   │   │   └── llm-handle-wrapper.test.ts
-│   │   ├── binding.cpp           # C++ implementation
-│   │   └── binding.test.cpp      # C++ tests
+│   ├── bindings/                 # ⚡ C++ N-API bindings (MODULAR)
+│   │   ├── llm-handle/           # Current: LLM handle implementation
+│   │   │   ├── llm-handle.cpp    # C++ implementation
+│   │   │   ├── llm-handle.hpp    # Header file
+│   │   │   ├── llm-handle.test.cpp # C++ tests
+│   │   │   ├── llm-handle-wrapper.ts # TypeScript wrapper
+│   │   │   └── llm-handle-wrapper.test.ts # Wrapper tests
+│   │   ├── core/                 # TODO: RKLLM lifecycle management
+│   │   ├── inference/            # TODO: Inference operations
+│   │   ├── memory/               # TODO: Memory & cache management
+│   │   ├── adapters/             # TODO: LoRA & extensions
+│   │   ├── utils/                # TODO: Common utilities
+│   │   ├── napi-bindings/        # TODO: N-API entry point
+│   │   ├── binding.cpp           # Legacy main binding
+│   │   ├── binding.test.cpp      # Legacy binding tests
+│   │   └── README.md             # C++ architecture docs
 │   ├── testing/                  # 🧪 Unified testing infrastructure
 │   │   ├── test-logger.ts        # Structured logging
 │   │   ├── test-utils.ts         # Production test utilities
@@ -275,6 +285,40 @@ interface ModelInfo {
   filename?: string;
 }
 ```
+
+## 🚧 Current Implementation Status
+
+### ✅ **Completed Modules:**
+- **TypeScript Layer**: Full API implementation with Promise-based interface
+- **Test Infrastructure**: Modular validator system and test framework
+- **Basic C++ Bindings**: Legacy binding.cpp with llm-handle implementation
+- **Project Structure**: Hybrid test architecture with Tier 1/Tier 2 separation
+
+### 🔄 **In Progress - C++ Modular Refactoring:**
+According to [RULES.md](./RULES.md), C++ code must be refactored into modular architecture:
+
+- 📦 **core/** - RKLLM lifecycle management (rkllm-manager)
+- ⚡ **inference/** - Inference operations (inference-engine)  
+- 💾 **memory/** - Memory & cache management (cache-manager)
+- 🔧 **adapters/** - LoRA & extensions (lora-adapter)
+- 🛠️ **utils/** - Common utilities (type-converters, error-handler)
+- 🌉 **napi-bindings/** - N-API entry point layer
+
+Each module requires: `.cpp/.hpp` implementation, unit tests, Makefile, README.md
+
+### 📋 **TODO - Build System:**
+- `src/bindings/build.sh` - Global C++ build script
+- `src/bindings/test.sh` - Global C++ test script
+- npm scripts: `build:cpp`, `test:cpp`, `test:cpp:module`, `clean:cpp`
+
+### 🎯 **Next Steps:**
+1. Implement C++ modular architecture per RULES.md
+2. Create individual Makefiles for each module
+3. Add global build/test scripts
+4. Update package.json with C++ build commands
+5. Migrate existing llm-handle logic to new modular structure
+
+**Status**: TypeScript layer complete, C++ refactoring required for RULES.md compliance
 
 ## 🔧 Development Rules
 

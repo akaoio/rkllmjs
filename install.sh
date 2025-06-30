@@ -1,448 +1,543 @@
 #!/bin/bash
 
-# RKLLM.js Modular Installation Script
-# Modern, responsive, and modular installation system
+# RKLLM.js Installation Script
+# Standard installation for RKLLM.js development environment
 
 set -e  # Exit on any error
 
 # Script metadata
-readonly SCRIPT_VERSION="2.0.0"
+readonly SCRIPT_VERSION="2.1.0"
 readonly SCRIPT_NAME="RKLLM.js Development Setup"
 
-# Get script directory and load module system
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m' # No Color
+
+# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-MODULE_LIB_DIR="$SCRIPT_DIR/scripts/lib"
-MODULE_SYSTEM="$MODULE_LIB_DIR/module-loader.sh"
 
-# Check if module system exists
-if [[ ! -f "$MODULE_SYSTEM" ]]; then
-    echo "❌ Module system not found: $MODULE_SYSTEM"
-    echo "Please ensure the modular installation files are present."
-    exit 1
-fi
+# Logging functions
+log_info() {
+    echo -e "${BLUE}ℹ️  $1${NC}"
+}
 
-# Load module system
-source "$MODULE_SYSTEM"
+log_success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
 
-# Initialize module system
-if ! init_module_system; then
-    echo "❌ Failed to initialize module system"
-    exit 1
-fi
+log_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
 
-# Load required modules in dependency order
-REQUIRED_MODULES=(
-    "core"           # Core utilities and logging
-    "ui-responsive"  # Responsive UI system
-    "os-detection"   # OS detection and package management
-    "runtime-node"   # Node.js installation
-    "runtime-bun"    # Bun installation
-    "runtime-deno"   # Deno installation
-    "runtime-yarn"   # Yarn installation
-    "build-tools"    # C++ build essentials
-)
+log_error() {
+    echo -e "${RED}❌ $1${NC}"
+}
 
-if ! load_modules "${REQUIRED_MODULES[@]}"; then
-    echo "❌ Failed to load required modules"
-    exit 1
-fi
+log_step() {
+    echo
+    echo -e "${BLUE}🔧 $1${NC}"
+    echo "─────────────────────────────────────"
+}
 
 # Global installation state
-declare -A RUNTIME_SELECTION
-declare -A RUNTIME_INSTALLED
+INTERACTIVE_MODE=true
+INSTALL_NODE=true
+INSTALL_BUILD_TOOLS=true
+INSTALL_GOOGLE_TEST=true
+
+# OS Detection
+detect_os() {
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        if command -v apt-get &> /dev/null; then
+            OS="ubuntu"
+            PKG_MANAGER="apt"
+            INSTALL_CMD="apt-get install -y"
+            UPDATE_CMD="apt-get update"
+        elif command -v yum &> /dev/null; then
+            OS="rhel"
+            PKG_MANAGER="yum"
+            INSTALL_CMD="yum install -y"
+            UPDATE_CMD="yum update -y"
+        elif command -v dnf &> /dev/null; then
+            OS="fedora"
+            PKG_MANAGER="dnf"
+            INSTALL_CMD="dnf install -y"
+            UPDATE_CMD="dnf update -y"
+        elif command -v pacman &> /dev/null; then
+            OS="arch"
+            PKG_MANAGER="pacman"
+            INSTALL_CMD="pacman -S --noconfirm"
+            UPDATE_CMD="pacman -Sy"
+        else
+            log_error "Unsupported Linux distribution"
+            exit 1
+        fi
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        OS="macos"
+        PKG_MANAGER="brew"
+        INSTALL_CMD="brew install"
+        UPDATE_CMD="brew update"
+    else
+        log_error "Unsupported operating system: $OSTYPE"
+        exit 1
+    fi
+    
+    log_info "Detected OS: $OS with package manager: $PKG_MANAGER"
+}
+
+# Check system requirements
+check_system_requirements() {
+    log_step "Checking system requirements"
+    
+    # Check for basic tools
+    local required_tools=("curl" "wget" "git")
+    for tool in "${required_tools[@]}"; do
+        if ! command -v "$tool" &> /dev/null; then
+            log_warning "$tool not found, will install it"
+        fi
+    done
+    
+    # Check memory (minimum 1GB)
+    local available_memory
+    if [[ "$OS" == "macos" ]]; then
+        available_memory=$(sysctl -n hw.memsize)
+        available_memory=$((available_memory / 1024 / 1024))  # Convert to MB
+    else
+        available_memory=$(free -m | awk 'NR==2{print $2}')
+    fi
+    
+    if [[ $available_memory -lt 1024 ]]; then
+        log_warning "Low memory detected: ${available_memory}MB (recommended: 2GB+)"
+    fi
+    
+    # Check disk space (minimum 1GB free)
+    local available_disk
+    available_disk=$(df "$SCRIPT_DIR" | awk 'NR==2 {print $4}')
+    if [[ $available_disk -lt 1048576 ]]; then  # 1GB in KB
+        log_warning "Low disk space detected (recommended: 1GB+ free)"
+    fi
+    
+    log_success "System requirements check completed"
+    return 0
+}
+
+# Install required system tools
+install_system_tools() {
+    log_step "Installing required system tools"
+    
+    local tools_to_install=()
+    
+    # Check for essential tools
+    for tool in curl wget git; do
+        if ! command -v "$tool" &> /dev/null; then
+            tools_to_install+=("$tool")
+        fi
+    done
+    
+    if [[ ${#tools_to_install[@]} -gt 0 ]]; then
+        log_info "Installing: ${tools_to_install[*]}"
+        
+        # Update package manager first
+        if [[ "$OS" != "macos" ]]; then
+            sudo $UPDATE_CMD
+        fi
+        
+        # Install tools
+        if [[ "$OS" == "macos" ]]; then
+            # Install Homebrew if not present
+            if ! command -v brew &> /dev/null; then
+                log_info "Installing Homebrew..."
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            fi
+            for tool in "${tools_to_install[@]}"; do
+                $INSTALL_CMD "$tool"
+            done
+        else
+            sudo $INSTALL_CMD "${tools_to_install[@]}"
+        fi
+    fi
+    
+    log_success "System tools installation completed"
+}
+
+# Install Node.js
+install_nodejs() {
+    log_step "Installing Node.js"
+    
+    # Check if Node.js is already installed
+    if command -v node &> /dev/null; then
+        local node_version
+        node_version=$(node --version | sed 's/v//')
+        local major_version
+        major_version=$(echo "$node_version" | cut -d. -f1)
+        
+        if [[ $major_version -ge 16 ]]; then
+            log_success "Node.js $node_version is already installed (meets requirement: >=16.0.0)"
+            return 0
+        else
+            log_warning "Node.js $node_version is too old (requirement: >=16.0.0). Installing newer version..."
+        fi
+    fi
+    
+    # Install Node.js via NodeSource repository
+    if [[ "$OS" == "ubuntu" ]] || [[ "$OS" == "rhel" ]] || [[ "$OS" == "fedora" ]]; then
+        log_info "Installing Node.js via NodeSource repository..."
+        curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+        sudo $INSTALL_CMD nodejs
+    elif [[ "$OS" == "arch" ]]; then
+        sudo $INSTALL_CMD nodejs npm
+    elif [[ "$OS" == "macos" ]]; then
+        $INSTALL_CMD node
+    fi
+    
+    # Verify installation
+    if command -v node &> /dev/null && command -v npm &> /dev/null; then
+        local node_version npm_version
+        node_version=$(node --version)
+        npm_version=$(npm --version)
+        log_success "Node.js $node_version and npm $npm_version installed successfully"
+    else
+        log_error "Node.js installation failed"
+        exit 1
+    fi
+}
+
+# Install C++ build tools
+install_build_tools() {
+    log_step "Installing C++ build tools"
+    
+    local build_packages=()
+    
+    case "$OS" in
+        ubuntu)
+            build_packages=(build-essential cmake pkg-config)
+            ;;
+        rhel|fedora)
+            build_packages=(gcc gcc-c++ make cmake pkgconfig)
+            ;;
+        arch)
+            build_packages=(base-devel cmake pkgconf)
+            ;;
+        macos)
+            # Xcode command line tools
+            if ! xcode-select -p &> /dev/null; then
+                log_info "Installing Xcode command line tools..."
+                xcode-select --install
+            fi
+            build_packages=(cmake pkg-config)
+            ;;
+    esac
+    
+    if [[ ${#build_packages[@]} -gt 0 ]]; then
+        log_info "Installing build tools: ${build_packages[*]}"
+        if [[ "$OS" == "macos" ]]; then
+            for package in "${build_packages[@]}"; do
+                $INSTALL_CMD "$package"
+            done
+        else
+            sudo $INSTALL_CMD "${build_packages[@]}"
+        fi
+    fi
+    
+    log_success "C++ build tools installation completed"
+}
+
+# Install Google Test
+install_google_test() {
+    log_step "Installing Google Test"
+    
+    # Check if Google Test is already available
+    if pkg-config --exists gtest; then
+        log_success "Google Test is already available via pkg-config"
+        return 0
+    fi
+    
+    # Try to install Google Test via package manager
+    local gtest_packages=()
+    
+    case "$OS" in
+        ubuntu)
+            gtest_packages=(libgtest-dev googletest)
+            ;;
+        rhel|fedora)
+            gtest_packages=(gtest-devel gmock-devel)
+            ;;
+        arch)
+            gtest_packages=(gtest)
+            ;;
+        macos)
+            gtest_packages=(googletest)
+            ;;
+    esac
+    
+    if [[ ${#gtest_packages[@]} -gt 0 ]]; then
+        log_info "Installing Google Test: ${gtest_packages[*]}"
+        if [[ "$OS" == "macos" ]]; then
+            for package in "${gtest_packages[@]}"; do
+                $INSTALL_CMD "$package" || true  # Don't fail if package doesn't exist
+            done
+        else
+            sudo $INSTALL_CMD "${gtest_packages[@]}" || true  # Don't fail if package doesn't exist
+        fi
+    fi
+    
+    # Verify installation
+    if pkg-config --exists gtest || [[ -f "/usr/include/gtest/gtest.h" ]] || [[ -f "/usr/local/include/gtest/gtest.h" ]]; then
+        log_success "Google Test installation completed"
+    else
+        log_warning "Google Test installation may have failed - C++ tests might not work"
+    fi
+}
+
+# Setup project dependencies
+setup_project_dependencies() {
+    log_step "Setting up project dependencies"
+    
+    # Navigate to project directory
+    cd "$SCRIPT_DIR"
+    
+    # Install npm dependencies
+    log_info "Installing npm dependencies..."
+    if ! npm install; then
+        log_error "Failed to install npm dependencies"
+        return 1
+    fi
+    
+    # Build the project
+    log_info "Building the project..."
+    if ! npm run build; then
+        log_warning "Project build failed - some features may not work"
+    fi
+    
+    log_success "Project dependencies setup completed"
+}
+
+# Show installation summary
+show_installation_summary() {
+    echo
+    log_success "🎉 RKLLM.js Installation Complete!"
+    echo
+    
+    # Show installed components
+    log_info "📦 Installed components:"
+    
+    if command -v node &> /dev/null; then
+        echo "  ✅ Node.js: $(node --version)"
+    fi
+    
+    if command -v npm &> /dev/null; then
+        echo "  ✅ npm: $(npm --version)"
+    fi
+    
+    if command -v gcc &> /dev/null; then
+        echo "  ✅ GCC: $(gcc --version | head -1)"
+    fi
+    
+    if command -v cmake &> /dev/null; then
+        echo "  ✅ CMake: $(cmake --version | head -1)"
+    fi
+    
+    if pkg-config --exists gtest 2>/dev/null; then
+        echo "  ✅ Google Test: Available"
+    elif [[ -f "/usr/include/gtest/gtest.h" ]]; then
+        echo "  ✅ Google Test: Headers found"
+    else
+        echo "  ⚠️  Google Test: Not found (C++ tests may not work)"
+    fi
+    
+    echo
+    log_info "🎯 Next steps:"
+    echo "  1. Restart your terminal or run: source ~/.bashrc"
+    echo "  2. Test the installation: npm test"
+    echo "  3. Build C++ modules: npm run build:cpp"
+    echo "  4. Run C++ tests: npm run test:cpp"
+    echo "  5. Start development with your RKLLM model!"
+    echo
+    
+    log_info "📖 Documentation:"
+    echo "  • Project README: README.md"
+    echo "  • Development rules: RULES.md"
+    echo "  • Architecture: ARCHITECTURE.md"
+    echo
+    
+    log_info "🚀 Available commands:"
+    echo "  • npm run build         - Build the entire project"
+    echo "  • npm run build:cpp     - Build C++ modules only"
+    echo "  • npm run test          - Run all tests"
+    echo "  • npm run test:cpp      - Run C++ tests only"
+    echo "  • npm run validate      - Run validation checks"
+    echo "  • npm run cli           - Use the RKLLM CLI"
+    echo
+}
+
+# Show header
+show_header() {
+    echo
+    echo "╔══════════════════════════════════════════════════════════════╗"
+    echo "║                    RKLLM.js Installation                    ║"
+    echo "║                                                              ║"
+    echo "║  RKLLM.js - Node.js binding for Rockchip RK3588 NPU         ║"
+    echo "║  Version: $SCRIPT_VERSION                                              ║"
+    echo "╚══════════════════════════════════════════════════════════════╝"
+    echo
+}
+
+# Interactive confirmation
+confirm_installation() {
+    if [[ "$INTERACTIVE_MODE" == "false" ]]; then
+        return 0
+    fi
+    
+    echo "This script will install the following components:"
+    echo "  • System tools (curl, wget, git)"
+    echo "  • Node.js (v16+) and npm"
+    echo "  • C++ build tools (gcc, cmake, pkg-config)"
+    echo "  • Google Test (for C++ unit testing)"
+    echo "  • Project dependencies"
+    echo
+    
+    while true; do
+        read -p "Do you want to continue? (y/N): " -r
+        case $REPLY in
+            [Yy]|[Yy][Ee][Ss])
+                return 0
+                ;;
+            [Nn]|[Nn][Oo]|"")
+                log_info "Installation cancelled by user"
+                exit 0
+                ;;
+            *)
+                echo "Please answer yes (y) or no (n)."
+                ;;
+        esac
+    done
+}
 
 # Main installation function
 main() {
     # Show header
     show_header
     
+    # Detect OS and package manager
+    detect_os
+    
     # Check system requirements
     if ! check_system_requirements; then
-        log_error "System requirements not met"
-        show_system_requirements_help
+        log_error "System requirements check failed"
         exit 1
     fi
     
-    # Install required tools first
-    if ! install_required_tools; then
-        log_error "Failed to install required tools"
+    # Show confirmation dialog
+    confirm_installation
+    
+    # Install system tools
+    if ! install_system_tools; then
+        log_error "System tools installation failed"
         exit 1
     fi
     
-    # Show interactive runtime selection
-    if ! select_runtimes_interactive; then
-        log_info "Setup cancelled by user"
-        exit 0
-    fi
-    
-    # Install selected runtimes
-    install_selected_runtimes
-    
-    # Install build essentials
-    if ! install_build_essentials; then
-        log_warning "Build essentials installation failed - some features may not work"
-    fi
-    
-    # Configure environments
-    configure_runtime_environments
-    
-    # Download standard model
-    download_standard_model
-    
-    # Show completion summary
-    show_completion_summary
-}
-
-# Interactive runtime selection with responsive UI
-select_runtimes_interactive() {
-    log_step "Runtime Selection"
-    
-    # Prepare runtime options for dialog
-    local runtime_options=(
-        "nodejs" "Node.js (Required - Primary runtime)" "ON"
-        "bun" "Bun (Optional - Fast runtime & package manager)" "OFF"
-        "deno" "Deno (Optional - Secure TypeScript runtime)" "OFF"
-        "yarn" "Yarn (Optional - Alternative package manager)" "OFF"
-    )
-    
-    # Show selection dialog
-    local choices
-    choices=$(show_responsive_checklist \
-        "RKLLM.js Runtime Selection" \
-        "Select JavaScript runtimes to install:\n\nNode.js is required as the primary runtime.\nOther runtimes are optional but recommended for development." \
-        "${runtime_options[@]}")
-    
-    local dialog_result=$?
-    
-    # Handle dialog result
-    case $dialog_result in
-        0)
-            # User made selections
-            parse_runtime_selections "$choices"
-            ;;
-        1)
-            # User cancelled
-            return 1
-            ;;
-        2)
-            # Terminal too small - use fallback
-            select_runtimes_fallback
-            ;;
-        *)
-            log_error "Unexpected dialog result: $dialog_result"
-            return 1
-            ;;
-    esac
-    
-    # Ensure Node.js is always selected
-    if [[ "${RUNTIME_SELECTION[nodejs]:-false}" != "true" ]]; then
-        log_warning "Node.js is required as the primary runtime. Enabling Node.js installation."
-        RUNTIME_SELECTION[nodejs]=true
-    fi
-    
-    # Show selected runtimes
-    show_runtime_selections
-    
-    # Final confirmation
-    if show_responsive_yesno "Confirm Installation" "Proceed with the installation of selected runtimes?"; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-# Fallback runtime selection for small terminals
-select_runtimes_fallback() {
-    log_info "Using fallback selection method for small terminal"
-    
-    echo "Available runtimes:"
-    echo "  1. Node.js (Required)"
-    echo "  2. Bun (Optional)"
-    echo "  3. Deno (Optional)"
-    echo "  4. Yarn (Optional)"
-    echo
-    
-    # Set defaults
-    RUNTIME_SELECTION[nodejs]=true
-    RUNTIME_SELECTION[bun]=false
-    RUNTIME_SELECTION[deno]=false
-    RUNTIME_SELECTION[yarn]=false
-    
-    # Ask for each optional runtime
-    for runtime in bun deno yarn; do
-        local runtime_name
-        case $runtime in
-            bun) runtime_name="Bun" ;;
-            deno) runtime_name="Deno" ;;
-            yarn) runtime_name="Yarn" ;;
-        esac
-        
-        echo -n "Install $runtime_name? (y/N): "
-        read -r response
-        case $response in
-            [Yy]*) RUNTIME_SELECTION[$runtime]=true ;;
-            *) RUNTIME_SELECTION[$runtime]=false ;;
-        esac
-    done
-}
-
-# Parse runtime selections from dialog
-parse_runtime_selections() {
-    local choices="$1"
-    
-    # Initialize all to false
-    RUNTIME_SELECTION[nodejs]=false
-    RUNTIME_SELECTION[bun]=false
-    RUNTIME_SELECTION[deno]=false
-    RUNTIME_SELECTION[yarn]=false
-    
-    # Parse selections
-    for choice in $choices; do
-        case $choice in
-            '"nodejs"'|'nodejs') RUNTIME_SELECTION[nodejs]=true ;;
-            '"bun"'|'bun') RUNTIME_SELECTION[bun]=true ;;
-            '"deno"'|'deno') RUNTIME_SELECTION[deno]=true ;;
-            '"yarn"'|'yarn') RUNTIME_SELECTION[yarn]=true ;;
-        esac
-    done
-}
-
-# Show selected runtimes
-show_runtime_selections() {
-    echo
-    log_info "Selected runtimes:"
-    [[ "${RUNTIME_SELECTION[nodejs]}" == "true" ]] && echo "  ✅ Node.js (Primary runtime)"
-    [[ "${RUNTIME_SELECTION[bun]}" == "true" ]] && echo "  ✅ Bun (Fast runtime)"
-    [[ "${RUNTIME_SELECTION[deno]}" == "true" ]] && echo "  ✅ Deno (Secure runtime)"
-    [[ "${RUNTIME_SELECTION[yarn]}" == "true" ]] && echo "  ✅ Yarn (Package manager)"
-    echo
-}
-
-# Install selected runtimes
-install_selected_runtimes() {
-    log_step "Installing selected runtimes..."
-    
-    # Install Node.js (required)
-    if [[ "${RUNTIME_SELECTION[nodejs]}" == "true" ]]; then
-        if install_nodejs; then
-            RUNTIME_INSTALLED[nodejs]=true
-            log_success "Node.js installation completed"
-        else
+    # Install Node.js
+    if [[ "$INSTALL_NODE" == "true" ]]; then
+        if ! install_nodejs; then
             log_error "Node.js installation failed"
             exit 1
         fi
     fi
     
-    # Install Bun (optional)
-    if [[ "${RUNTIME_SELECTION[bun]}" == "true" ]]; then
-        if install_bun; then
-            RUNTIME_INSTALLED[bun]=true
-            log_success "Bun installation completed"
-        else
-            log_warning "Bun installation failed - continuing with other runtimes"
-            RUNTIME_INSTALLED[bun]=false
+    # Install build tools
+    if [[ "$INSTALL_BUILD_TOOLS" == "true" ]]; then
+        if ! install_build_tools; then
+            log_warning "Build tools installation failed - some features may not work"
         fi
     fi
     
-    # Install Deno (optional)
-    if [[ "${RUNTIME_SELECTION[deno]}" == "true" ]]; then
-        if install_deno; then
-            RUNTIME_INSTALLED[deno]=true
-            log_success "Deno installation completed"
-        else
-            log_warning "Deno installation failed - continuing with other runtimes"
-            RUNTIME_INSTALLED[deno]=false
-        fi
+    # Install Google Test
+    if [[ "$INSTALL_GOOGLE_TEST" == "true" ]]; then
+        install_google_test
     fi
     
-    # Install Yarn (optional)
-    if [[ "${RUNTIME_SELECTION[yarn]}" == "true" ]]; then
-        if install_yarn; then
-            RUNTIME_INSTALLED[yarn]=true
-            log_success "Yarn installation completed"
-        else
-            log_warning "Yarn installation failed - continuing with setup"
-            RUNTIME_INSTALLED[yarn]=false
-        fi
+    # Setup project dependencies
+    if ! setup_project_dependencies; then
+        log_warning "Project setup failed - you may need to run 'npm install' manually"
     fi
+    
+    # Show installation summary
+    show_installation_summary
 }
 
-# Configure runtime environments
-configure_runtime_environments() {
-    log_step "Configuring runtime environments..."
-    
-    # Configure Node.js environment
-    if [[ "${RUNTIME_INSTALLED[nodejs]}" == "true" ]]; then
-        configure_nodejs
-    fi
-    
-    # Configure Bun environment
-    if [[ "${RUNTIME_INSTALLED[bun]}" == "true" ]]; then
-        configure_bun
-    fi
-    
-    # Configure Deno environment
-    if [[ "${RUNTIME_INSTALLED[deno]}" == "true" ]]; then
-        configure_deno
-    fi
-    
-    # Configure Yarn environment
-    if [[ "${RUNTIME_INSTALLED[yarn]}" == "true" ]]; then
-        configure_yarn
-    fi
-    
-    # Configure build environment
-    configure_build_environment
-}
-
-# Show system requirements help
-show_system_requirements_help() {
-    echo
-    echo "📋 System Requirements:"
-    echo "  • Supported OS: Ubuntu, Debian, RHEL/CentOS, Arch Linux, macOS"
-    echo "  • Minimum 1GB RAM (recommended: 2GB+)"
-    echo "  • Minimum 1GB free disk space"
-    echo "  • Internet connection for downloads"
-    echo "  • Terminal size: minimum 80x24 characters"
-    echo
-    echo "💡 Tips:"
-    echo "  • Ensure your package manager is working"
-    echo "  • Run 'sudo apt update' (Ubuntu) or equivalent before running this script"
-    echo "  • Close other applications to free up memory"
-    echo
-}
-
-# Show completion summary
-show_completion_summary() {
-    echo
-    log_success "🎉 RKLLM.js Development Setup Complete!"
-    echo
-    
-    # Show installed runtimes
-    log_info "✅ Installed runtimes:"
-    if [[ "${RUNTIME_INSTALLED[nodejs]}" == "true" ]]; then
-        show_nodejs_info | sed 's/^/  /'
-    fi
-    if [[ "${RUNTIME_INSTALLED[bun]}" == "true" ]]; then
-        show_bun_info | sed 's/^/  /'
-    fi
-    if [[ "${RUNTIME_INSTALLED[deno]}" == "true" ]]; then
-        show_deno_info | sed 's/^/  /'
-    fi
-    if [[ "${RUNTIME_INSTALLED[yarn]}" == "true" ]]; then
-        show_yarn_info | sed 's/^/  /'
-    fi
-    
-    echo
-    show_build_info | sed 's/^/  /'
-    
-    echo
-    log_info "🎯 Next steps:"
-    echo "  1. Restart your terminal or run: source ~/.bashrc"
-    echo "  2. Navigate to your RKLLM.js project directory"
-    echo "  3. Install project dependencies: npm install"
-    echo "  4. Run tests: npm test"
-    echo "  5. Start development: npm run dev"
-    echo
-    
-    log_info "📖 Documentation:"
-    echo "  • Project README: README.md"
-    echo "  • Development rules: RULES.md"
-    echo "  • Module documentation: scripts/modules/*/README.md"
-    echo
-    
-    echo "⚠️  REMINDER: This setup is for DEVELOPMENT ONLY!"
-}
-
-# Download standard model using CLI
-download_standard_model() {
-    log_step "Setting up standard RKLLM model"
-    
-    # Build the project first
-    log_info "Building project for model download..."
-    if ! npm install; then
-        log_warning "npm install failed - skipping model download"
-        return 0
-    fi
-    
-    if ! npm run build; then
-        log_warning "Build failed - skipping model download"
-        return 0
-    fi
-    
-    # Download the standard model
-    log_info "📥 Downloading standard model (dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1)..."
-    log_info "   Model file: Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm"
-    
-    # Use the CLI to pull the model
-    if npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm; then
-        log_success "✅ Standard model setup completed"
-    else
-        log_warning "Model download failed - you can download it later using:"
-        echo "  npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm"
-    fi
-}
-
-# Handle script arguments
+# Handle command line arguments
 handle_arguments() {
-    case "${1:-}" in
-        --help|-h)
-            show_help
-            exit 0
-            ;;
-        --version|-v)
-            echo "$SCRIPT_NAME v$SCRIPT_VERSION"
-            exit 0
-            ;;
-        --test)
-            echo "Running module system test..."
-            scripts/test-modules.sh
-            exit $?
-            ;;
-        --responsive-demo)
-            echo "Demonstrating responsive UI behavior..."
-            test_responsive_behavior
-            exit 0
-            ;;
-        --non-interactive)
-            log_info "Non-interactive mode - installing Node.js only"
-            RUNTIME_SELECTION[nodejs]=true
-            RUNTIME_SELECTION[bun]=false
-            RUNTIME_SELECTION[deno]=false
-            RUNTIME_SELECTION[yarn]=false
-            ;;
-        *)
-            # Interactive mode (default)
-            ;;
-    esac
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            --version|-v)
+                echo "$SCRIPT_NAME v$SCRIPT_VERSION"
+                exit 0
+                ;;
+            --non-interactive)
+                INTERACTIVE_MODE=false
+                shift
+                ;;
+            --no-node)
+                INSTALL_NODE=false
+                shift
+                ;;
+            --no-build-tools)
+                INSTALL_BUILD_TOOLS=false
+                shift
+                ;;
+            --no-gtest)
+                INSTALL_GOOGLE_TEST=false
+                shift
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                show_help
+                exit 1
+                ;;
+        esac
+    done
 }
 
 # Show help
 show_help() {
     echo "$SCRIPT_NAME v$SCRIPT_VERSION"
     echo
-    echo "A modern, modular installation system for RKLLM.js development environment."
+    echo "A standardized installation script for RKLLM.js development environment."
     echo
     echo "Usage: $0 [OPTIONS]"
     echo
     echo "Options:"
     echo "  -h, --help              Show this help message"
     echo "  -v, --version           Show version information"
-    echo "      --test              Test the module system"
-    echo "      --responsive-demo   Demonstrate responsive UI behavior"
-    echo "      --non-interactive   Install Node.js only (no prompts)"
+    echo "      --non-interactive   Run without prompts (auto-confirm)"
+    echo "      --no-node           Skip Node.js installation"
+    echo "      --no-build-tools    Skip C++ build tools installation"
+    echo "      --no-gtest          Skip Google Test installation"
     echo
-    echo "Interactive mode (default):"
-    echo "  • Responsive UI that adapts to terminal size"
-    echo "  • Interactive runtime selection"
-    echo "  • Progress feedback and error handling"
-    echo "  • Downloads standard RKLLM model automatically"
+    echo "Examples:"
+    echo "  $0                      # Interactive installation (default)"
+    echo "  $0 --non-interactive    # Automated installation"
+    echo "  $0 --no-gtest           # Skip Google Test installation"
     echo
-    echo "Supported runtimes:"
-    echo "  • Node.js (required)"
-    echo "  • Bun (optional)"
-    echo "  • Deno (optional)"
-    echo "  • Yarn (optional)"
+    echo "This script installs:"
+    echo "  • System tools (curl, wget, git)"
+    echo "  • Node.js v16+ and npm"
+    echo "  • C++ build essentials (gcc, cmake, pkg-config)"
+    echo "  • Google Test for C++ unit testing"
+    echo "  • Project dependencies via npm"
+    echo
+    echo "Supported platforms:"
+    echo "  • Ubuntu/Debian (apt)"
+    echo "  • RHEL/CentOS/Fedora (yum/dnf)"
+    echo "  • Arch Linux (pacman)"
+    echo "  • macOS (homebrew)"
     echo
     echo "For more information, see: README.md"
 }
