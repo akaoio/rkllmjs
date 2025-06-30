@@ -396,7 +396,7 @@ chmod +x src/bindings/build.sh src/bindings/test.sh
 **Success Criteria (Revised)**:
 - [ ] All modules compile without errors
 - [ ] At least 2-3 modules have working static libraries
-- [ ] Basic unit tests can run with GTest
+- [ ] Basic unit tests can run with RKLLMJS Test Framework
 - [ ] Build script reports actual status correctly
 - [ ] Clean separation between development and production builds
 

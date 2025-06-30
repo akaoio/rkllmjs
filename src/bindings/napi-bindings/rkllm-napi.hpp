@@ -1,18 +1,22 @@
 #pragma once
 
+#include "../config/build-config.hpp"
 #include <string>
 #include <memory>
 
 namespace rkllmjs {
 namespace napi {
 
-// Future N-API integration (when Node.js headers are available)
-/*
-#include <node_api.h>
+// Conditional N-API integration
+#ifndef SIMPLIFIED_BUILD
+    // Future N-API integration (when Node.js headers are available)
+    /*
+    #include <node_api.h>
 
-// N-API module initialization function
-napi_status InitRKLLMBindings(napi_env env, napi_value exports);
-*/
+    // N-API module initialization function
+    napi_status InitRKLLMBindings(napi_env env, napi_value exports);
+    */
+#endif
 
 } // namespace napi
 

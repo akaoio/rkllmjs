@@ -93,17 +93,26 @@ napi_value Init(napi_env env, napi_value exports) {
 
 ### Test Structure
 Each binding module includes comprehensive unit tests:
-- **C++ Unit Tests**: Test native binding logic and memory management
+- **C++ Unit Tests**: Use RKLLMJS Test Framework for native logic and memory management testing
 - **TypeScript Unit Tests**: Test wrapper functionality and type safety
 - **Integration Tests**: Test with real RKLLM models
 
+### Test Framework
+- **RKLLMJS Test Framework**: In-house C++ testing framework (no external dependencies)
+- **Location**: `src/bindings/testing/rkllmjs-test.hpp`
+- **Features**: Google Test-style macros, professional output, cross-platform support
+- **Benefits**: Zero dependencies, tailored for RKLLMJS, faster compilation
+
 ### Running Tests
 ```bash
-# Build and test all bindings
-npm run build:native && npm test
+# Build and test all C++ modules
+cd src/bindings && ./test.sh
 
-# Run C++ unit tests (after compilation)
-./build/test/binding-test
+# Build and test specific module
+cd src/bindings/core && make clean && make test
+
+# Run all tests with clean build
+cd src/bindings && find . -name "Makefile" -execdir make clean \; && ./test.sh
 ```
 
 ## Design Principles
@@ -148,8 +157,8 @@ The main build configuration defines:
 ### Implemented
 - ✅ **Main binding entry point** with module initialization
 - ✅ **LLM Handle module** with create/init/destroy functions
-- ✅ **Build system integration** with node-gyp
-- ✅ **Unit test framework** for C++ and TypeScript
+- ✅ **Build system integration** with individual module Makefiles
+- ✅ **RKLLMJS Test Framework** for C++ and comprehensive TypeScript testing
 
 ### Planned Implementation
 - [ ] **Inference module** for sync/async execution

@@ -1,22 +1,109 @@
-# RKLLMJS Memory Module Makefile (Placeholder)
+# Memory Module Makefile
+# Builds memory manager and its unit tests
 
-# Compiler settings
-CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -fPIC
-INCLUDES := -I../../../libs/rkllm/include
+MODULE_NAME = memory-manager
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -fPIC -I../config -I../testing
+
+# Build mode configuration
+ifdef SANDBOX_BUILD
+    CXXFLAGS += -DSANDBOX_BUILD -O2
+    LIBS = -pthread
+    RPATH = 
+else
+    CXXFLAGS += -DFULL_BUILD
+    LIBS = -pthread -lrt
+    RPATH = 
+endif
+
+# Debug/Release configuration
+ifdef DEBUG
+    CXXFLAGS += -g -O0 -DDEBUG
+else
+    ifndef SANDBOX_BUILD
+        CXXFLAGS += -O2 -DNDEBUG
+    endif
+endif
+
+# Source files
+SOURCES = $(MODULE_NAME).cpp
+TEST_SOURCES = $(MODULE_NAME).test.cpp
+OBJECTS = $(SOURCES:.cpp=.o)
+TEST_OBJECTS = $(TEST_SOURCES:.cpp=.o)
+
+# Targets
+TARGET = librkllm-memory.a
+TEST_TARGET = bin/$(MODULE_NAME).test
 
 # Default target
-.PHONY: all
-all:
-	@echo "⚠️  Memory module not yet implemented"
-	@echo "Creating placeholder library..."
-	@mkdir -p bin
-	@ar rcs bin/librkllm-memory.a /dev/null 2>/dev/null || touch bin/librkllm-memory.a
-	@echo "✅ Memory module placeholder created"
+all: $(TARGET) $(TEST_TARGET)
 
-.PHONY: test
-test:
-	@echo "⚠️  Memory module tests not yet implemented"
+# Build static library
+$(TARGET): $(OBJECTS)
+	@echo "🔧 Building memory management library..."
+	ar rcs $@ $^
+	@echo "✅ Memory library created: $@"
+
+# Build test executable
+$(TEST_TARGET): $(TEST_OBJECTS) $(TARGET) | bin
+	@echo "🔧 Building memory management tests..."
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS) $(RPATH)
+	@echo "✅ Memory tests created: $@"
+
+# Create bin directory
+bin:
+	mkdir -p bin
+
+# Compile source files
+%.o: %.cpp %.hpp
+	@echo "⚙️  Compiling $<..."
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Compile test files
+$(MODULE_NAME).test.o: $(MODULE_NAME).test.cpp $(MODULE_NAME).hpp
+	@echo "⚙️  Compiling test: $<..."
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Run tests
+test: $(TEST_TARGET)
+	@echo "🧪 Running memory management tests..."
+	./$(TEST_TARGET)
+
+# Run tests with verbose output
+test-verbose: $(TEST_TARGET)
+	@echo "🧪 Running verbose memory management tests..."
+	./$(TEST_TARGET) --verbose
+
+# Debug build
+debug:
+	@echo "🐛 Building debug version..."
+	$(MAKE) DEBUG=1
+
+# Clean build artifacts
+clean:
+	@echo "🧹 Cleaning memory module..."
+	rm -f $(OBJECTS) $(TEST_OBJECTS) $(TARGET)
+	rm -rf bin/
+
+# Install library (for other modules to use)
+install: $(TARGET)
+	@echo "📦 Installing memory library..."
+	mkdir -p ../lib
+	cp $(TARGET) ../lib/
+	mkdir -p ../include
+	cp $(MODULE_NAME).hpp ../include/
+
+# Show build info
+info:
+	@echo "📊 Memory Module Info:"
+	@echo "  Module: $(MODULE_NAME)"
+	@echo "  Compiler: $(CXX)"
+	@echo "  Flags: $(CXXFLAGS)"
+	@echo "  Libraries: $(LIBS)"
+	@echo "  Target: $(TARGET)"
+	@echo "  Test target: $(TEST_TARGET)"
+
+.PHONY: all clean test test-verbose debug install info
 
 .PHONY: install
 install: all

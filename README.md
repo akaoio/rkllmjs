@@ -237,6 +237,39 @@ bash scripts/validate.sh
 # ✅ All validation checks passed! 🎉
 ```
 
+## 🧪 Testing Architecture
+
+### RKLLMJS Test Framework (C++)
+For C++ modules, we use our **in-house RKLLMJS Test Framework**:
+
+- **Zero Dependencies**: No Google Test or external frameworks required
+- **Professional Output**: Clean, colored test results with familiar syntax
+- **Tailored Design**: Specifically built for RKLLMJS C++ modules
+- **Cross-Platform**: Works on Linux, macOS, and other UNIX-like systems
+- **Build Mode Support**: Supports both SANDBOX and FULL build configurations
+
+```bash
+# Run all C++ module tests
+cd src/bindings && ./test.sh
+
+# Run specific module tests
+cd src/bindings/core && make test
+cd src/bindings/utils && make test
+cd src/bindings/memory && make test
+```
+
+### TypeScript Testing
+For TypeScript/JavaScript code, we use standard Node.js testing:
+
+```bash
+# Run TypeScript tests (Node.js)
+npm test
+
+# Run tests with other runtimes
+npm run test:bun    # Bun runtime
+npm run test:deno   # Deno runtime
+```
+
 ## 📚 API Documentation
 
 ### RKLLMModelManager (Multi-Runtime)

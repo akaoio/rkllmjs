@@ -8,14 +8,11 @@
 
 namespace rkllmjs {
 
-// Use types from global namespace
-using ::LLMHandle;
-
 // Implementation for JSRKLLMManager
 class JSRKLLMManager::Impl {
 public:
     std::string current_model_id;
-    LLMHandle current_handle;
+    rkllmjs::core::LLMHandle current_handle;
     bool initialized;
     
     Impl() : current_handle(nullptr), initialized(false) {}
@@ -36,7 +33,8 @@ bool JSRKLLMManager::initializeModel(const std::string& modelPath) {
     }
     
     // Create model config
-    auto config = rkllmjs::core::RKLLMManager::getOptimizedConfig(modelPath);
+    auto config = rkllmjs::core::RKLLMManager::createDefaultConfig();
+    config.model_path = modelPath;
     
     // Create model
     result = manager.createModel(config, &pImpl->current_handle);
@@ -59,6 +57,9 @@ std::string JSRKLLMManager::generateText(const std::string& prompt) {
     
     // Create inference engine
     rkllmjs::inference::InferenceEngine engine(manager_ptr);
+    
+    // Set the model handle for inference
+    engine.setModelHandle(pImpl->current_handle);
     
     // Set up inference parameters
     rkllmjs::inference::InferenceParams params;

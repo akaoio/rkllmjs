@@ -42,7 +42,15 @@ validate_documentation() {
     print_section "📚 Checking documentation coverage..."
 
     # Check that each feature directory has README.md
-    FEATURE_DIRS=$(find src -mindepth 1 -type d -not -path "./tmp/*" -not -path "./node_modules/*")
+    # Exclude build artifacts and auto-generated directories
+    FEATURE_DIRS=$(find src -mindepth 1 -type d \
+        -not -path "./tmp/*" \
+        -not -path "./node_modules/*" \
+        -not -path "*/bin" \
+        -not -path "*/obj" \
+        -not -path "*/build" \
+        -not -path "*/logs" \
+        -not -path "*/.git")
 
     if [ -n "$FEATURE_DIRS" ]; then
         for dir in $FEATURE_DIRS; do

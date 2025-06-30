@@ -18,9 +18,9 @@ struct ModelConfig {
     std::string id;
     std::string name;
     std::string path;              // Relative path from project root
-    int size_mb;
-    int min_memory_mb;
-    int min_npu_cores;
+    int size_mb = 0;
+    int min_memory_mb = 0;
+    int min_npu_cores = 0;
     bool multimodal = false;
     
     // RKLLM parameters
@@ -37,8 +37,8 @@ struct ModelConfig {
 
 struct HardwareProfile {
     std::string name;
-    int npu_cores;
-    int max_memory_mb;
+    int npu_cores = 0;
+    int max_memory_mb = 0;
     std::vector<std::string> preferred_models;
     
     bool canRunModel(const ModelConfig& model) const;

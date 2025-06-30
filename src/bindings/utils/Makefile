@@ -1,15 +1,15 @@
-# RKLLMJS Utils Module Makefile (Simplified)
-# Builds basic utilities without N-API dependencies
+# RKLLMJS Utils Module Makefile
+# Builds basic utilities with RKLLMJS Test Framework
 
 # Compiler settings
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -fPIC
-INCLUDES := -I../../../libs/rkllm/include
-TEST_INCLUDES := $(INCLUDES) -I/usr/include/gtest
-SIMPLIFIED_BUILD := 1
+INCLUDES := -I../../../libs/rkllm/include -I../testing
+TEST_INCLUDES := $(INCLUDES)
+SANDBOX_BUILD := 1
 
-# Library settings
-TEST_LIBS := -lgtest -lgtest_main -pthread
+# Library settings - no external test dependencies
+TEST_LIBS := -pthread
 
 # Directories
 SRC_DIR := .
@@ -17,14 +17,14 @@ OBJ_DIR := ./obj
 TEST_DIR := .
 BIN_DIR := ./bin
 
-# Source files (simplified versions)
+# Source files (sandbox versions)
 SOURCES := type-converters.cpp error-handler.cpp
 TEST_SOURCES := type-converters.test.cpp error-handler.test.cpp
 
-# Use simplified headers when building standalone
-ifdef SIMPLIFIED_BUILD
-    HEADERS := type-converters-simple.hpp error-handler-simple.hpp
-    CXXFLAGS += -DSIMPLIFIED_BUILD
+# Use sandbox headers when building standalone
+ifdef SANDBOX_BUILD
+    HEADERS := type-converters.hpp error-handler.hpp
+    CXXFLAGS += -DSANDBOX_BUILD
 else
     HEADERS := type-converters.hpp error-handler.hpp
 endif
@@ -59,7 +59,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	@echo "Compiling: $<"
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-# Build test object files (skip for now due to gtest dependency)
+# Build test object files (RKLLMJS Test Framework)
 $(OBJ_DIR)/%.test.o: $(TEST_DIR)/%.test.cpp | $(OBJ_DIR)
 	@echo "Compiling test: $<"
 	$(CXX) $(CXXFLAGS) $(TEST_INCLUDES) -c $< -o $@
@@ -87,7 +87,7 @@ test: $(TEST_EXECUTABLES)
 	done
 	@echo "✅ All utils module tests passed"
 
-# Basic test without gtest
+# Basic test with RKLLMJS Test Framework
 .PHONY: test-basic
 test-basic: $(STATIC_LIB)
 	@echo "🧪 Running basic compilation test..."
@@ -118,12 +118,12 @@ help:
 	@echo ""
 	@echo "Available targets:"
 	@echo "  all         - Build static library (default)"
-	@echo "  test        - Build and run all tests (requires gtest)"
+	@echo "  test        - Build and run all tests (RKLLMJS Test Framework)"
 	@echo "  test-basic  - Basic compilation test"
 	@echo "  install     - Install to build directory"
 	@echo "  clean       - Clean build artifacts"
 	@echo "  help        - Show this help message"
 	@echo ""
 	@echo "Build modes:"
-	@echo "  SIMPLIFIED_BUILD=1  - Use simplified headers (default)"
-	@echo "  SIMPLIFIED_BUILD=0  - Use full N-API headers"
+	@echo "  SANDBOX_BUILD=1  - Use sandbox headers (default)"
+	@echo "  SANDBOX_BUILD=0  - Use full N-API headers"

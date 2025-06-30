@@ -200,6 +200,7 @@ bool ConfigManager::modelExists(const std::string& model_id) {
 void ConfigManager::parseModelsFromJson(const std::string& json_content) {
     // This is a simplified parser - in production you'd use a real JSON library
     // For now, we'll create some default models
+    (void)json_content; // Suppress unused parameter warning
     
     ModelConfig qwen_0_5b;
     qwen_0_5b.id = "qwen_0.5b";
@@ -233,6 +234,8 @@ void ConfigManager::parseModelsFromJson(const std::string& json_content) {
 }
 
 void ConfigManager::parseHardwareProfilesFromJson(const std::string& json_content) {
+    (void)json_content; // Suppress unused parameter warning
+    
     HardwareProfile high_profile;
     high_profile.name = "rk3588_high";
     high_profile.npu_cores = 3;

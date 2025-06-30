@@ -3,15 +3,26 @@
 
 MODULE_NAME = rkllm-manager
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -fPIC -I../../../libs/rkllm/include
-LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -lpthread
-RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
+CXXFLAGS = -std=c++17 -Wall -Wextra -fPIC -I../../../libs/rkllm/include -I../config -I../testing
+
+# Build mode configuration
+ifdef SANDBOX_BUILD
+    CXXFLAGS += -DSANDBOX_BUILD -O2
+    LIBS = -pthread
+    RPATH = 
+else
+    CXXFLAGS += -DFULL_BUILD
+    LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
+    RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
+endif
 
 # Debug/Release configuration
 ifdef DEBUG
     CXXFLAGS += -g -O0 -DDEBUG
 else
-    CXXFLAGS += -O2 -DNDEBUG
+    ifndef SANDBOX_BUILD
+        CXXFLAGS += -O2 -DNDEBUG
+    endif
 endif
 
 # Source files

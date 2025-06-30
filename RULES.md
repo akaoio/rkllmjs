@@ -106,6 +106,7 @@ src/bindings/
 **Each feature directory MUST contain README.md** with: Purpose, Architecture, Core Components, Usage Examples, Dependencies, Testing, Design Principles.
 
 ### 🚫 Prohibited Practices
+- ❌ Mocking data or logic files
 - ❌ Missing test files (every .cpp/.ts needs .test.cpp/.test.ts)
 - ❌ Multiple unrelated features in same file/directory
 - ❌ Generic naming (`utils.ts`, `helpers.cpp`)

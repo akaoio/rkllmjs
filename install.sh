@@ -46,7 +46,6 @@ log_step() {
 INTERACTIVE_MODE=true
 INSTALL_NODE=true
 INSTALL_BUILD_TOOLS=true
-INSTALL_GOOGLE_TEST=true
 
 # OS Detection
 detect_os() {
@@ -245,52 +244,7 @@ install_build_tools() {
     log_success "C++ build tools installation completed"
 }
 
-# Install Google Test
-install_google_test() {
-    log_step "Installing Google Test"
-    
-    # Check if Google Test is already available
-    if pkg-config --exists gtest; then
-        log_success "Google Test is already available via pkg-config"
-        return 0
-    fi
-    
-    # Try to install Google Test via package manager
-    local gtest_packages=()
-    
-    case "$OS" in
-        ubuntu)
-            gtest_packages=(libgtest-dev googletest)
-            ;;
-        rhel|fedora)
-            gtest_packages=(gtest-devel gmock-devel)
-            ;;
-        arch)
-            gtest_packages=(gtest)
-            ;;
-        macos)
-            gtest_packages=(googletest)
-            ;;
-    esac
-    
-    if [[ ${#gtest_packages[@]} -gt 0 ]]; then
-        log_info "Installing Google Test: ${gtest_packages[*]}"
-        if [[ "$OS" == "macos" ]]; then
-            for package in "${gtest_packages[@]}"; do
-                $INSTALL_CMD "$package" || true  # Don't fail if package doesn't exist
-            done
-        else
-            sudo $INSTALL_CMD "${gtest_packages[@]}" || true  # Don't fail if package doesn't exist
-        fi
-    fi
-    
-    # Verify installation
-    if pkg-config --exists gtest || [[ -f "/usr/include/gtest/gtest.h" ]] || [[ -f "/usr/local/include/gtest/gtest.h" ]]; then
-        log_success "Google Test installation completed"
-    else
-        log_warning "Google Test installation may have failed - C++ tests might not work"
-    fi
-}
+
 
 # Setup project dependencies
 setup_project_dependencies() {
@@ -340,13 +294,7 @@ show_installation_summary() {
         echo "  ✅ CMake: $(cmake --version | head -1)"
     fi
     
-    if pkg-config --exists gtest 2>/dev/null; then
-        echo "  ✅ Google Test: Available"
-    elif [[ -f "/usr/include/gtest/gtest.h" ]]; then
-        echo "  ✅ Google Test: Headers found"
-    else
-        echo "  ⚠️  Google Test: Not found (C++ tests may not work)"
-    fi
+    echo "  ✅ RKLLMJS Test Framework: Built-in (no external dependencies)"
     
     echo
     log_info "🎯 Next steps:"
@@ -395,7 +343,6 @@ confirm_installation() {
     echo "  • System tools (curl, wget, git)"
     echo "  • Node.js (v16+) and npm"
     echo "  • C++ build tools (gcc, cmake, pkg-config)"
-    echo "  • Google Test (for C++ unit testing)"
     echo "  • Project dependencies"
     echo
     
@@ -454,11 +401,6 @@ main() {
         fi
     fi
     
-    # Install Google Test
-    if [[ "$INSTALL_GOOGLE_TEST" == "true" ]]; then
-        install_google_test
-    fi
-    
     # Setup project dependencies
     if ! setup_project_dependencies; then
         log_warning "Project setup failed - you may need to run 'npm install' manually"
@@ -492,10 +434,6 @@ handle_arguments() {
                 INSTALL_BUILD_TOOLS=false
                 shift
                 ;;
-            --no-gtest)
-                INSTALL_GOOGLE_TEST=false
-                shift
-                ;;
             *)
                 log_error "Unknown option: $1"
                 show_help
@@ -519,18 +457,16 @@ show_help() {
     echo "      --non-interactive   Run without prompts (auto-confirm)"
     echo "      --no-node           Skip Node.js installation"
     echo "      --no-build-tools    Skip C++ build tools installation"
-    echo "      --no-gtest          Skip Google Test installation"
     echo
     echo "Examples:"
     echo "  $0                      # Interactive installation (default)"
     echo "  $0 --non-interactive    # Automated installation"
-    echo "  $0 --no-gtest           # Skip Google Test installation"
     echo
     echo "This script installs:"
     echo "  • System tools (curl, wget, git)"
     echo "  • Node.js v16+ and npm"
     echo "  • C++ build essentials (gcc, cmake, pkg-config)"
-    echo "  • Google Test for C++ unit testing"
+    echo "  • RKLLMJS Test Framework (built-in, no external dependencies)"
     echo "  • Project dependencies via npm"
     echo
     echo "Supported platforms:"

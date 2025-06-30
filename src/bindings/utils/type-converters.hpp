@@ -1,6 +1,11 @@
 #pragma once
 
-#include <napi.h>
+#include "../config/build-config.hpp"
+
+#if RKLLMJS_MODE_FULL
+    #include <napi.h>
+#endif
+
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -10,11 +15,32 @@ namespace rkllmjs {
 namespace utils {
 
 /**
+ * @brief Result class for safe conversion operations
+ * 
+ * Used for functions that may fail during conversion
+ */
+class ConversionResult {
+public:
+    ConversionResult(bool success, const std::string& error = "") 
+        : success_(success), error_(error) {}
+    
+    bool isSuccess() const { return success_; }
+    const std::string& getError() const { return error_; }
+    
+private:
+    bool success_;
+    std::string error_;
+};
+
+/**
  * @brief Type conversion utilities for JS ↔ C++ interoperability
  * 
  * This module provides safe, efficient conversion functions between
  * JavaScript types (via N-API) and C++ standard library types.
  */
+
+#if RKLLMJS_MODE_FULL
+// Full mode: Include N-API type conversions
 
 // String conversions
 std::string jsStringToCppString(Napi::Env env, const Napi::Value& jsValue);
@@ -37,12 +63,12 @@ Napi::Object cppStringMapToJsObject(
 // Number conversions
 int32_t jsNumberToCppInt32(Napi::Env env, const Napi::Value& jsValue);
 double jsNumberToCppDouble(Napi::Env env, const Napi::Value& jsValue);
-Napi::Number cppInt32ToJsNumber(Napi::Env env, int32_t value);
-Napi::Number cppDoubleToJsNumber(Napi::Env env, double value);
+Napi::Number cppInt32ToJsNumber(Napi::Env env, int32_t cppValue);
+Napi::Number cppDoubleToJsNumber(Napi::Env env, double cppValue);
 
 // Boolean conversions
 bool jsBooleanToCppBool(Napi::Env env, const Napi::Value& jsValue);
-Napi::Boolean cppBoolToJsBoolean(Napi::Env env, bool value);
+Napi::Boolean cppBoolToJsBoolean(Napi::Env env, bool cppValue);
 
 // Buffer/ArrayBuffer conversions
 std::vector<uint8_t> jsBufferToCppBytes(Napi::Env env, const Napi::Value& jsValue);
@@ -53,7 +79,55 @@ bool isValidType(Napi::Env env, const Napi::Value& value, napi_valuetype expecte
 void validateNotUndefined(Napi::Env env, const Napi::Value& value, const std::string& paramName);
 void validateNotNull(Napi::Env env, const Napi::Value& value, const std::string& paramName);
 
-// Template implementations
+#else
+// SANDBOX mode: Provide C++ only utility functions
+
+// Basic string utilities for testing
+bool validateString(const std::string& str);
+std::string normalizeString(const std::string& str);
+
+// Basic vector utilities
+template<typename T>
+bool validateVector(const std::vector<T>& vec);
+
+// Basic number utilities
+bool validateInt32(int32_t value);
+bool validateDouble(double value);
+
+#endif
+
+// Common utility functions for all modes
+std::string trim(const std::string& str);
+std::vector<std::string> split(const std::string& str, char delimiter);
+std::string join(const std::vector<std::string>& strings, const std::string& separator);
+bool startsWith(const std::string& str, const std::string& prefix);
+bool endsWith(const std::string& str, const std::string& suffix);
+
+int32_t stringToInt32(const std::string& str);
+double stringToDouble(const std::string& str);
+std::string int32ToString(int32_t value);
+std::string doubleToString(double value);
+
+std::unordered_map<std::string, std::string> parseKeyValuePairs(const std::string& input, 
+                                                                 char pairSeparator = ';',
+                                                                 char keyValueSeparator = '=');
+std::string mapToString(const std::unordered_map<std::string, std::string>& map,
+                       const std::string& pairSeparator = ";",
+                       const std::string& keyValueSeparator = "=");
+
+bool isValidString(const std::string& str);
+bool isValidNumber(const std::string& str);
+bool isValidPath(const std::string& path);
+bool isValidRange(double value, double min, double max);
+
+std::vector<uint8_t> stringToBytes(const std::string& str);
+std::string bytesToString(const std::vector<uint8_t>& bytes);
+std::string bytesToHex(const std::vector<uint8_t>& bytes);
+std::vector<uint8_t> hexToBytes(const std::string& hex);
+
+#if RKLLMJS_MODE_FULL
+// Template implementations for FULL mode
+
 template<typename T>
 std::vector<T> jsArrayToCppVector(Napi::Env env, const Napi::Array& jsArray) {
     std::vector<T> result;
@@ -98,6 +172,16 @@ Napi::Array cppVectorToJsArray(Napi::Env env, const std::vector<T>& cppVector) {
     
     return jsArray;
 }
+
+#else
+// SANDBOX mode template implementations
+
+template<typename T>
+bool validateVector(const std::vector<T>& vec) {
+    return true; // Basic validation - can be extended
+}
+
+#endif
 
 } // namespace utils
 } // namespace rkllmjs

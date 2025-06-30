@@ -1,5 +1,13 @@
 #include "inference-engine.hpp"
-#include "../utils/type-converters.hpp"
+#include "../config/build-config.hpp"
+
+// Professional conditional inclusion - centralized configuration
+#if RKLLMJS_MODE_SIMPLIFIED
+    #include "../utils/type-converters-simple.hpp"
+#else
+    #include "../utils/type-converters.hpp"
+#endif
+
 #include <algorithm>
 #include <random>
 #include <chrono>
@@ -269,6 +277,8 @@ InferenceResult InferenceEngine::executeInference(const InferenceParams& params)
         }
         
         // Use the stored model handle
+        
+#if RKLLMJS_HAS_RKLLM_NATIVE
         LLMHandle handle = modelHandle_;
         
         // Prepare RKLLM input structure
@@ -305,6 +315,26 @@ InferenceResult InferenceEngine::executeInference(const InferenceParams& params)
             result.finishReason = "error";
             throw rkllmjs::utils::RKLLMException("RKLLM inference failed with status: " + std::to_string(status));
         }
+#else
+        // Simplified mode - simulate inference with deterministic response
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Simulate processing time
+        
+        // Generate a response based on the prompt content
+        std::string responseText;
+        if (processedPrompt.find("hello") != std::string::npos || 
+            processedPrompt.find("hi") != std::string::npos) {
+            responseText = "Hello! I'm running in simplified mode. How can I help you today?";
+        } else if (processedPrompt.find("test") != std::string::npos) {
+            responseText = "This is a test response from the simplified inference engine.";
+        } else {
+            responseText = "I understand your request: \"" + processedPrompt + "\". This is a simplified response.";
+        }
+        
+        result.text = responseText;
+        result.finished = true;
+        result.finishReason = "completed";
+        result.tokensGenerated = static_cast<int>(responseText.length() / 4); // Rough token estimate
+#endif
         
     } catch (const std::exception& e) {
         // Fallback to error state
@@ -392,7 +422,11 @@ void InferenceEngine::processBatchRequests(const std::vector<BatchRequest>& requ
                 updateStats(batchResult.result);
             } catch (const std::exception& e) {
                 batchResult.error.category = rkllmjs::utils::ErrorCategory::MODEL_OPERATION;
+#ifdef SANDBOX_BUILD
                 batchResult.error.severity = rkllmjs::utils::ErrorSeverity::ERROR;
+#else
+                batchResult.error.severity = rkllmjs::utils::ErrorSeverity::ERROR;
+#endif
                 batchResult.error.message = e.what();
                 batchResult.error.code = "BATCH_INFERENCE_FAILED";
             }

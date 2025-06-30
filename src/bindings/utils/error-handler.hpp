@@ -1,8 +1,15 @@
 #pragma once
 
+#include "../config/build-config.hpp"
 #include <string>
 #include <exception>
 #include <memory>
+#include <functional>
+#include <vector>
+
+#if RKLLMJS_MODE_FULL
+    #include <napi.h>
+#endif
 
 namespace rkllmjs {
 namespace utils {
@@ -28,7 +35,10 @@ private:
 
 class TypeConversionException : public RKLLMException {
 public:
+    explicit TypeConversionException(const std::string& message) : RKLLMException(message) {}
+#if RKLLMJS_MODE_FULL
     TypeConversionException(const std::string& expected, napi_valuetype actual);
+#endif
 };
 
 class ConfigurationException : public RKLLMException {
@@ -77,6 +87,7 @@ struct ErrorInfo {
     std::string location; // File:line info
 };
 
+#if RKLLMJS_MODE_FULL
 // Utility function declarations
 std::string getTypeString(napi_valuetype type);
 
@@ -113,6 +124,22 @@ void validateStringParameter(Napi::Env env, const Napi::Value& value, const std:
 void validateNumberParameter(Napi::Env env, const Napi::Value& value, const std::string& paramName);
 void validateObjectParameter(Napi::Env env, const Napi::Value& value, const std::string& paramName);
 void validateArrayParameter(Napi::Env env, const Napi::Value& value, const std::string& paramName);
+
+#else
+// SANDBOX mode: Error handling functions without N-API
+
+// Error logging (SANDBOX mode)
+void logError(const ErrorInfo& errorInfo);
+void logError(const std::string& message, ErrorSeverity severity = ErrorSeverity::ERROR);
+
+// Exception conversion utilities (SANDBOX mode)
+ErrorInfo exceptionToErrorInfo(const std::exception& e);
+
+// Error code utilities (SANDBOX mode)
+std::string getErrorCodeString(ErrorCategory category, int code);
+ErrorCategory getErrorCategoryFromCode(const std::string& code);
+
+#endif
 
 // Macros for location tracking
 #define RKLLM_ERROR_LOCATION __FILE__ ":" + std::to_string(__LINE__)
