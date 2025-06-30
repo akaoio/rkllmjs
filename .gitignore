@@ -153,6 +153,14 @@ prebuilds/
 *.dylib
 *.dll
 
+# C++ Build artifacts and temporary files
+src/bindings/*/bin/
+src/bindings/core/rkllm-manager.test
+src/bindings/config/config-manager.test
+src/bindings/real-test-simple
+src/bindings/real-inference-test
+*.a
+
 # Test coverage
 coverage/
 
