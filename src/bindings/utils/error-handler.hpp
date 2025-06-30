@@ -1,6 +1,5 @@
 #pragma once
 
-#include <napi.h>
 #include <string>
 #include <exception>
 #include <memory>

@@ -16,9 +16,9 @@ OBJ_DIR := ./obj
 TEST_DIR := .
 BIN_DIR := ./bin
 
-# Source files (simplified versions)
-SOURCES := type-converters-simple.cpp error-handler-simple.cpp
-TEST_SOURCES := type-converters-simple.test.cpp error-handler-simple.test.cpp
+# Source files (current implementation)
+SOURCES := type-converters.cpp error-handler.cpp
+TEST_SOURCES := type-converters.test.cpp error-handler.test.cpp
 
 # Object files
 OBJECTS := $(SOURCES:%.cpp=$(OBJ_DIR)/%.o)

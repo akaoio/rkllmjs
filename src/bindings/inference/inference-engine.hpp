@@ -8,7 +8,7 @@
 #include <atomic>
 #include <map>
 #include "../../../libs/rkllm/include/rkllm.h"
-#include "../utils/error-handler-simple.hpp"
+#include "../utils/error-handler.hpp"
 #include "../core/rkllm-manager.hpp"
 
 namespace rkllmjs {

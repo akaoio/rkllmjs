@@ -1,5 +1,5 @@
 #include "inference-engine.hpp"
-#include "../utils/type-converters-simple.hpp"
+#include "../utils/type-converters.hpp"
 #include <algorithm>
 #include <random>
 #include <chrono>
