@@ -179,7 +179,9 @@ install_packages() {
             ;;
     esac
     
-    if eval "$INSTALL_CMD ${packages[*]}"; then
+    # Use a different approach for package installation
+    local install_cmd_array=($INSTALL_CMD)
+    if "${install_cmd_array[@]}" "${packages[@]}"; then
         log_success "Packages installed: ${packages[*]}"
         return 0
     else

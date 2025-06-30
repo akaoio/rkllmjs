@@ -30,23 +30,23 @@ LOG_LEVEL="${LOG_LEVEL:-3}"
 
 # Logging functions
 log_debug() {
-    [[ ${LOG_LEVEL:-3} -ge ${LOG_DEBUG:-5} ]] && echo -e "${CYAN}[DEBUG] $1${NC}" >&2 || true
+    echo "[DEBUG] $1" >&2
 }
 
 log_info() {
-    [[ ${LOG_LEVEL:-3} -ge ${LOG_INFO:-3} ]] && echo -e "${BLUE}ℹ️  $1${NC}" || true
+    echo "[INFO] $1"
 }
 
 log_success() {
-    [[ ${LOG_LEVEL:-3} -ge ${LOG_SUCCESS:-4} ]] && echo -e "${GREEN}✅ $1${NC}" || true
+    echo "[SUCCESS] $1"
 }
 
 log_warning() {
-    [[ ${LOG_LEVEL:-3} -ge ${LOG_WARNING:-2} ]] && echo -e "${YELLOW}⚠️  $1${NC}" || true
+    echo "[WARNING] $1"
 }
 
 log_error() {
-    [[ ${LOG_LEVEL:-3} -ge ${LOG_ERROR:-1} ]] && echo -e "${RED}❌ $1${NC}" >&2 || true
+    echo "[ERROR] $1" >&2
 }
 
 # Enhanced logging with context
@@ -55,11 +55,11 @@ log_step() {
 }
 
 log_install() {
-    echo -e "${BLUE}📦 Installing: $1${NC}"
+    echo "[INSTALL] Installing: $1"
 }
 
 log_configure() {
-    echo -e "${CYAN}⚙️  Configuring: $1${NC}"
+    echo "[CONFIGURE] Configuring: $1"
 }
 
 # Progress indicators

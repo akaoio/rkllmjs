@@ -1,0 +1,63 @@
+# Makefile for Real Inference Test
+
+CXX := g++
+CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -g
+INCLUDES := -I../../libs/rkllm/include -I. -Icore -Iinference -Iconfig -Iutils
+
+# Directories
+CORE_DIR := core
+INFERENCE_DIR := inference
+CONFIG_DIR := config
+UTILS_DIR := utils
+
+# Libraries
+CORE_LIB := $(CORE_DIR)/librkllm-manager.a
+INFERENCE_LIB := $(INFERENCE_DIR)/bin/librkllm-inference.a
+CONFIG_LIB := $(CONFIG_DIR)/libconfig-manager.a
+UTILS_LIB := $(UTILS_DIR)/bin/librkllm-utils.a
+
+# RKLLM runtime
+RKLLM_LIB_DIR := ../../libs/rkllm/aarch64
+LDFLAGS := -L$(RKLLM_LIB_DIR) -lrkllmrt -lpthread -ldl
+LDFLAGS += -Wl,-rpath,'$$ORIGIN/$(RKLLM_LIB_DIR)'
+
+# Target
+TARGET := real-inference-test
+SOURCE := real-inference-test.cpp
+
+all: $(TARGET)
+
+$(TARGET): $(SOURCE) $(CORE_LIB) $(INFERENCE_LIB) $(CONFIG_LIB) $(UTILS_LIB)
+	@echo "🔨 Building real inference test..."
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $< \
+		$(CORE_LIB) $(INFERENCE_LIB) $(CONFIG_LIB) $(UTILS_LIB) \
+		$(LDFLAGS)
+	@echo "✅ Real inference test built: $@"
+
+# Dependencies - ensure all modules are built
+$(CORE_LIB):
+	@echo "🔧 Building core module..."
+	$(MAKE) -C $(CORE_DIR) all
+
+$(INFERENCE_LIB):
+	@echo "🔧 Building inference module..."
+	$(MAKE) -C $(INFERENCE_DIR) all
+
+$(CONFIG_LIB):
+	@echo "🔧 Building config module..."
+	$(MAKE) -C $(CONFIG_DIR) all
+
+$(UTILS_LIB):
+	@echo "🔧 Building utils module..."
+	$(MAKE) -C $(UTILS_DIR) all
+
+clean:
+	@rm -f $(TARGET)
+	@echo "🧹 Real inference test cleaned"
+
+test: $(TARGET)
+	@echo "🧪 Running real inference test..."
+	@echo "=============================="
+	./$(TARGET)
+
+.PHONY: all clean test

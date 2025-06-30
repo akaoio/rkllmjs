@@ -1,33 +1,53 @@
-# Bindings
+# C++ Bindings Architecture
 
 ## Purpose
-Root directory for all C++ N-API bindings that interface with the Rockchip RKLLM library. This module provides the native bridge between JavaScript/TypeScript and the RKLLM C API.
+Modular C++ core that provides the actual LLM functionality. The TypeScript layer is just a thin wrapper around these C++ modules.
 
-## Architecture
+## Architecture Overview
 
 ```
-┌─────────────────────────────┐
-│   TypeScript Wrappers      │ ← High-level type-safe API  
-├─────────────────────────────┤
-│   C++ N-API Bindings       │ ← Native bridge layer
-├─────────────────────────────┤
-│   RKLLM C API              │ ← Core Rockchip library
-│   (librkllmrt.so)          │
-└─────────────────────────────┘
+┌─────────────────────┐
+│   TypeScript API    │ ← Thin wrapper layer
+├─────────────────────┤
+│   N-API Bindings    │ ← JavaScript ↔ C++ bridge
+├─────────────────────┤
+│   C++ Core Modules  │ ← Business logic (THIS LAYER)
+├─────────────────────┤
+│   librkllmrt.so     │ ← Rockchip NPU library
+└─────────────────────┘
 ```
 
-## Core Components
+## Core Modules
 
-### Main Binding Entry Point
-- **binding.cpp**: Main N-API module initialization and export orchestration
-- **binding.test.cpp**: Unit tests for main binding entry point
+### `/core/` - RKLLM Manager
+- **Purpose**: Model lifecycle management (init/destroy/config)
+- **Dependencies**: None (foundation module)
+- **Key Functions**: `rkllm_init`, `rkllm_destroy`, `createDefaultParam`
 
-### Feature Modules
-- **llm-handle/**: LLM instance creation, initialization, and destruction
-- **inference/**: Inference operations (sync/async execution) - *planned*
-- **memory-manager/**: Memory and cache management - *planned*
-- **lora-adapter/**: LoRA adapter support - *planned*
-- **chat-template/**: Chat template management - *planned*
+### `/inference/` - Inference Engine  
+- **Purpose**: Model inference operations (run/abort/async)
+- **Dependencies**: `core`, `utils`
+- **Key Functions**: `rkllm_run`, `rkllm_run_async`, `rkllm_abort`
+
+### `/memory/` - Cache Manager
+- **Purpose**: Memory and cache management (KV cache, prompt cache)
+- **Dependencies**: `core`, `utils`
+- **Key Functions**: Cache operations, memory optimization
+
+### `/adapters/` - LoRA Adapter
+- **Purpose**: LoRA and model adaptation operations
+- **Dependencies**: `core`, `utils`
+- **Key Functions**: `rkllm_load_lora`, adapter management
+
+### `/utils/` - Common Utilities
+- **Purpose**: Shared utilities and type conversions
+- **Dependencies**: None (utility module)
+- **Key Functions**: JS ↔ C++ conversion, error handling
+
+### `/napi-bindings/` - N-API Layer
+- **Purpose**: JavaScript ↔ C++ bridge using N-API
+- **Dependencies**: All other modules
+- **Key Functions**: N-API exports, type marshalling
 - **cross-attention/**: Cross-attention parameter handling - *planned*
 
 ## Usage
@@ -81,9 +101,6 @@ Each binding module includes comprehensive unit tests:
 ```bash
 # Build and test all bindings
 npm run build:native && npm test
-
-# Test specific module
-npm test -- src/bindings/llm-handle/
 
 # Run C++ unit tests (after compilation)
 ./build/test/binding-test
@@ -164,3 +181,56 @@ The main build configuration defines:
 - Minimize JavaScript ↔ C++ boundary crossings
 - Implement proper caching for frequently accessed data
 - Profile memory usage and optimize allocation patterns
+
+## Build System
+
+```bash
+# Build all C++ modules and tests
+./build.sh
+
+# Test all C++ modules
+./test.sh
+
+# Build specific module
+cd core && make
+
+# Test specific module  
+cd core && make test
+```
+
+## Module Independence
+
+Each module:
+- ✅ Can be built standalone
+- ✅ Has its own unit tests
+- ✅ Has clear dependencies
+- ✅ Has comprehensive documentation
+- ✅ Follows RULES.md requirements
+
+## Development Workflow
+
+1. **Develop in modules** - Work on one module at a time
+2. **Test in isolation** - Each module tests independently  
+3. **Integration testing** - Test module interactions
+4. **N-API binding** - Connect to JavaScript layer
+5. **TypeScript wrapper** - Provide user-friendly API
+
+## Current State
+
+- **core/**: RKLLM Manager - model lifecycle management
+- **inference/**: Inference Engine - text generation
+- **memory/**: Memory Management - resource monitoring  
+- **utils/**: Utilities and helpers - type conversion, error handling
+- **config/**: Configuration Management - JSON config handling
+- **adapters/**: Model Adapters - model format handling
+- **napi-bindings/**: Node.js N-API bindings - JavaScript integration
+- **binding.cpp**: Main N-API entry point
+- **New modular structure**: To be implemented
+
+## Migration Plan
+
+1. Extract core functionality to `/core/`
+2. Separate inference logic to `/inference/`
+3. Move cache operations to `/memory/`
+4. Create common utilities in `/utils/`
+5. Rebuild N-API layer in `/napi-bindings/`

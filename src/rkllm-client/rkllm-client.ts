@@ -27,12 +27,61 @@ import {
 } from '../rkllm-types/rkllm-types.js';
 
 // Import the main branch's LLM Handle Wrapper
-import { 
-  LLMHandleWrapper,
-  type RKLLMParam as MainRKLLMParam,
-  type RKLLMInput as MainRKLLMInput,
-  type LLMHandle
-} from '../bindings/llm-handle/llm-handle-wrapper.js';
+// TODO: Import from new modular N-API bindings instead of llm-handle
+// import { 
+//   LLMHandleWrapper,
+//   type RKLLMParam as MainRKLLMParam,
+//   type RKLLMInput as MainRKLLMInput,
+//   type LLMHandle
+// } from '../bindings/napi-bindings/...';
+
+// Placeholder types and mock implementation for now (llm-handle was reference code and removed)
+type MainRKLLMParam = any;
+type MainRKLLMInput = any;
+type LLMHandle = any;
+
+// Mock LLMHandleWrapper implementation until native bindings are ready
+const LLMHandleWrapper = {
+  async init(_param: MainRKLLMParam): Promise<LLMHandle> {
+    throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
+  },
+  
+  async destroy(_handle: LLMHandle): Promise<void> {
+    throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
+  },
+  
+  async run(_handle: LLMHandle, _input: MainRKLLMInput, _inferParams: any): Promise<number> {
+    throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
+  },
+  
+  async abort(_handle: LLMHandle): Promise<void> {
+    throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
+  },
+  
+  async loadLora(_handle: LLMHandle, _adapter: any): Promise<void> {
+    throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
+  },
+  
+  async setChatTemplate(_handle: LLMHandle, _system: string, _prefix: string, _postfix: string): Promise<void> {
+    throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
+  },
+  
+  async setFunctionTools(_handle: LLMHandle, _system: string, _tools: string, _response: string): Promise<void> {
+    throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
+  },
+  
+  async loadPromptCache(_handle: LLMHandle, _cachePath: string): Promise<void> {
+    throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
+  },
+  
+  async releasePromptCache(_handle: LLMHandle): Promise<void> {
+    throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
+  },
+  
+  async createDefaultParam(): Promise<MainRKLLMParam> {
+    throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
+  }
+};
 
 // ============================================================================
 // Client Configuration and Options
