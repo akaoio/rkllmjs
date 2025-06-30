@@ -100,8 +100,8 @@ install: $(STATIC_LIB)
 	@mkdir -p ../../../build/lib
 	@mkdir -p ../../../build/include/utils
 	cp $(STATIC_LIB) ../../../build/lib/
-	cp type-converters-simple.hpp ../../../build/include/utils/type-converters.hpp
-	cp error-handler-simple.hpp ../../../build/include/utils/error-handler.hpp
+	cp type-converters.hpp ../../../build/include/utils/type-converters.hpp
+	cp error-handler.hpp ../../../build/include/utils/error-handler.hpp
 	@echo "✅ Utils module installed"
 
 # Clean targets

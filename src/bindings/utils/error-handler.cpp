@@ -1,4 +1,4 @@
-#include "error-handler-simple.hpp"
+#include "error-handler.hpp"
 #include <iostream>
 #include <sstream>
 #include <chrono>
@@ -13,34 +13,34 @@ TypeConversionException::TypeConversionException(const std::string& expected, co
 
 // ErrorScope implementation
 ErrorScope::ErrorScope(const std::string& operation) 
-    : operation_(operation), success_called_(false) {
-    logError(ErrorCategory::RESOURCE_MANAGEMENT, ErrorSeverity::LOW, 
+    : operation_(operation), successful_(false) {
+    logError(ErrorCategory::RESOURCE_MANAGEMENT, ErrorSeverity::INFO, 
              "Starting operation: " + operation_);
 }
 
 ErrorScope::~ErrorScope() {
-    if (!success_called_) {
+    if (!successful_) {
         // Operation failed, run cleanup functions
-        for (auto& cleanup : cleanup_functions_) {
+        for (auto& cleanup : cleanupFunctions_) {
             try {
                 cleanup();
             } catch (const std::exception& e) {
-                logError(ErrorCategory::RESOURCE_MANAGEMENT, ErrorSeverity::HIGH,
+                logError(ErrorCategory::RESOURCE_MANAGEMENT, ErrorSeverity::ERROR,
                         "Cleanup function failed", e.what());
             }
         }
-        logError(ErrorCategory::RESOURCE_MANAGEMENT, ErrorSeverity::MEDIUM,
+        logError(ErrorCategory::RESOURCE_MANAGEMENT, ErrorSeverity::WARNING,
                 "Operation failed, cleanup completed: " + operation_);
     }
 }
 
 void ErrorScope::addCleanupFunction(std::function<void()> cleanup) {
-    cleanup_functions_.push_back(cleanup);
+    cleanupFunctions_.push_back(cleanup);
 }
 
 void ErrorScope::success() {
-    success_called_ = true;
-    logError(ErrorCategory::RESOURCE_MANAGEMENT, ErrorSeverity::LOW,
+    successful_ = true;
+    logError(ErrorCategory::RESOURCE_MANAGEMENT, ErrorSeverity::INFO,
              "Operation completed successfully: " + operation_);
 }
 
@@ -71,8 +71,7 @@ ErrorInfo createErrorInfo(ErrorCategory category, ErrorSeverity severity,
         code,
         message,
         details,
-        location,
-        std::chrono::steady_clock::now()
+        location
     };
 }
 
@@ -91,9 +90,9 @@ std::string getCategoryString(ErrorCategory category) {
 
 std::string getSeverityString(ErrorSeverity severity) {
     switch (severity) {
-        case ErrorSeverity::LOW: return "LOW";
-        case ErrorSeverity::MEDIUM: return "MEDIUM";
-        case ErrorSeverity::HIGH: return "HIGH";
+        case ErrorSeverity::INFO: return "INFO";
+        case ErrorSeverity::WARNING: return "WARNING";
+        case ErrorSeverity::ERROR: return "ERROR";
         case ErrorSeverity::CRITICAL: return "CRITICAL";
         default: return "UNKNOWN";
     }

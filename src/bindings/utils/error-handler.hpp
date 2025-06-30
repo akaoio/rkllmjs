@@ -36,6 +36,7 @@ private:
 class TypeConversionException : public RKLLMException {
 public:
     explicit TypeConversionException(const std::string& message) : RKLLMException(message) {}
+    TypeConversionException(const std::string& expected, const std::string& actual);
 #if RKLLMJS_MODE_FULL
     TypeConversionException(const std::string& expected, napi_valuetype actual);
 #endif
@@ -131,6 +132,8 @@ void validateArrayParameter(Napi::Env env, const Napi::Value& value, const std::
 // Error logging (SANDBOX mode)
 void logError(const ErrorInfo& errorInfo);
 void logError(const std::string& message, ErrorSeverity severity = ErrorSeverity::ERROR);
+void logError(ErrorCategory category, ErrorSeverity severity, 
+              const std::string& message, const std::string& details = "");
 
 // Exception conversion utilities (SANDBOX mode)
 ErrorInfo exceptionToErrorInfo(const std::exception& e);
@@ -138,6 +141,19 @@ ErrorInfo exceptionToErrorInfo(const std::exception& e);
 // Error code utilities (SANDBOX mode)
 std::string getErrorCodeString(ErrorCategory category, int code);
 ErrorCategory getErrorCategoryFromCode(const std::string& code);
+
+// Utility functions (SANDBOX mode)
+std::string getCategoryString(ErrorCategory category);
+std::string getSeverityString(ErrorSeverity severity);
+std::string formatErrorMessage(const ErrorInfo& error);
+ErrorInfo createErrorInfo(ErrorCategory category, ErrorSeverity severity,
+                         const std::string& code, const std::string& message,
+                         const std::string& details = "", const std::string& location = "");
+
+// Validation functions (SANDBOX mode)
+void validateNotEmpty(const std::string& value, const std::string& paramName);
+void validateRange(double value, double min, double max, const std::string& paramName);
+void validatePositive(double value, const std::string& paramName);
 
 #endif
 

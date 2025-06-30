@@ -59,8 +59,8 @@ rkllmjs/
 │   │   │   ├── inference-engine.test.cpp
 │   │   │   └── Makefile
 │   │   ├── utils/                # ✅ Utilities and helpers
-│   │   │   ├── type-converters-simple.cpp/hpp
-│   │   │   ├── error-handler-simple.cpp/hpp
+│   │   │   ├── type-converters.cpp/hpp
+│   │   │   ├── error-handler.cpp/hpp
 │   │   │   └── Makefile
 │   │   ├── config/               # ✅ Configuration Management
 │   │   │   ├── config-manager.cpp/hpp

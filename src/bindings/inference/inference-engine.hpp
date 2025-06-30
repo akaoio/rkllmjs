@@ -18,13 +18,8 @@
 #endif
 
 // Professional conditional includes - centralized configuration
-#if RKLLMJS_MODE_SIMPLIFIED
-    #include "../utils/error-handler-simple.hpp"
-    #include "../utils/type-converters-simple.hpp"
-#else
-    #include "../utils/error-handler.hpp"
-    #include "../utils/type-converters.hpp"
-#endif
+#include "../utils/error-handler.hpp"
+#include "../utils/type-converters.hpp"
 
 #include "../core/rkllm-manager.hpp"
 

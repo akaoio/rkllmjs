@@ -2,11 +2,7 @@
 #include "../config/build-config.hpp"
 
 // Professional conditional inclusion - centralized configuration
-#if RKLLMJS_MODE_SIMPLIFIED
-    #include "../utils/type-converters-simple.hpp"
-#else
-    #include "../utils/type-converters.hpp"
-#endif
+#include "../utils/type-converters.hpp"
 
 #include <algorithm>
 #include <random>
