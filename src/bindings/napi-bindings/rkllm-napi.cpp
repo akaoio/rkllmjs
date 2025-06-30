@@ -127,3 +127,33 @@ void test_napi_bindings() {
 }
 
 } // namespace rkllmjs
+
+// Future N-API initialization function (when Node.js headers are available)
+/*
+namespace rkllmjs {
+namespace napi {
+
+napi_status InitRKLLMBindings(napi_env env, napi_value exports) {
+    napi_status status;
+    
+    // For now, just export a test function
+    napi_value test_fn;
+    status = napi_create_function(env, nullptr, 0, 
+        [](napi_env env, napi_callback_info info) -> napi_value {
+            test_napi_bindings();
+            napi_value result;
+            napi_get_undefined(env, &result);
+            return result;
+        }, nullptr, &test_fn);
+    
+    if (status != napi_ok) return status;
+    
+    status = napi_set_named_property(env, exports, "testBindings", test_fn);
+    if (status != napi_ok) return status;
+    
+    return napi_ok;
+}
+
+} // namespace napi
+} // namespace rkllmjs
+*/

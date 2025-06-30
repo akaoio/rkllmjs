@@ -3,8 +3,7 @@
     {
       "target_name": "binding",
       "sources": [
-        "src/bindings/binding.cpp",
-        "src/bindings/llm-handle/llm-handle.cpp"
+        "src/bindings/binding.cpp"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",

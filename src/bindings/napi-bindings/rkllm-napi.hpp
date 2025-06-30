@@ -4,6 +4,17 @@
 #include <memory>
 
 namespace rkllmjs {
+namespace napi {
+
+// Future N-API integration (when Node.js headers are available)
+/*
+#include <node_api.h>
+
+// N-API module initialization function
+napi_status InitRKLLMBindings(napi_env env, napi_value exports);
+*/
+
+} // namespace napi
 
 /**
  * JavaScript-exposed RKLLM Manager class

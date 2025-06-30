@@ -102,9 +102,6 @@ Each binding module includes comprehensive unit tests:
 # Build and test all bindings
 npm run build:native && npm test
 
-# Test specific module
-npm test -- src/bindings/llm-handle/
-
 # Run C++ unit tests (after compilation)
 ./build/test/binding-test
 ```
@@ -220,7 +217,13 @@ Each module:
 
 ## Current State
 
-- **llm-handle/**: Monolithic implementation (needs refactoring)
+- **core/**: RKLLM Manager - model lifecycle management
+- **inference/**: Inference Engine - text generation
+- **memory/**: Memory Management - resource monitoring  
+- **utils/**: Utilities and helpers - type conversion, error handling
+- **config/**: Configuration Management - JSON config handling
+- **adapters/**: Model Adapters - model format handling
+- **napi-bindings/**: Node.js N-API bindings - JavaScript integration
 - **binding.cpp**: Main N-API entry point
 - **New modular structure**: To be implemented
 

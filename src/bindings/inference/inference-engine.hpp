@@ -116,6 +116,10 @@ public:
     // Basic inference
     InferenceResult generate(const InferenceParams& params);
     
+    // Model handle management
+    void setModelHandle(LLMHandle handle);
+    LLMHandle getModelHandle() const;
+    
     // Streaming inference
     void generateStream(const InferenceParams& params, StreamCallback callback);
     std::future<InferenceResult> generateStreamAsync(const InferenceParams& params, StreamCallback callback);
@@ -152,6 +156,7 @@ public:
 private:
     // Core components
     std::shared_ptr<core::RKLLMManager> manager_;
+    LLMHandle modelHandle_;
     
     // State management
     std::atomic<InferenceState> state_;
