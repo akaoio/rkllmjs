@@ -8,8 +8,8 @@
 #include <vector>
 
 // Conditional RKLLM include and type definitions
-#ifdef SIMPLIFIED_BUILD
-    // Simplified mode: no RKLLM headers, use void* for handle
+#ifdef SANDBOX_BUILD
+    // Sandbox mode: no RKLLM headers, use void* for handle
     namespace rkllmjs {
     namespace core {
         using LLMHandle = void*;

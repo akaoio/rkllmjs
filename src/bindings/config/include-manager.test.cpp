@@ -19,7 +19,7 @@ TEST(IncludeManagerTest, ConditionalInclusion) {
     // In full build mode
     EXPECT_TRUE(RKLLMJS_MODE_FULL);
 #else
-    // In simplified build mode
+    // In sandbox build mode
     EXPECT_TRUE(RKLLMJS_MODE_SANDBOX);
 #endif
 }

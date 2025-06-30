@@ -97,7 +97,7 @@ ManagerResult RKLLMManager::cleanup() {
 #if RKLLMJS_MODE_FULL
             rkllm_destroy(handle);
 #else
-            std::cout << "[RKLLMManager] Simplified mode: simulated cleanup" << std::endl;
+            std::cout << "[RKLLMManager] Sandbox mode: simulated cleanup" << std::endl;
 #endif
             instance->is_active = false;
         }
@@ -161,9 +161,9 @@ ManagerResult RKLLMManager::createModel(const RKLLMModelConfig& config, LLMHandl
         return ManagerResult::ERROR_MODEL_LOAD_FAILED;
     }
 #else
-    // Simplified mode: simulate successful initialization
+    // Sandbox mode: simulate successful initialization
     *handle = reinterpret_cast<LLMHandle>(0x12345678); // Mock handle
-    std::cout << "[RKLLMManager] Simplified mode: simulated model init" << std::endl;
+    std::cout << "[RKLLMManager] Sandbox mode: simulated model init" << std::endl;
 #endif
     
     // Create model instance
@@ -202,8 +202,8 @@ ManagerResult RKLLMManager::destroyModel(LLMHandle handle) {
         std::cout << "[RKLLMManager] Warning: rkllmDestroy returned: " << ret << std::endl;
     }
 #else
-    // Simplified mode: simulate successful destruction
-    std::cout << "[RKLLMManager] Simplified mode: simulated model destroy" << std::endl;
+    // Sandbox mode: simulate successful destruction
+    std::cout << "[RKLLMManager] Sandbox mode: simulated model destroy" << std::endl;
 #endif
     
     // Update resource usage

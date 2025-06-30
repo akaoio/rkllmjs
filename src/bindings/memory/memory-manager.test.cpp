@@ -86,12 +86,12 @@ TEST(MemoryManagerTest, AlignedAllocation) {
     EXPECT_EQ(MemoryResult::SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
     
-    // Check alignment (in simplified mode, alignment might not be perfect)
+    // Check alignment (in sandbox mode, alignment might not be perfect)
     uintptr_t addr = reinterpret_cast<uintptr_t>(ptr);
 #ifndef SANDBOX_BUILD
     EXPECT_EQ(0, addr % 32);
 #else
-    // In simplified mode, just check that we got a valid pointer
+    // In sandbox mode, just check that we got a valid pointer
     (void)addr; // Suppress unused warning
     EXPECT_NE(nullptr, ptr);
 #endif

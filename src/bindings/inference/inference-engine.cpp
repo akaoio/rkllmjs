@@ -312,18 +312,18 @@ InferenceResult InferenceEngine::executeInference(const InferenceParams& params)
             throw rkllmjs::utils::RKLLMException("RKLLM inference failed with status: " + std::to_string(status));
         }
 #else
-        // Simplified mode - simulate inference with deterministic response
+        // Sandbox mode - simulate inference with deterministic response
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Simulate processing time
         
         // Generate a response based on the prompt content
         std::string responseText;
         if (processedPrompt.find("hello") != std::string::npos || 
             processedPrompt.find("hi") != std::string::npos) {
-            responseText = "Hello! I'm running in simplified mode. How can I help you today?";
+            responseText = "Hello! I'm running in sandbox mode. How can I help you today?";
         } else if (processedPrompt.find("test") != std::string::npos) {
-            responseText = "This is a test response from the simplified inference engine.";
+            responseText = "This is a test response from the sandbox inference engine.";
         } else {
-            responseText = "I understand your request: \"" + processedPrompt + "\". This is a simplified response.";
+            responseText = "I understand your request: \"" + processedPrompt + "\". This is a sandbox response.";
         }
         
         result.text = responseText;

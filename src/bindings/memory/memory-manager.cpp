@@ -49,7 +49,7 @@ MemoryResult CPUMemoryAllocator::allocate(size_t size, void** ptr, size_t alignm
             return MemoryResult::ERROR_OUT_OF_MEMORY;
         }
 #else
-        // Simplified mode: just use regular malloc for safety
+        // Sandbox mode: just use regular malloc for safety
         // Real alignment would need more complex logic
         allocated_ptr = std::malloc(size);
 #endif
@@ -196,7 +196,7 @@ bool NPUMemoryAllocator::initializeNPU() {
     // For now, just simulate quick check without output
     return true; // Assume available in full mode
 #else
-    // Simplified mode: simulate NPU availability quickly without output
+    // Sandbox mode: simulate NPU availability quickly without output
     return true;
 #endif
 }

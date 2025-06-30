@@ -378,7 +378,7 @@ Each module has: `.cpp/.hpp` implementation, unit tests, Makefile, README.md
 
 ### 🎯 **Build System Status:**
 - **✅ Module Makefiles**: All 7 modules have working standalone builds
-- **✅ Simplified Headers**: Created N-API-free versions for standalone compilation
+- **✅ Sandbox Headers**: Created N-API-free versions for standalone compilation
 - **✅ Test Framework**: Unit tests with comprehensive coverage  
 - **✅ Global Scripts**: build.sh and test.sh orchestration
 - **✅ Working Example**: Utils module builds successfully as static library

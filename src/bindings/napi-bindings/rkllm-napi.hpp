@@ -8,7 +8,7 @@ namespace rkllmjs {
 namespace napi {
 
 // Conditional N-API integration
-#ifndef SIMPLIFIED_BUILD
+#ifndef SANDBOX_BUILD
     // Future N-API integration (when Node.js headers are available)
     /*
     #include <node_api.h>
