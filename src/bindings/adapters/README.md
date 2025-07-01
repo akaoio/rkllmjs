@@ -1,256 +1,125 @@
 # adapters
 
 ## Purpose
-Platform-specific runtime adapters for RKLLM integration
+Hardware adapters and device-specific implementations
 
 ## Overview
-Implements platform abstraction layer with adapters for different JavaScript runtimes (Node.js, Deno, Bun). Provides unified interface for cross-platform RKLLM deployment and runtime-specific optimizations.
+Provides C++ implementation with 2 source files and 1 header files. Hardware abstraction layer for different NPU devices and platform-specific optimizations.
 
 ## Architecture
-- **adapter-manager.hpp**: IAdapter, TextAdapter, JsonAdapter, RKLLMAdapter, AdapterFactory, AdapterManager, AdapterPipeline
-
+Module architecture information will be added here.
 
 ## Source Files
-- `adapter-manager.cpp` (cpp)
-- `adapter-manager.hpp` (hpp)
+## Source File: adapter-manager.cpp
+
+### Functions
+- `AdapterFactory()`
+- `AdapterFactory::()`
+- `AdapterManager()`
+- `AdapterManager::()`
+- `AdapterPipeline::()`
+- `JsonAdapter()`
+- `JsonAdapter::()`
+- `RKLLMAdapter()`
+- `RKLLMAdapter::()`
+- `TextAdapter()`
+- `TextAdapter::()`
+- `cleanup()`
+- `clearPipeline()`
+- `createAdapterByFormat()`
+- `formatToString()`
+- `getAdapterNames()`
+- `getAvailableAdapters()`
+- `getErrorMessage()`
+- `getInstance()`
+- `getLoadedAdapters()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `../config/build-config.hpp`
+- `adapter-manager.hpp`
+- `algorithm`
+- `iostream`
+- `mutex`
+- `regex`
+- `sstream`
+
+## Source File: adapter-manager.hpp
+
+### Functions
+- `ostream()`
+
+### Classes
+- `AdapterFactory`
+- `AdapterManager`
+- `AdapterPipeline`
+- `IAdapter`
+- `JsonAdapter`
+- `RKLLMAdapter`
+- `TextAdapter`
+
+### Dependencies
+- `../config/build-config.hpp`
+- `functional`
+- `memory`
+- `mutex`
+- `ostream`
+- `string`
+- `unordered_map`
+- `vector`
+
+## Source File: adapter-manager.test.cpp
+
+### Functions
+- `TEST()`
+- `int()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `../testing/rkllmjs-test.hpp`
+- `adapter-manager.hpp`
+- `string`
+- `vector`
 
 
 ## API Reference
 
 ### Functions
-#### adapter-manager.cpp
-
-##### `cleanup()`
-*No documentation available*
-
-##### `whitespace_regex()`
-*No documentation available*
-
-##### `dangerous_regex()`
-*No documentation available*
-
-##### `preparePrompt()`
-*No documentation available*
-
-##### `processResponse()`
-*No documentation available*
-
-##### `cleanup_regex()`
-*No documentation available*
-
-##### `registerAdapter()`
-*No documentation available*
-
-##### `createAdapter()`
-*No documentation available*
-
-##### `loadAdapterInternal()`
-*No documentation available*
-
-##### `clearPipeline()`
-*No documentation available*
-
-#### adapter-manager.hpp
-
-##### `TextAdapter()`
-*No documentation available*
-
-##### `getName()`
-*No documentation available*
-
-##### `getVersion()`
-*No documentation available*
-
-##### `getSupportedFormat()`
-*No documentation available*
-
-##### `initialize()`
-*No documentation available*
-
-##### `cleanup()`
-*No documentation available*
-
-##### `isInitialized()`
-*No documentation available*
-
-##### `convertInput()`
-*No documentation available*
-
-##### `convertOutput()`
-*No documentation available*
-
-##### `validate()`
-*No documentation available*
-
-##### `setEncoding()`
-*No documentation available*
-
-##### `getEncoding()`
-*No documentation available*
-
-##### `normalize()`
-*No documentation available*
-
-##### `sanitize()`
-*No documentation available*
-
-##### `JsonAdapter()`
-*No documentation available*
-
-##### `setPrettyPrint()`
-*No documentation available*
-
-##### `getPrettyPrint()`
-*No documentation available*
-
-##### `parseJson()`
-*No documentation available*
-
-##### `createJson()`
-*No documentation available*
-
-##### `RKLLMAdapter()`
-*No documentation available*
-
-##### `preparePrompt()`
-*No documentation available*
-
-##### `processResponse()`
-*No documentation available*
-
-##### `optimizeInput()`
-*No documentation available*
-
-##### `AdapterFactory()`
-*No documentation available*
-
-##### `isAdapterAvailable()`
-*No documentation available*
-
-##### `getAdapterInfo()`
-*No documentation available*
-
-##### `getErrorMessage()`
-*No documentation available*
-
-##### `formatToString()`
-*No documentation available*
-
-##### `stringToFormat()`
-*No documentation available*
-
-##### `AdapterManager()`
-*No documentation available*
-
-##### `loadAdapterInternal()`
-*No documentation available*
-
-##### `loadAdapter()`
-*No documentation available*
-
-##### `unloadAdapter()`
-*No documentation available*
-
-##### `loadDefaultAdapters()`
-*No documentation available*
-
-##### `convertData()`
-*No documentation available*
-
-##### `validateData()`
-*No documentation available*
-
-##### `chainAdapters()`
-*No documentation available*
-
-##### `AdapterPipeline()`
-*No documentation available*
-
-##### `addAdapter()`
-*No documentation available*
-
-##### `removeAdapter()`
-*No documentation available*
-
-##### `clearPipeline()`
-*No documentation available*
-
-##### `execute()`
-*No documentation available*
-
-##### `getAdapterCount()`
-*No documentation available*
-
-
+See source files below for detailed function information.
 
 ### Classes
-#### adapter-manager.hpp
-
-##### `IAdapter`
-*No documentation available*
-
-##### `TextAdapter`
-*No documentation available*
-
-##### `JsonAdapter`
-*No documentation available*
-
-##### `RKLLMAdapter`
-*No documentation available*
-
-##### `AdapterFactory`
-*No documentation available*
-
-##### `AdapterManager`
-*No documentation available*
-
-##### `AdapterPipeline`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-*None*
+Data structures will be documented here.
 
 ### Enumerations
-- AdapterResult DataFormat 
-
+Enumerations will be documented here.
 
 ## Dependencies
-- ../config/build-config.hpp
-- ../core/rkllm-manager.hpp
-- ../inference/inference-engine.hpp
-- adapter-manager.hpp
-- algorithm
-- functional
-- iostream
-- memory
-- mutex
-- ostream
-- regex
-- sstream
-- string
-- unordered_map
-- vector
-
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -279,7 +148,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

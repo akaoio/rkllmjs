@@ -1,60 +1,88 @@
 # runtime-detector
 
 ## Purpose
-JavaScript runtime detection and cross-platform compatibility layer
+Runtime environment detection and configuration
 
 ## Overview
-Intelligent runtime detection supporting Node.js, Bun, and Deno with unified API abstraction. Provides runtime-specific optimizations and feature detection for seamless cross-platform deployment.
+Provides TypeScript implementation with 3 source files. Core functionality and implementation details for the runtime-detector component.
 
 ## Architecture
-- **runtime-detector.ts**: RuntimeDetector
-
+Module architecture information will be added here.
 
 ## Source Files
-- `global-types.d.ts` (ts)
-- `runtime-detector.ts` (ts)
+## Source File: global-types.d.ts
+
+### Exports
+- `49:export {};`
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+*No imports found*
+
+## Source File: runtime-detector.test.ts
+
+### Exports
+*No exports found*
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `../testing/index.js`
+- `./runtime-detector`
+- `node:assert`
+- `node:test`
+
+## Source File: runtime-detector.ts
+
+### Exports
+- `class`
+- `interface`
+- `type`
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+*No imports found*
 
 
 ## API Reference
 
 ### Functions
-
+See source files below for detailed function information.
 
 ### Classes
-#### runtime-detector.ts
-
-##### `RuntimeDetector`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-*None*
+Data structures will be documented here.
 
 ### Enumerations
-*None*
+Enumerations will be documented here.
 
 ## Dependencies
-- Standard C++ libraries
-- RKLLM runtime
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -83,7 +111,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

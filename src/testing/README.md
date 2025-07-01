@@ -1,94 +1,134 @@
 # testing
 
 ## Purpose
-Comprehensive testing infrastructure and utilities for RKLLM JavaScript bindings
+Testing utilities and mock implementations
 
 ## Overview
-Provides structured testing framework with logging, hardware validation, native binding testing, and production-ready test utilities. Supports both unit testing and integration testing for RKLLM components.
+Provides TypeScript implementation with 6 source files. Test utilities, mock objects, and testing framework integration for validation.
 
 ## Architecture
-- **test-logger.ts**: TestLogger
-
+Module architecture information will be added here.
 
 ## Source Files
-- `index.ts` (ts)
-- `test-logger.ts` (ts)
-- `test-utils.ts` (ts)
+## Source File: index.test.ts
+
+### Exports
+*No exports found*
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `import {`
+- `node:assert`
+- `node:test`
+
+## Source File: index.ts
+
+### Exports
+- `23:export {`
+- `TestLogger`
+- `const`
+- `default`
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `./test-logger.js`
+
+## Source File: test-logger.test.ts
+
+### Exports
+*No exports found*
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `./test-logger.js`
+- `glob`
+- `node:assert`
+- `node:test`
+- `path`
+
+## Source File: test-logger.ts
+
+### Exports
+- `class`
+- `interface`
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `fs`
+- `os`
+- `path`
+
+## Source File: test-utils.test.ts
+
+### Exports
+*No exports found*
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `import {`
+- `node:assert`
+- `node:test`
+
+## Source File: test-utils.ts
+
+### Exports
+- `async`
+- `const`
+- `default`
+- `function`
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `fs`
+- `os`
 
 
 ## API Reference
 
 ### Functions
-#### index.ts
-
-##### `createTestLogger()`
-*No documentation available*
-
-#### test-logger.ts
-
-##### `getTestSessionTimestamp()`
-*No documentation available*
-
-#### test-utils.ts
-
-##### `areNativeBindingsAvailable()`
-*No documentation available*
-
-##### `requireNativeBindings()`
-*No documentation available*
-
-##### `getTestModelPath()`
-*No documentation available*
-
-##### `isCompatibleHardware()`
-*No documentation available*
-
-##### `canRunProductionTests()`
-*No documentation available*
-
-##### `skipIfRequirementsNotMet()`
-*No documentation available*
-
-##### `forceMemoryCleanup()`
-*No documentation available*
-
-
+See source files below for detailed function information.
 
 ### Classes
-#### test-logger.ts
-
-##### `TestLogger`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-*None*
+Data structures will be documented here.
 
 ### Enumerations
-*None*
+Enumerations will be documented here.
 
 ## Dependencies
-- Standard C++ libraries
-- RKLLM runtime
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -117,7 +157,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

@@ -1,92 +1,68 @@
 # testing
 
 ## Purpose
-
+Testing utilities and mock implementations
 
 ## Overview
-Test result tracking
+Provides Test utilities, mock objects, and testing framework integration for validation.
 
 ## Architecture
-- **rkllmjs-test.hpp**: TestRunner, TestCase
-
+Module architecture information will be added here.
 
 ## Source Files
-- `rkllmjs-test.hpp` (hpp)
+## Source File: rkllmjs-test.hpp
+
+### Functions
+*No public functions found*
+
+### Classes
+- `TestCase`
+- `TestRunner`
+
+### Dependencies
+- `chrono`
+- `cmath`
+- `functional`
+- `iostream`
+- `sstream`
+- `string`
+- `vector`
 
 
 ## API Reference
 
 ### Functions
-#### rkllmjs-test.hpp
-
-##### `startTest()`
-*No documentation available*
-
-##### `endTest()`
-*No documentation available*
-
-##### `recordFailure()`
-*No documentation available*
-
-##### `runAll()`
-*No documentation available*
-
-##### `getSummary()`
-*No documentation available*
-
-##### `test_func()`
-*No documentation available*
-
-##### `main()`
-*No documentation available*
-
-
+See source files below for detailed function information.
 
 ### Classes
-#### rkllmjs-test.hpp
-
-##### `TestRunner`
-*No documentation available*
-
-##### `TestCase`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-- TestResult 
-
+Data structures will be documented here.
 
 ### Enumerations
-*None*
+Enumerations will be documented here.
 
 ## Dependencies
-- chrono
-- cmath
-- functional
-- iostream
-- sstream
-- string
-- vector
-
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -115,7 +91,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

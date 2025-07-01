@@ -12,7 +12,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 VALIDATORS_DIR="$SCRIPT_DIR/validators"
 RULES_OUTPUT_FILE="$PROJECT_ROOT/RULES.md"
 README_TEMPLATE="$PROJECT_ROOT/configs/readme-template.md"
-README_CONFIG="$PROJECT_ROOT/configs/readme-generator.json"
+README_CONFIG="$PROJECT_ROOT/configs/readme-template.md"
 
 # Colors for output
 RED='\033[0;31m'
@@ -581,9 +581,6 @@ infer_module_purpose() {
             ;;
         "testing")
             echo "Testing utilities and mock implementations"
-            ;;
-        "readme-generator")
-            echo "Automatic README generation from source code analysis"
             ;;
         "model-manager")
             echo "Model loading, validation, and lifecycle management"

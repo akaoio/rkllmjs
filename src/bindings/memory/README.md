@@ -1,189 +1,127 @@
 # memory
 
 ## Purpose
-Advanced memory management and optimization for RKLLM model operations
+Memory management utilities for NPU and CPU memory operations
 
 ## Overview
-Provides sophisticated memory allocation strategies, caching mechanisms, and performance optimization for NPU operations. Handles memory pools, garbage collection, and resource monitoring for efficient RKLLM execution.
+Provides C++ implementation with 2 source files and 1 header files. NPU memory allocation, CPU-NPU transfers, and memory pool management for efficient operations.
 
 ## Architecture
-- **memory-manager.hpp**: IMemoryAllocator, CPUMemoryAllocator, NPUMemoryAllocator, MemoryManager, MemoryGuard
-
+Module architecture information will be added here.
 
 ## Source Files
-- `memory-manager.cpp` (cpp)
-- `memory-manager.hpp` (hpp)
+## Source File: memory-manager.cpp
+
+### Functions
+- `CPUMemoryAllocator()`
+- `CPUMemoryAllocator::()`
+- `MemoryManager()`
+- `MemoryManager::()`
+- `NPUMemoryAllocator()`
+- `NPUMemoryAllocator::()`
+- `allocate()`
+- `allocateCPU()`
+- `allocateContiguous()`
+- `allocateNPU()`
+- `cleanup()`
+- `deallocate()`
+- `defragment()`
+- `getCPUStats()`
+- `getCombinedStats()`
+- `getErrorMessage()`
+- `getInstance()`
+- `getNPUStats()`
+- `getStats()`
+- `initialize()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `../config/build-config.hpp`
+- `algorithm`
+- `cstdlib`
+- `cstring`
+- `iostream`
+- `memory-manager.hpp`
+- `sys/mman.h`
+- `unistd.h`
+
+## Source File: memory-manager.hpp
+
+### Functions
+*No public functions found*
+
+### Classes
+- `CPUMemoryAllocator`
+- `IMemoryAllocator`
+- `MemoryGuard`
+- `MemoryManager`
+- `NPUMemoryAllocator`
+
+### Dependencies
+- `../config/build-config.hpp`
+- `cstddef`
+- `functional`
+- `memory`
+- `mutex`
+- `string`
+- `type_traits`
+- `unordered_map`
+- `vector`
+
+## Source File: memory-manager.test.cpp
+
+### Functions
+- `RKLLMJS_TEST_MAIN()`
+- `TEST()`
+- `void()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `../testing/rkllmjs-test.hpp`
+- `cstring`
+- `memory-manager.hpp`
+- `thread`
+- `vector`
 
 
 ## API Reference
 
 ### Functions
-#### memory-manager.cpp
-
-##### `block()`
-*No documentation available*
-
-##### `updateStats()`
-*No documentation available*
-
-##### `allocate()`
-*No documentation available*
-
-##### `new_block()`
-*No documentation available*
-
-##### `cleanup()`
-*No documentation available*
-
-#### memory-manager.hpp
-
-##### `updateStats()`
-*No documentation available*
-
-##### `CPUMemoryAllocator()`
-*No documentation available*
-
-##### `allocate()`
-*No documentation available*
-
-##### `deallocate()`
-*No documentation available*
-
-##### `getStats()`
-*No documentation available*
-
-##### `isValidPointer()`
-*No documentation available*
-
-##### `reallocate()`
-*No documentation available*
-
-##### `defragment()`
-*No documentation available*
-
-##### `initializeNPU()`
-*No documentation available*
-
-##### `NPUMemoryAllocator()`
-*No documentation available*
-
-##### `isNPUAvailable()`
-*No documentation available*
-
-##### `initializeNPULazy()`
-*No documentation available*
-
-##### `allocateContiguous()`
-*No documentation available*
-
-##### `mapToNPU()`
-*No documentation available*
-
-##### `MemoryManager()`
-*No documentation available*
-
-##### `initialize()`
-*No documentation available*
-
-##### `cleanup()`
-*No documentation available*
-
-##### `isInitialized()`
-*No documentation available*
-
-##### `allocateCPU()`
-*No documentation available*
-
-##### `allocateNPU()`
-*No documentation available*
-
-##### `getCombinedStats()`
-*No documentation available*
-
-##### `getCPUStats()`
-*No documentation available*
-
-##### `getNPUStats()`
-*No documentation available*
-
-##### `optimizeMemory()`
-*No documentation available*
-
-##### `logMemoryUsage()`
-*No documentation available*
-
-##### `getErrorMessage()`
-*No documentation available*
-
-##### `bool()`
-*No documentation available*
-
-
+See source files below for detailed function information.
 
 ### Classes
-#### memory-manager.hpp
-
-##### `IMemoryAllocator`
-*No documentation available*
-
-##### `CPUMemoryAllocator`
-*No documentation available*
-
-##### `NPUMemoryAllocator`
-*No documentation available*
-
-##### `MemoryManager`
-*No documentation available*
-
-##### `MemoryGuard`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-- MemoryStats MemoryBlock 
-
+Data structures will be documented here.
 
 ### Enumerations
-- MemoryResult 
-
+Enumerations will be documented here.
 
 ## Dependencies
-- ../config/build-config.hpp
-- algorithm
-- cstddef
-- cstdlib
-- cstring
-- functional
-- iostream
-- memory
-- memory-manager.hpp
-- mutex
-- string
-- sys/mman.h
-- type_traits
-- unistd.h
-- unordered_map
-- vector
-
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -212,7 +150,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

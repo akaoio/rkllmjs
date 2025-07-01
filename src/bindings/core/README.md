@@ -1,153 +1,121 @@
 # core
 
 ## Purpose
-Core RKLLM runtime management and model lifecycle operations
+Core functionality and base classes for RKLLM operations
 
 ## Overview
-Provides thread-safe singleton that manages RKLLM model instances, resource allocation, configuration validation, and cleanup operations. This module handles the fundamental infrastructure needed for RKLLM model management including NPU resource allocation and monitoring.
+Provides C++ implementation with 2 source files and 1 header files. Essential base classes, interfaces, and core functionality required by other modules.
 
 ## Architecture
-- **rkllm-manager.hpp**: RKLLMManager
-
+Module architecture information will be added here.
 
 ## Source Files
-- `rkllm-manager.cpp` (cpp)
-- `rkllm-manager.hpp` (hpp)
+## Source File: rkllm-manager.cpp
+
+### Functions
+- `RKLLMManager::()`
+- `allocateResources()`
+- `cleanup()`
+- `createDefaultConfig()`
+- `createModel()`
+- `destroyModel()`
+- `generateModelId()`
+- `getActiveModelCount()`
+- `getActiveModelIds()`
+- `getDefaultConfig()`
+- `getErrorMessage()`
+- `getInstance()`
+- `getModelConfig()`
+- `getResourceStats()`
+- `getValidationError()`
+- `hasAvailableResources()`
+- `initialize()`
+- `isInitialized()`
+- `isValid()`
+- `string()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `../config/build-config.hpp`
+- `chrono`
+- `cstring`
+- `fstream`
+- `iostream`
+- `rkllm-manager.hpp`
+- `sstream`
+- `sys/sysinfo.h`
+- `thread`
+
+## Source File: rkllm-manager.hpp
+
+### Functions
+*No public functions found*
+
+### Classes
+- `RKLLMManager`
+
+### Dependencies
+- `../config/build-config.hpp`
+- `memory`
+- `mutex`
+- `string`
+- `unordered_map`
+- `vector`
+
+## Source File: rkllm-manager.test.cpp
+
+### Functions
+- `RKLLMJS_TEST_MAIN()`
+- `RKLLMModelConfig()`
+- `TEST()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `../testing/rkllmjs-test.hpp`
+- `chrono`
+- `rkllm-manager.hpp`
+- `thread`
+- `vector`
 
 
 ## API Reference
 
 ### Functions
-#### rkllm-manager.cpp
-
-##### `cleanup()`
-*No documentation available*
-
-##### `updateResourceStats()`
-*No documentation available*
-
-##### `rkllm_destroy()`
-*No documentation available*
-
-##### `getDefaultConfig()`
-*No documentation available*
-
-#### rkllm-manager.hpp
-
-##### `isValid()`
-*No documentation available*
-
-##### `getValidationError()`
-*No documentation available*
-
-##### `initialize()`
-*No documentation available*
-
-##### `cleanup()`
-*No documentation available*
-
-##### `isInitialized()`
-*No documentation available*
-
-##### `createModel()`
-*No documentation available*
-
-##### `destroyModel()`
-*No documentation available*
-
-##### `getModelConfig()`
-*No documentation available*
-
-##### `getResourceStats()`
-*No documentation available*
-
-##### `hasAvailableResources()`
-*No documentation available*
-
-##### `validateConfig()`
-*No documentation available*
-
-##### `createDefaultConfig()`
-*No documentation available*
-
-##### `getDefaultConfig()`
-*No documentation available*
-
-##### `getOptimizedConfig()`
-*No documentation available*
-
-##### `getActiveModelCount()`
-*No documentation available*
-
-##### `getErrorMessage()`
-*No documentation available*
-
-##### `generateModelId()`
-*No documentation available*
-
-##### `allocateResources()`
-*No documentation available*
-
-##### `deallocateResources()`
-*No documentation available*
-
-##### `updateResourceStats()`
-*No documentation available*
-
-
+See source files below for detailed function information.
 
 ### Classes
-#### rkllm-manager.hpp
-
-##### `RKLLMManager`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-- sysinfo 
-- RKLLMModelConfig ResourceStats ModelInstance 
-
+Data structures will be documented here.
 
 ### Enumerations
-- ManagerResult 
-
+Enumerations will be documented here.
 
 ## Dependencies
-- ../../../libs/rkllm/include/rkllm.h
-- ../config/build-config.hpp
-- chrono
-- cstring
-- fstream
-- iostream
-- memory
-- mutex
-- rkllm-manager.hpp
-- sstream
-- string
-- sys/sysinfo.h
-- thread
-- unordered_map
-- vector
-
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -176,7 +144,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

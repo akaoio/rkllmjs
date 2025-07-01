@@ -1,59 +1,80 @@
 # model-manager
 
 ## Purpose
-RKLLM model downloading, caching, and lifecycle management
+Model loading, validation, and lifecycle management
 
 ## Overview
-Comprehensive model management system with automatic downloading, intelligent caching, version control, and integrity validation. Supports multiple model sources and runtime-agnostic deployment.
+Provides TypeScript implementation with 2 source files. Core functionality and implementation details for the model-manager component.
 
 ## Architecture
-- **model-manager.ts**: RKLLMModelManager
-
+Module architecture information will be added here.
 
 ## Source Files
-- `model-manager.ts` (ts)
+## Source File: model-manager.test.ts
+
+### Exports
+*No exports found*
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `../testing/index.js`
+- `./model-manager.js`
+- `fs`
+- `node:assert`
+- `node:test`
+- `path`
+
+## Source File: model-manager.ts
+
+### Exports
+- `class`
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `../model-types/model-types.js`
+- `fs`
+- `path`
+- `url`
 
 
 ## API Reference
 
 ### Functions
-
+See source files below for detailed function information.
 
 ### Classes
-#### model-manager.ts
-
-##### `RKLLMModelManager`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-*None*
+Data structures will be documented here.
 
 ### Enumerations
-*None*
+Enumerations will be documented here.
 
 ## Dependencies
-- Standard C++ libraries
-- RKLLM runtime
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -82,7 +103,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

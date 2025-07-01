@@ -1,59 +1,78 @@
 # rkllm-client
 
 ## Purpose
-High-level TypeScript client for RKLLM model interaction
+Main client interface for RKLLM operations
 
 ## Overview
-Promise-based client API providing streamlined interface for RKLLM model operations. Features async/await support, event-driven architecture, streaming text generation, and comprehensive error handling.
+Provides TypeScript implementation with 2 source files. Core functionality and implementation details for the rkllm-client component.
 
 ## Architecture
-- **rkllm-client.ts**: RKLLMClient
-
+Module architecture information will be added here.
 
 ## Source Files
-- `rkllm-client.ts` (ts)
+## Source File: rkllm-client.test.ts
+
+### Exports
+*No exports found*
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `../rkllm-types/rkllm-types.js`
+- `./rkllm-client.js`
+- `import {`
+- `node:assert`
+- `node:test`
+
+## Source File: rkllm-client.ts
+
+### Exports
+- `class`
+- `interface`
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `events`
+- `import {`
 
 
 ## API Reference
 
 ### Functions
-
+See source files below for detailed function information.
 
 ### Classes
-#### rkllm-client.ts
-
-##### `RKLLMClient`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-*None*
+Data structures will be documented here.
 
 ### Enumerations
-*None*
+Enumerations will be documented here.
 
 ## Dependencies
-- Standard C++ libraries
-- RKLLM runtime
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -82,7 +101,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

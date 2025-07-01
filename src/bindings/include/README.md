@@ -1,215 +1,66 @@
 # include
 
 ## Purpose
-Core RKLLM runtime management and model lifecycle operations
+Module for include functionality
 
 ## Overview
-Provides thread-safe singleton that manages RKLLM model instances, resource allocation, configuration validation, and cleanup operations. This module handles the fundamental infrastructure needed for RKLLM model management including NPU resource allocation and monitoring.
+Provides Core functionality and implementation details for the include component.
 
 ## Architecture
-- **readme-generator.hpp**: ReadmeGenerator
-- **rkllm-manager.hpp**: RKLLMManager
-
+Module architecture information will be added here.
 
 ## Source Files
-- `readme-generator.hpp` (hpp)
-- `rkllm-manager.hpp` (hpp)
+## Source File: rkllm-manager.hpp
+
+### Functions
+*No public functions found*
+
+### Classes
+- `RKLLMManager`
+
+### Dependencies
+- `../config/build-config.hpp`
+- `memory`
+- `mutex`
+- `string`
+- `unordered_map`
+- `vector`
 
 
 ## API Reference
 
 ### Functions
-#### readme-generator.hpp
-
-##### `ReadmeGenerator()`
-*No documentation available*
-
-##### `loadConfig()`
-*No documentation available*
-
-##### `setConfig()`
-*No documentation available*
-
-##### `getConfig()`
-*No documentation available*
-
-##### `analyzeSourceFile()`
-*No documentation available*
-
-##### `analyzeModule()`
-*No documentation available*
-
-##### `loadTemplate()`
-*No documentation available*
-
-##### `processTemplate()`
-*No documentation available*
-
-##### `generateReadme()`
-*No documentation available*
-
-##### `detectFileType()`
-*No documentation available*
-
-##### `isSourceFile()`
-*No documentation available*
-
-##### `inferPurpose()`
-*No documentation available*
-
-##### `validateTemplate()`
-*No documentation available*
-
-##### `validateModule()`
-*No documentation available*
-
-##### `parseCppFile()`
-*No documentation available*
-
-##### `parseTypeScriptFile()`
-*No documentation available*
-
-##### `extractFunctions()`
-*No documentation available*
-
-##### `extractClasses()`
-*No documentation available*
-
-##### `extractComments()`
-*No documentation available*
-
-##### `replaceTemplateVariables()`
-*No documentation available*
-
-##### `readFile()`
-*No documentation available*
-
-##### `writeFile()`
-*No documentation available*
-
-##### `fileExists()`
-*No documentation available*
-
-##### `getFileName()`
-*No documentation available*
-
-##### `getDirectory()`
-*No documentation available*
-
-#### rkllm-manager.hpp
-
-##### `isValid()`
-*No documentation available*
-
-##### `getValidationError()`
-*No documentation available*
-
-##### `initialize()`
-*No documentation available*
-
-##### `cleanup()`
-*No documentation available*
-
-##### `isInitialized()`
-*No documentation available*
-
-##### `createModel()`
-*No documentation available*
-
-##### `destroyModel()`
-*No documentation available*
-
-##### `getModelConfig()`
-*No documentation available*
-
-##### `getResourceStats()`
-*No documentation available*
-
-##### `hasAvailableResources()`
-*No documentation available*
-
-##### `validateConfig()`
-*No documentation available*
-
-##### `createDefaultConfig()`
-*No documentation available*
-
-##### `getDefaultConfig()`
-*No documentation available*
-
-##### `getOptimizedConfig()`
-*No documentation available*
-
-##### `getActiveModelCount()`
-*No documentation available*
-
-##### `getErrorMessage()`
-*No documentation available*
-
-##### `generateModelId()`
-*No documentation available*
-
-##### `allocateResources()`
-*No documentation available*
-
-##### `deallocateResources()`
-*No documentation available*
-
-##### `updateResourceStats()`
-*No documentation available*
-
-
+See source files below for detailed function information.
 
 ### Classes
-#### readme-generator.hpp
-
-##### `ReadmeGenerator`
-*No documentation available*
-
-#### rkllm-manager.hpp
-
-##### `RKLLMManager`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-- ReadmeConfig SourceInfo ModuleInfo 
-- RKLLMModelConfig ResourceStats ModelInstance 
-
+Data structures will be documented here.
 
 ### Enumerations
-- ManagerResult 
-
+Enumerations will be documented here.
 
 ## Dependencies
-- ../../../libs/rkllm/include/rkllm.h
-- ../config/build-config.hpp
-- map
-- memory
-- mutex
-- string
-- unordered_map
-- vector
-
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -238,7 +89,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

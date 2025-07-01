@@ -1,59 +1,79 @@
 # rkllm-types
 
 ## Purpose
-TypeScript type definitions and interfaces for RKLLM C API binding
+TypeScript type definitions for RKLLM interfaces
 
 ## Overview
-Comprehensive type safety layer providing TypeScript interfaces that mirror RKLLM C API structures. Ensures type-safe interaction between JavaScript and native RKLLM library functions.
+Provides TypeScript implementation with 2 source files. Core functionality and implementation details for the rkllm-types component.
 
 ## Architecture
-- **rkllm-types.ts**: RKLLMError
-
+Module architecture information will be added here.
 
 ## Source Files
-- `rkllm-types.ts` (ts)
+## Source File: rkllm-types.test.ts
+
+### Exports
+*No exports found*
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+- `../testing/index.js`
+- `import {`
+- `node:assert`
+- `node:test`
+
+## Source File: rkllm-types.ts
+
+### Exports
+- `class`
+- `const`
+- `enum`
+- `interface`
+- `type`
+
+### Interfaces
+*No interfaces found*
+
+### Dependencies
+*No imports found*
 
 
 ## API Reference
 
 ### Functions
-
+See source files below for detailed function information.
 
 ### Classes
-#### rkllm-types.ts
-
-##### `RKLLMError`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-*None*
+Data structures will be documented here.
 
 ### Enumerations
-*None*
+Enumerations will be documented here.
 
 ## Dependencies
-- Standard C++ libraries
-- RKLLM runtime
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -82,7 +102,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*
