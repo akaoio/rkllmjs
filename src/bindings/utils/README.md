@@ -1,439 +1,172 @@
 # utils
 
 ## Purpose
-Type conversion utilities for JavaScript and C++ interoperability
+Utility functions and helper classes for common operations
 
 ## Overview
-Provides safe and efficient type conversion functions between JavaScript values and C++ types. Includes comprehensive error handling, validation, and support for complex data structures. Essential for N-API bindings.
+Provides C++ implementation with 4 source files and 2 header files. Common utilities including logging, error handling, file operations, and helper functions.
 
 ## Architecture
-- **error-handler.hpp**: RKLLMException, TypeConversionException, ConfigurationException, ResourceException, ErrorScope
-- **type-converters.hpp**: ConversionResult
-
+Module architecture information will be added here.
 
 ## Source Files
-- `error-handler.cpp` (cpp)
-- `error-handler.hpp` (hpp)
-- `type-converters.cpp` (cpp)
-- `type-converters.hpp` (hpp)
+## Source File: error-handler.cpp
+
+### Functions
+- `ErrorInfo()`
+- `ErrorScope::()`
+- `function()`
+- `string()`
+- `success()`
+- `void()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `chrono`
+- `error-handler.hpp`
+- `iomanip`
+- `iostream`
+- `sstream`
+
+## Source File: error-handler.hpp
+
+### Functions
+- `ERROR()`
+- `Env()`
+- `ErrorInfo()`
+- `exception()`
+- `string()`
+- `void()`
+
+### Classes
+- `ConfigurationException`
+- `ErrorScope`
+- `RKLLMException`
+- `ResourceException`
+- `TypeConversionException`
+
+### Dependencies
+- `../config/build-config.hpp`
+- `exception`
+- `functional`
+- `memory`
+- `string`
+- `vector`
+
+## Source File: error-handler.test.cpp
+
+### Functions
+- `RKLLMJS_TEST_MAIN()`
+- `TEST()`
+
+### Classes
+- `ErrorHandlerTest`
+
+### Dependencies
+- `../testing/rkllmjs-test.hpp`
+- `error-handler.hpp`
+- `stdexcept`
+- `string`
+
+## Source File: type-converters.cpp
+
+### Functions
+- `Env()`
+- `Object()`
+- `Value()`
+- `bool()`
+- `string()`
+- `vector()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `algorithm`
+- `cctype`
+- `cmath`
+- `error-handler.hpp`
+- `functional`
+- `iomanip`
+- `sstream`
+- `type-converters.hpp`
+
+## Source File: type-converters.hpp
+
+### Functions
+- `Array()`
+- `Env()`
+- `Object()`
+- `Value()`
+- `bool()`
+- `string()`
+- `vector()`
+
+### Classes
+- `ConversionResult`
+
+### Dependencies
+- `../config/build-config.hpp`
+- `memory`
+- `string`
+- `unordered_map`
+- `vector`
+
+## Source File: type-converters.test.cpp
+
+### Functions
+- `RKLLMJS_TEST_MAIN()`
+- `TEST()`
+
+### Classes
+- `TestEnvironment`
+
+### Dependencies
+- `../testing/rkllmjs-test.hpp`
+- `cctype`
+- `chrono`
+- `numeric`
+- `string`
+- `type-converters.hpp`
+- `vector`
 
 
 ## API Reference
 
 ### Functions
-#### error-handler.cpp
-
-##### `RKLLMException()`
-*No documentation available*
-
-##### `logError()`
-*No documentation available*
-
-##### `cleanup()`
-*No documentation available*
-
-##### `createErrorInfo()`
-*No documentation available*
-
-##### `getCategoryString()`
-*No documentation available*
-
-##### `getSeverityString()`
-*No documentation available*
-
-##### `formatErrorMessage()`
-*No documentation available*
-
-##### `validateNotEmpty()`
-*No documentation available*
-
-##### `ConfigurationException()`
-*No documentation available*
-
-##### `validateRange()`
-*No documentation available*
-
-##### `validatePositive()`
-*No documentation available*
-
-#### error-handler.hpp
-
-##### `TypeConversionException()`
-*No documentation available*
-
-##### `getTypeString()`
-*No documentation available*
-
-##### `throwError()`
-*No documentation available*
-
-##### `throwConversionError()`
-*No documentation available*
-
-##### `throwConfigurationError()`
-*No documentation available*
-
-##### `throwResourceError()`
-*No documentation available*
-
-##### `createError()`
-*No documentation available*
-
-##### `handleNativeError()`
-*No documentation available*
-
-##### `getNativeErrorMessage()`
-*No documentation available*
-
-##### `logError()`
-*No documentation available*
-
-##### `exceptionToErrorInfo()`
-*No documentation available*
-
-##### `rethrowAsJSError()`
-*No documentation available*
-
-##### `getErrorCodeString()`
-*No documentation available*
-
-##### `getErrorCategoryFromCode()`
-*No documentation available*
-
-##### `validateParameter()`
-*No documentation available*
-
-##### `validateStringParameter()`
-*No documentation available*
-
-##### `validateNumberParameter()`
-*No documentation available*
-
-##### `validateObjectParameter()`
-*No documentation available*
-
-##### `validateArrayParameter()`
-*No documentation available*
-
-##### `getCategoryString()`
-*No documentation available*
-
-##### `getSeverityString()`
-*No documentation available*
-
-##### `formatErrorMessage()`
-*No documentation available*
-
-##### `createErrorInfo()`
-*No documentation available*
-
-##### `validateNotEmpty()`
-*No documentation available*
-
-##### `validateRange()`
-*No documentation available*
-
-##### `validatePositive()`
-*No documentation available*
-
-##### `ErrorScope()`
-*No documentation available*
-
-##### `success()`
-*No documentation available*
-
-#### type-converters.cpp
-
-##### `trim()`
-*No documentation available*
-
-##### `ss()`
-*No documentation available*
-
-##### `join()`
-*No documentation available*
-
-##### `startsWith()`
-*No documentation available*
-
-##### `endsWith()`
-*No documentation available*
-
-##### `stringToInt32()`
-*No documentation available*
-
-##### `TypeConversionException()`
-*No documentation available*
-
-##### `stringToDouble()`
-*No documentation available*
-
-##### `int32ToString()`
-*No documentation available*
-
-##### `doubleToString()`
-*No documentation available*
-
-##### `mapToString()`
-*No documentation available*
-
-##### `isValidString()`
-*No documentation available*
-
-##### `isValidNumber()`
-*No documentation available*
-
-##### `isValidPath()`
-*No documentation available*
-
-##### `isValidRange()`
-*No documentation available*
-
-##### `bytesToString()`
-*No documentation available*
-
-##### `bytesToHex()`
-*No documentation available*
-
-##### `safeStringToInt32()`
-*No documentation available*
-
-##### `ConversionResult()`
-*No documentation available*
-
-##### `safeStringToDouble()`
-*No documentation available*
-
-##### `validateString()`
-*No documentation available*
-
-##### `normalizeString()`
-*No documentation available*
-
-##### `validateInt32()`
-*No documentation available*
-
-##### `validateDouble()`
-*No documentation available*
-
-##### `jsStringToCppString()`
-*No documentation available*
-
-##### `cppStringToJsString()`
-*No documentation available*
-
-##### `cppStringMapToJsObject()`
-*No documentation available*
-
-##### `jsNumberToCppInt32()`
-*No documentation available*
-
-##### `jsNumberToCppDouble()`
-*No documentation available*
-
-##### `cppInt32ToJsNumber()`
-*No documentation available*
-
-##### `cppDoubleToJsNumber()`
-*No documentation available*
-
-##### `jsBooleanToCppBool()`
-*No documentation available*
-
-##### `cppBoolToJsBoolean()`
-*No documentation available*
-
-##### `isValidType()`
-*No documentation available*
-
-##### `validateNotUndefined()`
-*No documentation available*
-
-##### `validateNotNull()`
-*No documentation available*
-
-#### type-converters.hpp
-
-##### `isSuccess()`
-*No documentation available*
-
-##### `jsStringToCppString()`
-*No documentation available*
-
-##### `cppStringToJsString()`
-*No documentation available*
-
-##### `cppVectorToJsArray()`
-*No documentation available*
-
-##### `cppStringMapToJsObject()`
-*No documentation available*
-
-##### `jsNumberToCppInt32()`
-*No documentation available*
-
-##### `jsNumberToCppDouble()`
-*No documentation available*
-
-##### `cppInt32ToJsNumber()`
-*No documentation available*
-
-##### `cppDoubleToJsNumber()`
-*No documentation available*
-
-##### `jsBooleanToCppBool()`
-*No documentation available*
-
-##### `cppBoolToJsBoolean()`
-*No documentation available*
-
-##### `isValidType()`
-*No documentation available*
-
-##### `validateNotUndefined()`
-*No documentation available*
-
-##### `validateNotNull()`
-*No documentation available*
-
-##### `validateString()`
-*No documentation available*
-
-##### `normalizeString()`
-*No documentation available*
-
-##### `validateVector()`
-*No documentation available*
-
-##### `validateInt32()`
-*No documentation available*
-
-##### `validateDouble()`
-*No documentation available*
-
-##### `trim()`
-*No documentation available*
-
-##### `join()`
-*No documentation available*
-
-##### `startsWith()`
-*No documentation available*
-
-##### `endsWith()`
-*No documentation available*
-
-##### `stringToInt32()`
-*No documentation available*
-
-##### `stringToDouble()`
-*No documentation available*
-
-##### `int32ToString()`
-*No documentation available*
-
-##### `doubleToString()`
-*No documentation available*
-
-##### `mapToString()`
-*No documentation available*
-
-##### `isValidString()`
-*No documentation available*
-
-##### `isValidNumber()`
-*No documentation available*
-
-##### `isValidPath()`
-*No documentation available*
-
-##### `isValidRange()`
-*No documentation available*
-
-##### `bytesToString()`
-*No documentation available*
-
-##### `bytesToHex()`
-*No documentation available*
-
-##### `constexpr()`
-*No documentation available*
-
-##### `static_assert()`
-*No documentation available*
-
-
+See source files below for detailed function information.
 
 ### Classes
-#### error-handler.hpp
-
-##### `RKLLMException`
-*No documentation available*
-
-##### `TypeConversionException`
-*No documentation available*
-
-##### `ConfigurationException`
-*No documentation available*
-
-##### `ResourceException`
-*No documentation available*
-
-##### `ErrorScope`
-*No documentation available*
-
-#### type-converters.hpp
-
-##### `ConversionResult`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-- ErrorInfo 
-
+Data structures will be documented here.
 
 ### Enumerations
-- ErrorSeverity ErrorCategory 
-
+Enumerations will be documented here.
 
 ## Dependencies
-- ../config/build-config.hpp
-- algorithm
-- cctype
-- chrono
-- cmath
-- error-handler.hpp
-- exception
-- functional
-- iomanip
-- iostream
-- memory
-- napi.h
-- sstream
-- string
-- type-converters.hpp
-- unordered_map
-- vector
-
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -462,7 +195,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

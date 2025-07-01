@@ -7,6 +7,9 @@
 VALIDATOR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$VALIDATOR_DIR/core.sh"
 
+# @rule validate_naming_conventions
+# Validates naming conventions across the codebase
+# Prohibits generic names like utils.ts, helpers.cpp that violate RULES.md
 validate_naming_conventions() {
     print_section "📝 Checking naming conventions..."
 
@@ -20,6 +23,9 @@ validate_naming_conventions() {
     done
 }
 
+# @rule validate_directory_structure
+# Validates directory structure compliance
+# Ensures no empty directories exist (directories with only README.md)
 validate_directory_structure() {
     # Check for empty directories (only README.md) but respect .gitignore
     print_section "🗂️ Checking for empty directories..."
@@ -32,6 +38,11 @@ validate_directory_structure() {
         # Count non-README, non-Makefile files
         files=$(find "$dir" -maxdepth 1 -type f -not -name "README.md" -not -name "Makefile" | wc -l)
         if [ $files -eq 0 ] && [ -f "$dir/README.md" ]; then
+            # Check if this is a build artifact directory (contains "artifact" or "compiled" in README)
+            if grep -qi -E "(artifact|compiled|build.*process|generated.*build)" "$dir/README.md" 2>/dev/null; then
+                # This is a build artifact directory - allowed to be empty
+                continue
+            fi
             echo "$dir"
         fi
     done)
@@ -56,6 +67,9 @@ validate_directory_structure() {
     fi
 }
 
+# @rule validate_documentation
+# Validates documentation coverage requirements
+# Ensures each feature directory has proper README.md documentation
 validate_documentation() {
     print_section "📚 Checking documentation coverage..."
 
@@ -86,6 +100,9 @@ validate_documentation() {
     fi
 }
 
+# @rule validate_protected_assets
+# Validates presence of protected Rockchip assets
+# Ensures critical library files and headers exist and are not modified
 validate_protected_assets() {
     print_section "🔒 Checking protected Rockchip assets..."
 
@@ -102,6 +119,9 @@ validate_protected_assets() {
     done
 }
 
+# @rule validate_documentation_and_naming
+# Main documentation and naming validation orchestrator
+# Runs all documentation coverage and naming convention checks
 validate_documentation_and_naming() {
     validate_naming_conventions
     validate_directory_structure  

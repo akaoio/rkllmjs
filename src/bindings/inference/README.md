@@ -1,235 +1,129 @@
 # inference
 
 ## Purpose
-High-performance text generation and streaming inference engine
+Model inference execution and NPU interface management
 
 ## Overview
-Implements advanced inference capabilities with multiple sampling strategies, streaming text generation, batch processing, and KV-cache optimization. Supports concurrent inference management and real-time performance monitoring.
+Provides C++ implementation with 2 source files and 1 header files. Model execution on NPU hardware, batch processing, and inference pipeline management.
 
 ## Architecture
-- **inference-engine.hpp**: InferenceEngine, SamplingStrategy, GreedySampling, TopKSampling, TopPSampling
-
+Module architecture information will be added here.
 
 ## Source Files
-- `inference-engine.cpp` (cpp)
-- `inference-engine.hpp` (hpp)
+## Source File: inference-engine.cpp
+
+### Functions
+- `InferenceEngine::()`
+- `RKLLMManager()`
+- `bool()`
+- `calculateTokensPerSecond()`
+- `enableKVCache()`
+- `executeInference()`
+- `generate()`
+- `generateStream()`
+- `generateStreamAsync()`
+- `getModelHandle()`
+- `getState()`
+- `getStats()`
+- `isRunning()`
+- `isValid()`
+- `pause()`
+- `resetStats()`
+- `resume()`
+- `setDefaultParams()`
+- `setMaxConcurrentInferences()`
+- `setModelHandle()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `../config/build-config.hpp`
+- `../utils/type-converters.hpp`
+- `algorithm`
+- `chrono`
+- `inference-engine.hpp`
+- `map`
+- `numeric`
+- `random`
+- `regex`
+- `sstream`
+- `thread`
+
+## Source File: inference-engine.hpp
+
+### Functions
+- `string()`
+
+### Classes
+- `GreedySampling`
+- `InferenceEngine`
+- `SamplingStrategy`
+- `TopKSampling`
+- `TopPSampling`
+
+### Dependencies
+- `../config/build-config.hpp`
+- `../core/rkllm-manager.hpp`
+- `../utils/error-handler.hpp`
+- `../utils/type-converters.hpp`
+- `atomic`
+- `functional`
+- `future`
+- `map`
+- `memory`
+- `string`
+- `vector`
+
+## Source File: inference-engine.test.cpp
+
+### Functions
+- `RKLLMJS_TEST_MAIN()`
+- `TEST()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `../config/build-config.hpp`
+- `../testing/rkllmjs-test.hpp`
+- `inference-engine.hpp`
 
 
 ## API Reference
 
 ### Functions
-#### inference-engine.cpp
-
-##### `stop()`
-*No documentation available*
-
-##### `validateParams()`
-*No documentation available*
-
-##### `updateStats()`
-*No documentation available*
-
-##### `callback()`
-*No documentation available*
-
-##### `whitespaceRegex()`
-*No documentation available*
-
-##### `iss()`
-*No documentation available*
-
-##### `detokenize()`
-*No documentation available*
-
-##### `formatPrompt()`
-*No documentation available*
-
-##### `escapeSpecialTokens()`
-*No documentation available*
-
-##### `calculatePerplexity()`
-*No documentation available*
-
-##### `isValidPrompt()`
-*No documentation available*
-
-##### `isValidInferenceParams()`
-*No documentation available*
-
-#### inference-engine.hpp
-
-##### `isValid()`
-*No documentation available*
-
-##### `validate()`
-*No documentation available*
-
-##### `InferenceEngine()`
-*No documentation available*
-
-##### `generate()`
-*No documentation available*
-
-##### `setModelHandle()`
-*No documentation available*
-
-##### `getModelHandle()`
-*No documentation available*
-
-##### `generateStream()`
-*No documentation available*
-
-##### `pause()`
-*No documentation available*
-
-##### `resume()`
-*No documentation available*
-
-##### `stop()`
-*No documentation available*
-
-##### `isRunning()`
-*No documentation available*
-
-##### `getState()`
-*No documentation available*
-
-##### `setMaxConcurrentInferences()`
-*No documentation available*
-
-##### `setStreamBufferSize()`
-*No documentation available*
-
-##### `enableKVCache()`
-*No documentation available*
-
-##### `setDefaultParams()`
-*No documentation available*
-
-##### `getStats()`
-*No documentation available*
-
-##### `resetStats()`
-*No documentation available*
-
-##### `executeInference()`
-*No documentation available*
-
-##### `validateParams()`
-*No documentation available*
-
-##### `updateStats()`
-*No documentation available*
-
-##### `streamingWorker()`
-*No documentation available*
-
-##### `processBatchRequests()`
-*No documentation available*
-
-##### `preprocessPrompt()`
-*No documentation available*
-
-##### `shouldStop()`
-*No documentation available*
-
-##### `calculateTokensPerSecond()`
-*No documentation available*
-
-##### `sample()`
-*No documentation available*
-
-##### `getName()`
-*No documentation available*
-
-##### `detokenize()`
-*No documentation available*
-
-##### `formatPrompt()`
-*No documentation available*
-
-##### `escapeSpecialTokens()`
-*No documentation available*
-
-##### `calculatePerplexity()`
-*No documentation available*
-
-##### `isValidPrompt()`
-*No documentation available*
-
-##### `isValidInferenceParams()`
-*No documentation available*
-
-
+See source files below for detailed function information.
 
 ### Classes
-#### inference-engine.hpp
-
-##### `InferenceEngine`
-*No documentation available*
-
-##### `SamplingStrategy`
-*No documentation available*
-
-##### `GreedySampling`
-*No documentation available*
-
-##### `TopKSampling`
-*No documentation available*
-
-##### `TopPSampling`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-- InferenceParams InferenceResult BatchRequest BatchResult Stats 
-
+Data structures will be documented here.
 
 ### Enumerations
-- InferenceState 
-
+Enumerations will be documented here.
 
 ## Dependencies
-- ../../../libs/rkllm/include/rkllm.h
-- ../config/build-config.hpp
-- ../core/rkllm-manager.hpp
-- ../utils/error-handler.hpp
-- ../utils/type-converters.hpp
-- algorithm
-- atomic
-- chrono
-- functional
-- future
-- inference-engine.hpp
-- map
-- memory
-- numeric
-- random
-- regex
-- sstream
-- string
-- thread
-- vector
-
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -258,7 +152,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

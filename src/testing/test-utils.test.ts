@@ -4,13 +4,13 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { 
+import {
   areNativeBindingsAvailable,
   requireNativeBindings,
   getTestModelPath,
   isCompatibleHardware,
   PRODUCTION_TEST_CONFIG,
-  PRODUCTION_TEST_PROMPTS
+  PRODUCTION_TEST_PROMPTS,
 } from './test-utils.js';
 
 describe('Test Utilities', () => {
@@ -59,7 +59,7 @@ describe('Test Utilities', () => {
   test('should provide production test prompts', () => {
     assert.ok(Array.isArray(PRODUCTION_TEST_PROMPTS));
     assert.ok(PRODUCTION_TEST_PROMPTS.length > 0);
-    
+
     for (const prompt of PRODUCTION_TEST_PROMPTS) {
       assert.ok(typeof prompt === 'string');
       assert.ok(prompt.length > 0);

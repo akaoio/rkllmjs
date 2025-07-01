@@ -14,7 +14,7 @@ export function areNativeBindingsAvailable(): boolean {
   // TODO: Re-enable when N-API integration is complete
   // For now, skip all native binding tests
   return false;
-  
+
   // Original implementation (disabled):
   // try {
   //   require('../../build/Release/binding.node');
@@ -39,7 +39,7 @@ export function requireNativeBindings(testContext?: any): boolean {
     }
     return false;
   }
-  
+
   // Additional check: Model availability
   try {
     getTestModelPath();
@@ -64,14 +64,14 @@ export function getTestModelPath(): string {
   if (envModelPath && fs.existsSync(envModelPath)) {
     return envModelPath;
   }
-  
+
   // Auto-discover models in the models directory
   const modelsDir = './models';
   if (fs.existsSync(modelsDir)) {
     const findModelFiles = (dir: string): string[] => {
       const files: string[] = [];
       const items = fs.readdirSync(dir, { withFileTypes: true });
-      
+
       for (const item of items) {
         const fullPath = `${dir}/${item.name}`;
         if (item.isDirectory()) {
@@ -82,7 +82,7 @@ export function getTestModelPath(): string {
       }
       return files;
     };
-    
+
     const modelFiles = findModelFiles(modelsDir);
     if (modelFiles.length > 0) {
       // Use the first available model
@@ -91,16 +91,16 @@ export function getTestModelPath(): string {
       return modelPath;
     }
   }
-  
+
   // Fallback - throw error with helpful message
   throw new Error(
     `Test model not found!\n` +
-    `Tried:\n` +
-    `  1. Environment variable RKLLM_TEST_MODEL_PATH\n` +
-    `  2. Auto-discovery in ./models directory\n\n` +
-    `Solutions:\n` +
-    `  1. Set RKLLM_TEST_MODEL_PATH to point to a valid RKLLM model file\n` +
-    `  2. Download a model using: npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm`
+      `Tried:\n` +
+      `  1. Environment variable RKLLM_TEST_MODEL_PATH\n` +
+      `  2. Auto-discovery in ./models directory\n\n` +
+      `Solutions:\n` +
+      `  1. Set RKLLM_TEST_MODEL_PATH to point to a valid RKLLM model file\n` +
+      `  2. Download a model using: npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm`
   );
 }
 
@@ -111,18 +111,18 @@ export function isCompatibleHardware(): boolean {
   // Check if we're on ARM64 Linux (RK3588)
   const arch = os.arch();
   const platform = os.platform();
-  
+
   if (platform !== 'linux' || arch !== 'arm64') {
     console.log(`⚠️  Not on compatible hardware: ${platform}/${arch} (expected linux/arm64)`);
     return false;
   }
-  
+
   // Check if NPU is available (basic check)
   if (!fs.existsSync('/dev/dri') && !fs.existsSync('/sys/class/devfreq')) {
     console.log('⚠️  NPU device nodes not found - may not be on RK3588');
     return false;
   }
-  
+
   return true;
 }
 
@@ -136,13 +136,13 @@ export function canRunProductionTests(): boolean {
       console.log('❌ Native bindings not available');
       return false;
     }
-    
+
     // Check 2: Compatible hardware
     if (!isCompatibleHardware()) {
       console.log('❌ Not on compatible hardware');
       return false;
     }
-    
+
     // Check 3: Test model available
     try {
       const modelPath = getTestModelPath();
@@ -178,27 +178,27 @@ export function skipIfRequirementsNotMet(testName: string): boolean {
  * Tuned to work with NPU memory constraints
  */
 export const PRODUCTION_TEST_CONFIG = {
-  maxContextLen: 256,     // Reduced from 512 to minimize memory usage
-  maxNewTokens: 32,       // Reduced from 50 to minimize memory usage  
-  topK: 20,              // Reduced from 40 to minimize computation
+  maxContextLen: 256, // Reduced from 512 to minimize memory usage
+  maxNewTokens: 32, // Reduced from 50 to minimize memory usage
+  topK: 20, // Reduced from 40 to minimize computation
   topP: 0.9,
   temperature: 0.7,
   repeatPenalty: 1.1,
-  cpuMask: 0x03,         // Use only CPUs 0-1 to reduce memory pressure
-  enabledCpusNum: 2,     // Limit to 2 CPU cores
-  nBatch: 1,             // Use batch size 1 to minimize memory
+  cpuMask: 0x03, // Use only CPUs 0-1 to reduce memory pressure
+  enabledCpusNum: 2, // Limit to 2 CPU cores
+  nBatch: 1, // Use batch size 1 to minimize memory
   isAsync: false,
   enableProfiler: true,
-  
+
   // Extended parameters for memory optimization
   extendParam: {
     baseDomainId: 0,
-    embedFlash: true,    // Use flash memory for embeddings to save RAM
-    enabledCpusNum: 2,   // Limit CPU cores
+    embedFlash: true, // Use flash memory for embeddings to save RAM
+    enabledCpusNum: 2, // Limit CPU cores
     enabledCpusMask: 0x03, // Binary: 11 (use CPU 0,1)
-    nBatch: 1,           // Minimize batch size
+    nBatch: 1, // Minimize batch size
     useCrossAttn: false,
-  }
+  },
 };
 
 /**
@@ -206,8 +206,8 @@ export const PRODUCTION_TEST_CONFIG = {
  * Reduces memory usage to avoid allocation failures
  */
 export const MEMORY_OPTIMIZED_CONFIG = {
-  maxContextLen: 512,    // Reduced from 2048
-  maxNewTokens: 128,     // Reduced from 512
+  maxContextLen: 512, // Reduced from 2048
+  maxNewTokens: 128, // Reduced from 512
   temperature: 0.7,
   topP: 0.9,
   topK: 40,
@@ -223,11 +223,11 @@ export const MEMORY_OPTIMIZED_CONFIG = {
   extendParam: {
     baseDomainId: 0,
     embedFlash: false,
-    enabledCpusNum: 3,      // Use fewer CPUs to reduce memory
-    enabledCpusMask: 0x07,  // First 3 CPUs only
-    nBatch: 1,              // Minimal batch size
+    enabledCpusNum: 3, // Use fewer CPUs to reduce memory
+    enabledCpusMask: 0x07, // First 3 CPUs only
+    nBatch: 1, // Minimal batch size
     useCrossAttn: false,
-  }
+  },
 };
 
 /**
@@ -238,9 +238,9 @@ export async function forceMemoryCleanup(): Promise<void> {
   if (global.gc) {
     global.gc();
   }
-  
+
   // Allow NPU memory to be released
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise((resolve) => setTimeout(resolve, 300));
 }
 
 /**

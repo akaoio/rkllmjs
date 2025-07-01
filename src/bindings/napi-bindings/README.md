@@ -1,122 +1,97 @@
 # napi-bindings
 
 ## Purpose
-Node.js N-API binding layer for RKLLM functionality exposure
+N-API bindings for Node.js integration with C++ modules
 
 ## Overview
-Provides stable and efficient Node.js bindings using N-API for RKLLM operations. Handles JavaScript to C++ bridging, async operations, memory safety, and error propagation between runtime environments.
+Provides C++ implementation with 2 source files and 1 header files. Bridge between Node.js and C++ modules enabling JavaScript access to NPU functionality.
 
 ## Architecture
-- **rkllm-napi.cpp**: JSRKLLMManager
-- **rkllm-napi.hpp**: JSRKLLMManager
-
+Module architecture information will be added here.
 
 ## Source Files
-- `rkllm-napi.cpp` (cpp)
-- `rkllm-napi.hpp` (hpp)
+## Source File: rkllm-napi.cpp
+
+### Functions
+- `JSRKLLMManager::()`
+- `cleanup()`
+- `getMemoryUsage()`
+- `isInitialized()`
+- `isNPUAvailable()`
+- `make_unique()`
+- `napi_status()`
+- `string()`
+- `void()`
+
+### Classes
+- `JSRKLLMManager`
+
+### Dependencies
+- `../core/rkllm-manager.hpp`
+- `../inference/inference-engine.hpp`
+- `iostream`
+- `rkllm-napi.hpp`
+
+## Source File: rkllm-napi.hpp
+
+### Functions
+- `void()`
+
+### Classes
+- `JSRKLLMManager`
+
+### Dependencies
+- `../config/build-config.hpp`
+- `memory`
+- `string`
+
+## Source File: rkllm-napi.test.cpp
+
+### Functions
+- `int()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `iostream`
+- `rkllm-napi.hpp`
 
 
 ## API Reference
 
 ### Functions
-#### rkllm-napi.cpp
-
-##### `engine()`
-*No documentation available*
-
-##### `test_napi_bindings()`
-*No documentation available*
-
-##### `InitRKLLMBindings()`
-*No documentation available*
-
-##### `napi_get_undefined()`
-*No documentation available*
-
-#### rkllm-napi.hpp
-
-##### `InitRKLLMBindings()`
-*No documentation available*
-
-##### `JSRKLLMManager()`
-*No documentation available*
-
-##### `initializeModel()`
-*No documentation available*
-
-##### `generateText()`
-*No documentation available*
-
-##### `cleanup()`
-*No documentation available*
-
-##### `isInitialized()`
-*No documentation available*
-
-##### `setParameter()`
-*No documentation available*
-
-##### `getParameter()`
-*No documentation available*
-
-##### `getMemoryUsage()`
-*No documentation available*
-
-##### `isNPUAvailable()`
-*No documentation available*
-
-##### `test_napi_bindings()`
-*No documentation available*
-
-
+See source files below for detailed function information.
 
 ### Classes
-#### rkllm-napi.cpp
-
-##### `JSRKLLMManager`
-*No documentation available*
-
-#### rkllm-napi.hpp
-
-##### `JSRKLLMManager`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-*None*
+Data structures will be documented here.
 
 ### Enumerations
-*None*
+Enumerations will be documented here.
 
 ## Dependencies
-- ../config/build-config.hpp
-- ../core/rkllm-manager.hpp
-- ../inference/inference-engine.hpp
-- iostream
-- memory
-- node_api.h
-- rkllm-napi.hpp
-- string
-
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -145,7 +120,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

@@ -10,7 +10,7 @@
 
 /**
  * Unified Testing Module for RKLLMJS
- * 
+ *
  * Provides a comprehensive testing infrastructure with:
  * - Structured logging for test debugging and audit
  * - Production utilities for real hardware testing
@@ -20,7 +20,7 @@
 
 // Re-export all testing functionality from a single entry point
 export { TestLogger, type TestLogEntry } from './test-logger.js';
-export { 
+export {
   areNativeBindingsAvailable,
   requireNativeBindings,
   getTestModelPath,
@@ -30,7 +30,7 @@ export {
   PRODUCTION_TEST_CONFIG,
   PRODUCTION_TEST_PROMPTS,
   MEMORY_OPTIMIZED_CONFIG,
-  forceMemoryCleanup
+  forceMemoryCleanup,
 } from './test-utils.js';
 
 // Import for factory function

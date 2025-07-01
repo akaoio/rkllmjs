@@ -91,7 +91,7 @@ describe('RKLLMModelManager', () => {
         // Try to use real model first
         const realModelPath = getTestModelPath();
         logger.info('Using real model for test', { modelPath: realModelPath });
-        
+
         // Use real model
         const models = await manager.listModels();
         logger.debug('Models found with real model', {
@@ -111,11 +111,11 @@ describe('RKLLMModelManager', () => {
           const testRepo = 'test/repo';
           const testModelDir = path.join(TEST_MODELS_DIR, testRepo);
           fs.mkdirSync(testModelDir, { recursive: true });
-          
+
           // Copy or link the real model
           const realModelName = path.basename(realModelPath);
           const testModelPath = path.join(testModelDir, realModelName);
-          
+
           try {
             // Try to create a hard link to save space
             fs.linkSync(realModelPath, testModelPath);
@@ -142,7 +142,9 @@ describe('RKLLMModelManager', () => {
         // If no real model available, skip this test
         if (error instanceof Error && error.message.includes('Test model not found')) {
           logger.info('Skipping test - no real model available');
-          logger.info('To enable this test, download a model first: npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm');
+          logger.info(
+            'To enable this test, download a model first: npm run cli pull dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1 Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm'
+          );
         } else {
           throw error;
         }
