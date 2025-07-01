@@ -7,7 +7,8 @@
 #include <functional>
 #include <vector>
 
-#ifdef RKLLM_COMPILE_MODE_REAL
+// Only include N-API headers when building N-API bindings, not standalone tests
+#if defined(RKLLM_COMPILE_MODE_REAL) && defined(RKLLM_NAPI_BINDINGS)
     #include <napi.h>
 #endif
 
@@ -37,7 +38,7 @@ class TypeConversionException : public RKLLMException {
 public:
     explicit TypeConversionException(const std::string& message) : RKLLMException(message) {}
     TypeConversionException(const std::string& expected, const std::string& actual);
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if defined(RKLLM_COMPILE_MODE_REAL) && defined(RKLLM_NAPI_BINDINGS)
     TypeConversionException(const std::string& expected, napi_valuetype actual);
 #endif
 };
@@ -88,7 +89,7 @@ struct ErrorInfo {
     std::string location; // File:line info
 };
 
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if defined(RKLLM_COMPILE_MODE_REAL) && defined(RKLLM_NAPI_BINDINGS)
 // Utility function declarations
 std::string getTypeString(napi_valuetype type);
 
@@ -129,7 +130,7 @@ void validateObjectParameter(Napi::Env env, const Napi::Value& value, const std:
 void validateArrayParameter(Napi::Env env, const Napi::Value& value, const std::string& paramName);
 
 #else
-// SANDBOX mode: Error handling functions without N-API
+// Standard C++ mode: Error handling functions without N-API
 
 // Error logging (SANDBOX mode)
 void logError(const ErrorInfo& errorInfo);

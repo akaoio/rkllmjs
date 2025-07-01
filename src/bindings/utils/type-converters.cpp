@@ -220,7 +220,8 @@ bool validateDouble(double value) {
 }
 
 #else
-// REAL mode: Implement N-API conversion functions
+// REAL mode with N-API bindings: Implement N-API conversion functions
+#if defined(RKLLM_COMPILE_MODE_REAL) && defined(RKLLM_NAPI_BINDINGS)
 
 std::string jsStringToCppString(Napi::Env env, const Napi::Value& jsValue) {
     if (!jsValue.IsString()) {
@@ -330,7 +331,12 @@ void validateNotNull(Napi::Env env, const Napi::Value& value, const std::string&
     }
 }
 
-#endif
+#else
+// REAL mode without N-API bindings: Provide stub implementations
+// These functions should not be called in this mode
+
+#endif // RKLLM_NAPI_BINDINGS
+#endif // RKLLM_COMPILE_MODE_SANDBOX
 
 } // namespace utils
 } // namespace rkllmjs

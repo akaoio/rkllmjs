@@ -22,13 +22,13 @@ endif
 
 # Build mode configuration - now supports RKLLM_MODE environment variable
 ifdef RKLLM_COMPILE_MODE_REAL
-    CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL -O2
+    CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL -DRKLLM_NAPI_BINDINGS -O2
     INCLUDES += -I../../../libs/rkllm/include
     LDFLAGS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
     LDFLAGS += -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
 else ifdef REAL_BUILD
     # Legacy support for REAL_BUILD
-    CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL -O2
+    CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL -DRKLLM_NAPI_BINDINGS -O2
     INCLUDES += -I../../../libs/rkllm/include
     LDFLAGS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
     LDFLAGS += -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'

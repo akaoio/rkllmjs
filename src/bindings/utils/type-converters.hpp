@@ -12,7 +12,8 @@
 
 #include "../config/build-config.hpp"
 
-#ifdef RKLLM_COMPILE_MODE_REAL
+// Only include N-API headers when building N-API bindings, not standalone tests
+#if defined(RKLLM_COMPILE_MODE_REAL) && defined(RKLLM_NAPI_BINDINGS)
     #include <napi.h>
 #endif
 
@@ -49,7 +50,7 @@ private:
  * JavaScript types (via N-API) and C++ standard library types.
  */
 
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if defined(RKLLM_COMPILE_MODE_REAL) && defined(RKLLM_NAPI_BINDINGS)
 // Full mode: Include N-API type conversions
 
 // String conversions
@@ -135,7 +136,7 @@ std::string bytesToString(const std::vector<uint8_t>& bytes);
 std::string bytesToHex(const std::vector<uint8_t>& bytes);
 std::vector<uint8_t> hexToBytes(const std::string& hex);
 
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if defined(RKLLM_COMPILE_MODE_REAL) && defined(RKLLM_NAPI_BINDINGS)
 // Template implementations for REAL mode
 
 template<typename T>
