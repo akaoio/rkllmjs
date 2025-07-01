@@ -1,0 +1,15 @@
+{
+  "tasks": {
+    "cli": "deno run --allow-all src/cli-runner/cli-runner.ts",
+    "test": "deno test --allow-all",
+    "dev": "deno run --allow-all --watch src/cli-runner/cli-runner.ts"
+  },
+  "imports": {
+    "@/": "./src/"
+  },
+  "compilerOptions": {
+    "allowJs": true,
+    "lib": ["deno.window"],
+    "strict": true
+  }
+}
