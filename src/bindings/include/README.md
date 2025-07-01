@@ -1,224 +1,195 @@
-# config
+# include
 
 ## Purpose
-Configuration management and validation for RKLLM components
+Core RKLLM runtime management and model lifecycle operations
 
 ## Overview
-Provides comprehensive configuration loading, validation, and management for RKLLM runtime settings. Handles JSON parsing, environment variables, and configuration schema validation with runtime safety checks.
+Provides thread-safe singleton that manages RKLLM model instances, resource allocation, configuration validation, and cleanup operations. This module handles the fundamental infrastructure needed for RKLLM model management including NPU resource allocation and monitoring.
 
 ## Architecture
-- **config-manager.hpp**: ConfigManager
-- **json-parser.hpp**: JsonValue, JsonParser
+- **readme-generator.hpp**: ReadmeGenerator
+- **rkllm-manager.hpp**: RKLLMManager
 
 
 ## Source Files
-- `build-config.hpp` (hpp)
-- `config-manager.cpp` (cpp)
-- `config-manager.hpp` (hpp)
-- `include-manager.hpp` (hpp)
-- `json-parser.cpp` (cpp)
-- `json-parser.hpp` (hpp)
+- `readme-generator.hpp` (hpp)
+- `rkllm-manager.hpp` (hpp)
 
 
 ## API Reference
 
 ### Functions
-#### build-config.hpp
+#### readme-generator.hpp
 
-##### `to_lower()`
-*No documentation available*
-
-##### `detect_rk3588()`
-*No documentation available*
-
-##### `detect_arm64()`
-*No documentation available*
-
-##### `detect_real_mode()`
-*No documentation available*
-
-#### config-manager.cpp
-
-##### `file()`
-*No documentation available*
-
-##### `parseModelsFromJson()`
-*No documentation available*
-
-##### `parseHardwareProfilesFromJson()`
+##### `ReadmeGenerator()`
 *No documentation available*
 
 ##### `loadConfig()`
 *No documentation available*
 
-#### config-manager.hpp
+##### `setConfig()`
+*No documentation available*
+
+##### `getConfig()`
+*No documentation available*
+
+##### `analyzeSourceFile()`
+*No documentation available*
+
+##### `analyzeModule()`
+*No documentation available*
+
+##### `loadTemplate()`
+*No documentation available*
+
+##### `processTemplate()`
+*No documentation available*
+
+##### `generateReadme()`
+*No documentation available*
+
+##### `detectFileType()`
+*No documentation available*
+
+##### `isSourceFile()`
+*No documentation available*
+
+##### `inferPurpose()`
+*No documentation available*
+
+##### `validateTemplate()`
+*No documentation available*
+
+##### `validateModule()`
+*No documentation available*
+
+##### `parseCppFile()`
+*No documentation available*
+
+##### `parseTypeScriptFile()`
+*No documentation available*
+
+##### `extractFunctions()`
+*No documentation available*
+
+##### `extractClasses()`
+*No documentation available*
+
+##### `extractComments()`
+*No documentation available*
+
+##### `replaceTemplateVariables()`
+*No documentation available*
+
+##### `readFile()`
+*No documentation available*
+
+##### `writeFile()`
+*No documentation available*
+
+##### `fileExists()`
+*No documentation available*
+
+##### `getFileName()`
+*No documentation available*
+
+##### `getDirectory()`
+*No documentation available*
+
+#### rkllm-manager.hpp
 
 ##### `isValid()`
 *No documentation available*
 
-##### `toString()`
+##### `getValidationError()`
 *No documentation available*
 
-##### `canRunModel()`
+##### `initialize()`
 *No documentation available*
 
-##### `loadConfig()`
+##### `cleanup()`
 *No documentation available*
 
-##### `getModel()`
+##### `isInitialized()`
 *No documentation available*
 
-##### `getHardwareProfile()`
+##### `createModel()`
 *No documentation available*
 
-##### `selectBestModel()`
+##### `destroyModel()`
 *No documentation available*
 
-##### `resolvePath()`
+##### `getModelConfig()`
 *No documentation available*
 
-##### `modelExists()`
+##### `getResourceStats()`
 *No documentation available*
 
-##### `getProjectRoot()`
+##### `hasAvailableResources()`
 *No documentation available*
 
-##### `extractJsonValue()`
+##### `validateConfig()`
 *No documentation available*
 
-##### `parseModelsFromJson()`
+##### `createDefaultConfig()`
 *No documentation available*
 
-##### `parseHardwareProfilesFromJson()`
+##### `getDefaultConfig()`
 *No documentation available*
 
-#### json-parser.cpp
-
-##### `setObject()`
+##### `getOptimizedConfig()`
 *No documentation available*
 
-##### `skipWhitespace()`
+##### `getActiveModelCount()`
 *No documentation available*
 
-##### `parseValue()`
+##### `getErrorMessage()`
 *No documentation available*
 
-##### `JsonValue()`
+##### `generateModelId()`
 *No documentation available*
 
-##### `parseObject()`
+##### `allocateResources()`
 *No documentation available*
 
-##### `parseString()`
+##### `deallocateResources()`
 *No documentation available*
 
-##### `parseNumber()`
-*No documentation available*
-
-#### json-parser.hpp
-
-##### `getType()`
-*No documentation available*
-
-##### `asString()`
-*No documentation available*
-
-##### `asNumber()`
-*No documentation available*
-
-##### `asInt()`
-*No documentation available*
-
-##### `asBool()`
-*No documentation available*
-
-##### `isNull()`
-*No documentation available*
-
-##### `isString()`
-*No documentation available*
-
-##### `isNumber()`
-*No documentation available*
-
-##### `isBool()`
-*No documentation available*
-
-##### `isObject()`
-*No documentation available*
-
-##### `hasKey()`
-*No documentation available*
-
-##### `setObject()`
-*No documentation available*
-
-##### `set()`
-*No documentation available*
-
-##### `parse()`
-*No documentation available*
-
-##### `stringify()`
-*No documentation available*
-
-##### `parseValue()`
-*No documentation available*
-
-##### `parseObject()`
-*No documentation available*
-
-##### `parseString()`
-*No documentation available*
-
-##### `parseNumber()`
-*No documentation available*
-
-##### `skipWhitespace()`
+##### `updateResourceStats()`
 *No documentation available*
 
 
 
 ### Classes
-#### config-manager.hpp
+#### readme-generator.hpp
 
-##### `ConfigManager`
+##### `ReadmeGenerator`
 *No documentation available*
 
-#### json-parser.hpp
+#### rkllm-manager.hpp
 
-##### `JsonValue`
-*No documentation available*
-
-##### `JsonParser`
+##### `RKLLMManager`
 *No documentation available*
 
 
 
 ### Data Structures
-- stat stat 
-- ModelConfig HardwareProfile 
+- ReadmeConfig SourceInfo ModuleInfo 
+- RKLLMModelConfig ResourceStats ModelInstance 
 
 
 ### Enumerations
-- Type 
+- ManagerResult 
 
 
 ## Dependencies
-- algorithm
-- build-config.hpp
-- cctype
-- config-manager.hpp
-- cstdio
-- cstdlib
-- fstream
-- iostream
-- json-parser.hpp
+- ../../../libs/rkllm/include/rkllm.h
+- ../config/build-config.hpp
 - map
-- sstream
+- memory
+- mutex
 - string
-- sys/stat.h
-- unistd.h
+- unordered_map
 - vector
 
 

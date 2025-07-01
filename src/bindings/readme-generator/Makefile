@@ -93,7 +93,7 @@ $(MODULE_NAME)-cli.test.o: $(MODULE_NAME)-cli.test.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Run tests
-test: $(TEST_TARGET) $(CLI_TEST_TARGET)
+test: $(TEST_TARGET) $(CLI_TARGET) $(CLI_TEST_TARGET)
 	@echo "Running tests for $(MODULE_NAME)..."
 	./$(TEST_TARGET)
 	@echo "Running CLI tests for $(MODULE_NAME)..."
