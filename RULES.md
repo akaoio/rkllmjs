@@ -123,15 +123,9 @@ src/bindings/
 - ✅ **Dynamic configuration** - Store paths in `configs/` directory
 - ✅ **Runtime resolution** - Resolve paths at runtime, not compile time
 
-### 📂 Folder Organization Limits
+### 📂 Folder Organization Principles
 
-**CRITICAL**: Strict limits to prevent management complexity and debugging issues.
-
-#### Directory Size Limits
-- ✅ **Root level maximum**: 15 files/directories (excluding .git, node_modules)
-- ✅ **Source modules maximum**: 8 subdirectories per `src/` module folder  
-- ✅ **C++ bindings maximum**: 8 operational modules in `src/bindings/`
-- ✅ **Empty directories prohibited**: All directories MUST contain implementation files (.cpp/.ts), not just README.md
+**PRINCIPLE**: Organize files logically for maintainability and clear separation of concerns.
 
 #### Implementation Requirements  
 - ✅ **Every directory with README.md MUST have**: At least 1 source file (.cpp/.ts) AND 1 test file

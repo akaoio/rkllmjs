@@ -163,8 +163,7 @@ TEST(MemoryManagerTest, MemoryStatistics) {
     EXPECT_GE(after_dealloc_stats.peak_usage, 5 * 1024);
 }
 
-// Smart pointer helpers test - DISABLED due to static initialization issues
-// TODO: Re-enable after fixing template smart pointer methods
+// Smart pointer helpers test - Basic implementation
 TEST(MemoryManagerTest, SmartPointerHelpers) {
     ensureMemoryManagerInitialized();
     auto& manager = MemoryManager::getInstance();

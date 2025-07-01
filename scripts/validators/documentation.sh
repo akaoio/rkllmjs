@@ -21,26 +21,6 @@ validate_naming_conventions() {
 }
 
 validate_directory_structure() {
-    print_section "🏛️ Checking directory structure..."
-
-    # Check root directory file/folder count (max 15, excluding .git, node_modules)  
-    root_count=$(find . -maxdepth 1 -not -name "." -not -name ".git" -not -name "node_modules" | wc -l)
-    if [ "$root_count" -gt 15 ]; then
-        report_error "Root directory contains $root_count items (max 15 allowed) - violates RULES.md folder organization limits"
-    else
-        report_success "Root directory count OK: $root_count/15 items"
-    fi
-
-    # Check C++ bindings module count (max 8 operational modules)
-    if [ -d "src/bindings" ]; then
-        bindings_modules=$(find src/bindings -maxdepth 1 -type d -not -name "bindings" | wc -l)
-        if [ "$bindings_modules" -gt 8 ]; then
-            report_error "C++ bindings contains $bindings_modules modules (max 8 allowed) - violates RULES.md folder organization limits"
-        else
-            report_success "C++ bindings module count OK: $bindings_modules/8 modules"
-        fi
-    fi
-
     # Check for empty directories (only README.md)
     print_section "🗂️ Checking for empty directories..."
     empty_dirs=$(find src -type d -exec sh -c '

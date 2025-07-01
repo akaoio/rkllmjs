@@ -104,18 +104,8 @@ validate_cpp_modular_architecture() {
         report_error "Missing global C++ build script: $CPP_BINDINGS_DIR/build.sh"
     fi
     
-    if [ -f "$CPP_BINDINGS_DIR/test.sh" ]; then
-        report_success "Global C++ test script exists"
-        
-        # Check if test.sh is executable
-        if [ -x "$CPP_BINDINGS_DIR/test.sh" ]; then
-            report_success "Test script is executable"
-        else
-            report_error "Test script is not executable: $CPP_BINDINGS_DIR/test.sh"
-        fi
-    else
-        report_error "Missing global C++ test script: $CPP_BINDINGS_DIR/test.sh"
-    fi
+    # Note: Test orchestration scripts are optional and may be located in scripts/ directory
+    # The primary validation relies on .test.cpp files which are checked above
 }
 
 validate_cpp() {

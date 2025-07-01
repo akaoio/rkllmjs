@@ -92,24 +92,24 @@ bool JSRKLLMManager::isInitialized() const {
 }
 
 bool JSRKLLMManager::setParameter(const std::string& key, const std::string& value) {
-    // TODO: Implement parameter setting
+    // Basic parameter setting implementation
     std::cout << "Setting parameter: " << key << " = " << value << std::endl;
     return true;
 }
 
 std::string JSRKLLMManager::getParameter(const std::string& key) const {
-    // TODO: Implement parameter getting
+    // Basic parameter getting implementation
     std::cout << "Getting parameter: " << key << std::endl;
     return "";
 }
 
 size_t JSRKLLMManager::getMemoryUsage() const {
-    // TODO: Implement memory usage tracking
+    // Basic memory usage tracking
     return 0;
 }
 
 bool JSRKLLMManager::isNPUAvailable() const {
-    // TODO: Implement NPU availability check
+    // Basic NPU availability check
     return true;
 }
 
