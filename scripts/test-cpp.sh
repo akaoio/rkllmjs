@@ -33,6 +33,9 @@ for module_dir in "$CPP_BINDINGS_DIR"/*; do
         
         MODULES_FOUND=$((MODULES_FOUND + 1))
         
+        # Always clean first to ensure consistent build flags
+        (cd "$module_dir" && make clean >/dev/null 2>&1)
+
         # Run module tests
         if (cd "$module_dir" && make test 2>/dev/null); then
             echo -e "${GREEN}✅ $module_name: PASSED${NC}"

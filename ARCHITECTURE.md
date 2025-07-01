@@ -260,7 +260,7 @@ debug: # Debug build with symbols
 - **Features**: No N-API dependencies, standalone compilation
 - **Use Case**: Module development, CI/CD testing
 
-#### FULL Mode  
+#### REAL Mode
 - **Purpose**: Production builds with Node.js integration
 - **Features**: Complete N-API integration, all dependencies
 - **Use Case**: Final builds, runtime execution
