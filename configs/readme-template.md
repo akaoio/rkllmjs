@@ -3,21 +3,49 @@
 ## Purpose
 {{PURPOSE}}
 
+## Overview
+{{DESCRIPTION}}
+
+## Architecture
+{{ARCHITECTURE}}
+
 ## Source Files
 {{SOURCE_FILES}}
 
-## Functions
-{{FUNCTIONS}}
+## API Reference
 
-## Classes
-{{CLASSES}}
+### Functions
+{{FUNCTIONS_DETAILED}}
+
+### Classes
+{{CLASSES_DETAILED}}
+
+### Data Structures
+{{STRUCTS}}
+
+### Enumerations
+{{ENUMS}}
 
 ## Dependencies
-- Standard C++ libraries
-- RKLLM runtime
+{{DEPENDENCIES}}
+
+## Usage Examples
+{{EXAMPLES}}
+
+## Error Handling
+{{ERROR_HANDLING}}
+
+## Performance Notes
+{{PERFORMANCE_NOTES}}
+
+## Thread Safety
+{{THREAD_SAFETY}}
+
+## Memory Management
+{{MEMORY_MANAGEMENT}}
 
 ## Testing
-All components have corresponding unit tests.
+{{TESTING_INFO}}
 
 ### Running Tests
 ```bash
@@ -45,6 +73,8 @@ make clean
 make install
 ```
 
----
+## Troubleshooting
+{{TROUBLESHOOTING}}
 
+---
 *Generated automatically by RKLLMJS README Generator*

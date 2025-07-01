@@ -1,3 +1,13 @@
+/**
+ * @module memory
+ * @purpose Advanced memory management and optimization for RKLLM model operations
+ * @description Provides sophisticated memory allocation strategies, caching mechanisms,
+ *              and performance optimization for NPU operations. Handles memory pools,
+ *              garbage collection, and resource monitoring for efficient RKLLM execution.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
 #pragma once
 
 #include "../config/build-config.hpp"

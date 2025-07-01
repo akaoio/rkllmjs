@@ -13,9 +13,14 @@
   "generator": {
     "templatePath": "configs/readme-template.md",
     "overwriteExisting": false,
-    "verbose": false,
+    "verbose": true,
     "includeGeneratedDate": true,
-    "includeSourceStats": true
+    "includeSourceStats": true,
+    "extractDocComments": true,
+    "analyzeComplexity": true,
+    "generateExamples": true,
+    "includePerformanceNotes": true,
+    "analyzeThreadSafety": true
   },
   
   "parsing": {
@@ -24,21 +29,52 @@
     "extractDependencies": true,
     "extractFunctions": true,
     "extractClasses": true,
-    "extractExports": true
+    "extractExports": true,
+    "extractIncludes": true,
+    "extractNamespaces": true,
+    "extractEnums": true,
+    "extractStructs": true,
+    "extractTemplates": true,
+    "analyzeParameters": true,
+    "analyzeReturnTypes": true,
+    "extractDocstrings": true,
+    "parseJSDoc": true,
+    "analyzeFunctionComplexity": true
+  },
+  
+  "content": {
+    "inferPurpose": true,
+    "generateDescription": true,
+    "analyzeArchitecture": true,
+    "extractFeatures": true,
+    "generateUsageExamples": true,
+    "analyzeErrorHandling": true,
+    "documentPerformance": true,
+    "analyzeThreadSafety": true,
+    "documentMemoryManagement": true,
+    "includeTestingInfo": true,
+    "documentConfiguration": true,
+    "includeTroubleshooting": true,
+    "generateContributingGuidelines": true
   },
   
   "validation": {
     "requirePurpose": true,
     "requireMinimumFunctions": 1,
     "validateTemplateVariables": true,
-    "checkFileExists": true
+    "checkFileExists": true,
+    "requireDescription": true,
+    "requireUsageExamples": true,
+    "validateDocumentation": true
   },
   
   "output": {
     "encoding": "utf-8",
     "lineEnding": "lf",
-    "includeTableOfContents": false,
-    "markdownCompliance": "github-flavored"
+    "includeTableOfContents": true,
+    "markdownCompliance": "github-flavored",
+    "codeHighlighting": true,
+    "includeMetadata": true
   },
   
   "integration": {

@@ -76,6 +76,7 @@ public:
     std::vector<std::string> findSourceFiles(const std::string& directory);
     std::string detectFileType(const std::string& filePath);
     bool isSourceFile(const std::string& filePath);
+    std::string inferPurpose(const std::string& moduleName, const std::vector<SourceInfo>& sourceFiles);
     
     // Validation
     bool validateTemplate(const std::string& templateContent);

@@ -1,193 +1,88 @@
-# Model Manager
+# model-manager
 
 ## Purpose
-Core component for downloading, managing, and organizing RKLLM models from HuggingFace repositories with multi-runtime support.
+RKLLM model downloading, caching, and lifecycle management
+
+## Overview
+Comprehensive model management system with automatic downloading, intelligent caching, version control, and integrity validation. Supports multiple model sources and runtime-agnostic deployment.
 
 ## Architecture
+- **model-manager.ts**: RKLLMModelManager
 
-### Model Management Pipeline
-```
-HuggingFace Repository → Download → Local Storage → Model Registry
-       ↓                    ↓            ↓              ↓
-   Repository API    File Download    File System    Model Index
-```
 
-### Components
-- **Download Engine**: Fetch models and metadata from HuggingFace
-- **Storage Manager**: Organize files in structured directory layout
-- **Model Registry**: Track downloaded models with metadata
-- **Runtime Adapter**: Work consistently across Node.js, Bun, Deno
+## Source Files
+- `model-manager.ts` (ts)
 
-## Core Operations
 
-### Download Models (`downloadModel`)
-Downloads RKLLM model file plus essential technical files:
+## API Reference
 
-```typescript
-// Standard model (recommended)
-await manager.downloadModel(
-  'dulimov/Qwen2.5-VL-7B-Instruct-rk3588-1.2.1',
-  'Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm'
-);
+### Functions
 
-// Alternative models
-await manager.downloadModel(
-  'limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4',
-  'Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm'
-);
-```
 
-**Downloaded Files:**
-- **Primary**: `.rkllm` model file (main inference model)
-- **Technical**: `config.json`, `generation_config.json`, `meta.json`
-- **Tokenization**: `tokenizer_config.json`, `tokenizer.json`
+### Classes
+#### model-manager.ts
 
-### List Models (`listModels`)
-Scans local filesystem and returns model inventory:
+##### `RKLLMModelManager`
+*No documentation available*
 
-```typescript
-const models: ModelInfo[] = await manager.listModels();
-// Returns array of ModelInfo with path, size, dates, etc.
-```
 
-### Model Operations
-```typescript
-// Get specific model by name
-const model = await manager.getModel('Qwen2.5-0.5B-Instruct');
 
-// Remove model and all associated files  
-await manager.removeModel('TinyLlama');
+### Data Structures
+*None*
 
-// Clear all downloaded models
-await manager.cleanModels();
-```
-
-## Storage Architecture
-
-### Directory Structure
-```
-models/
-├── dulimov/
-│   └── Qwen2.5-VL-7B-Instruct-rk3588-1.2.1/
-│       ├── Qwen2.5-VL-7B-Instruct-rk3588-w8a8-opt-1-hybrid-ratio-0.5.rkllm
-│       ├── config.json
-│       ├── generation_config.json
-│       ├── meta.json
-│       ├── tokenizer_config.json
-│       └── tokenizer.json
-├── limcheekin/
-│   └── Qwen2.5-0.5B-Instruct-rk3588-1.1.4/
-│       ├── Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm
-│       ├── config.json
-│       ├── generation_config.json
-│       ├── meta.json
-│       ├── tokenizer_config.json
-│       └── tokenizer.json
-└── punchnox/
-    └── Tinnyllama-1.1B-rk3588-rkllm-1.1.4/
-        ├── TinyLlama-1.1B-Chat-v1.0-rk3588-w8a8-opt-0-hybrid-ratio-0.5.rkllm
-        └── [technical files...]
-```
-
-### Storage Benefits
-- **Organized**: Repository-based directory structure
-- **Complete**: Model + all technical files together
-- **Discoverable**: Easy to locate models by repository
-- **Portable**: Standard directory layout across systems
-
-## Multi-Runtime Support
-
-### Runtime Adaptation
-```typescript
-// Automatic runtime detection and adaptation
-async function initializeModules() {
-  const detector = RuntimeDetector.getInstance();
-  
-  fs = await detector.getFileSystem();
-  path = await detector.getPath();
-  
-  // Load configuration based on runtime
-  const runtime = detector.detect();
-  if (runtime.type === 'node' || runtime.type === 'bun') {
-    // Use ES modules import for Node.js/Bun
-  } else if (runtime.type === 'deno') {
-    // Use Deno APIs
-  }
-}
-```
-
-### File System Operations
-Runtime-agnostic file operations:
-- **Node.js**: `fs.promises` APIs
-- **Bun**: Native `Bun.write()` and `fs` compatibility
-- **Deno**: `Deno.readFile()` and `Deno.writeFile()`
-
-## Configuration Integration
-
-### Model Configuration
-Loads repository suggestions and examples from `configs/models.json`:
-
-```typescript
-// Example repositories for CLI help
-const repositories = config.REPOSITORY_SUGGESTIONS;
-const examples = config.EXAMPLE_MODEL_FILES;
-```
-
-### Runtime-Specific Loading
-```typescript
-// Node.js/Bun: Use ES modules import
-import * as fs from 'fs';
-const config = JSON.parse(fs.readFileSync('../../configs/models.json', 'utf8'));
-
-// Deno: Use direct file reading  
-const configText = await Deno.readTextFile('./configs/models.json');
-const config = JSON.parse(configText);
-```
-
-## Download Process
-
-### HuggingFace Integration
-1. **Repository Validation**: Check repository exists and accessible
-2. **File Discovery**: Scan for available `.rkllm` files
-3. **Essential Files**: Download model + technical configuration files
-4. **Progress Tracking**: Show download progress for large files
-5. **Integrity Check**: Verify file sizes and successful downloads
-6. **Metadata Storage**: Save repository info and download timestamp
-
-### Network Error Handling
-- **Retry Logic**: Automatic retry for temporary network issues
-- **Resume Support**: Handle partial downloads gracefully
-- **Timeout Management**: Reasonable timeouts for large files
-- **Error Reporting**: Clear error messages with troubleshooting hints
-
-## Performance Optimizations
-
-### Download Efficiency
-- **Parallel Downloads**: Download technical files concurrently
-- **Progress Feedback**: Real-time progress for user experience
-- **Memory Management**: Stream large files to avoid memory issues
-- **Caching**: Avoid re-downloading existing files
-
-### Storage Efficiency
-- **Deduplication**: Check existing files before download
-- **Cleanup**: Remove incomplete downloads on failure
-- **Compression**: Preserve original file formats (no re-compression)
+### Enumerations
+*None*
 
 ## Dependencies
-- `RuntimeDetector` - Multi-runtime support
-- `ModelInfo` types - TypeScript interfaces
-- `configs/models.json` - Repository configuration
-- Native runtime APIs - File system and network operations
+- Standard C++ libraries
+- RKLLM runtime
+
+## Usage Examples
+*Usage examples will be added based on function analysis*
+
+## Error Handling
+*Error handling documentation will be generated from code analysis*
+
+## Performance Notes
+*Performance considerations will be documented*
+
+## Thread Safety
+*Thread safety analysis will be provided*
+
+## Memory Management
+*Memory management details will be documented*
 
 ## Testing
-- `model-manager.test.ts` - All core operations and error scenarios
-- Mock network requests for reliable testing
-- Validate file system operations across runtimes
-- Test configuration loading and parsing
-- Verify error handling and edge cases
+All components have corresponding unit tests.
 
-## Error Scenarios
-- **Network Issues**: Connection failures, timeouts, HTTP errors
-- **File System**: Permission errors, disk space, path issues
-- **Configuration**: Missing or invalid configuration files
-- **Runtime**: Unsupported runtime or missing APIs
+### Running Tests
+```bash
+# Build and run tests
+make test
+
+# Run with verbose output
+make test-verbose
+
+# Build debug version for testing
+make debug
+```
+
+## Build Configuration
+
+### Standalone Build
+```bash
+# Build the module
+make
+
+# Clean artifacts
+make clean
+
+# Install library for other modules
+make install
+```
+
+## Troubleshooting
+*Common issues and solutions will be documented*
+
+---
+*Generated automatically by RKLLMJS README Generator*

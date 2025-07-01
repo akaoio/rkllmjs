@@ -1,212 +1,468 @@
-# RKLLMJS Utils Module
+# utils
 
-> **Type conversion utilities and error handling for RKLLMJS C++ modules**
+## Purpose
+Type conversion utilities for JavaScript and C++ interoperability
 
 ## Overview
-
-The Utils module provides essential utilities for seamless interoperability between JavaScript and C++ code in RKLLMJS. It contains two main components:
-
-1. **Type Converters** - Safe, efficient conversion between JS and C++ types
-2. **Error Handler** - Unified error handling and exception management
+Provides safe and efficient type conversion functions between JavaScript values and C++ types. Includes comprehensive error handling, validation, and support for complex data structures. Essential for N-API bindings.
 
 ## Architecture
+- **error-handler.hpp**: RKLLMException, TypeConversionException, ConfigurationException, ResourceException, ErrorScope
+- **type-converters.hpp**: ConversionResult
 
-```
-src/bindings/utils/
-├── type-converters.hpp     # Type conversion interfaces
-├── type-converters.cpp     # Type conversion implementations  
-├── error-handler.hpp       # Error handling interfaces
-├── error-handler.cpp       # Error handling implementations
-├── type-converters.test.cpp # Type converter unit tests
-├── error-handler.test.cpp   # Error handler unit tests
-├── Makefile                # Build configuration
-└── README.md              # This file
-```
 
-## Components
+## Source Files
+- `error-handler.cpp` (cpp)
+- `error-handler.hpp` (hpp)
+- `type-converters.cpp` (cpp)
+- `type-converters.hpp` (hpp)
 
-### Type Converters (`type-converters.hpp/cpp`)
 
-Provides safe, efficient conversion functions between JavaScript types (via N-API) and C++ standard library types.
+## API Reference
 
-**Features:**
-- String conversions (JS ↔ C++ std::string)
-- Array conversions (JS Array ↔ C++ std::vector)
-- Object/Map conversions (JS Object ↔ C++ std::unordered_map)
-- Number conversions (JS Number ↔ C++ int32_t/double)
-- Boolean conversions (JS Boolean ↔ C++ bool)
-- Buffer conversions (JS Buffer/ArrayBuffer ↔ C++ std::vector<uint8_t>)
-- Validation utilities
+### Functions
+#### error-handler.cpp
 
-**Key Functions:**
-```cpp
-// String conversions
-std::string jsStringToCppString(Napi::Env env, const Napi::Value& jsValue);
-Napi::String cppStringToJsString(Napi::Env env, const std::string& cppString);
+##### `RKLLMException()`
+*No documentation available*
 
-// Array conversions (templated)
-template<typename T>
-std::vector<T> jsArrayToCppVector(Napi::Env env, const Napi::Array& jsArray);
+##### `logError()`
+*No documentation available*
 
-// Object conversions
-std::unordered_map<std::string, std::string> jsObjectToCppStringMap(
-    Napi::Env env, const Napi::Object& jsObject);
+##### `cleanup()`
+*No documentation available*
 
-// Validation utilities
-void validateNotUndefined(Napi::Env env, const Napi::Value& value, const std::string& paramName);
-```
+##### `createErrorInfo()`
+*No documentation available*
 
-### Error Handler (`error-handler.hpp/cpp`)
+##### `getCategoryString()`
+*No documentation available*
 
-Provides standardized error handling, exception conversion, and error logging functionality.
+##### `getSeverityString()`
+*No documentation available*
 
-**Features:**
-- Custom exception hierarchy
-- Error categorization and severity levels
-- Native library error handling
-- Error logging with timestamps
-- RAII error scopes for automatic cleanup
-- JS ↔ C++ exception conversion
+##### `formatErrorMessage()`
+*No documentation available*
 
-**Error Categories:**
-- `TYPE_CONVERSION` - Type conversion errors
-- `CONFIGURATION` - Configuration validation errors
-- `RESOURCE_MANAGEMENT` - Resource allocation/cleanup errors
-- `MODEL_OPERATION` - Model-specific operations errors
-- `MEMORY_ALLOCATION` - Memory management errors
-- `NATIVE_LIBRARY` - RKLLM native library errors
-- `VALIDATION` - Parameter validation errors
+##### `validateNotEmpty()`
+*No documentation available*
 
-**Key Classes:**
-```cpp
-// Exception hierarchy
-class RKLLMException : public std::exception;
-class TypeConversionException : public RKLLMException;
-class ConfigurationException : public RKLLMException;
-class ResourceException : public RKLLMException;
+##### `ConfigurationException()`
+*No documentation available*
 
-// Error information structure
-struct ErrorInfo {
-    ErrorCategory category;
-    ErrorSeverity severity;
-    std::string code;
-    std::string message;
-    std::string details;
-    std::string location;
-};
+##### `validateRange()`
+*No documentation available*
 
-// RAII error scope
-class ErrorScope {
-public:
-    explicit ErrorScope(const std::string& operation);
-    void addCleanupFunction(std::function<void()> cleanup);
-    void success();
-};
-```
+##### `validatePositive()`
+*No documentation available*
 
-## Usage Examples
+#### error-handler.hpp
 
-### Type Conversion
+##### `TypeConversionException()`
+*No documentation available*
 
-```cpp
-#include "type-converters.hpp"
+##### `getTypeString()`
+*No documentation available*
 
-// Convert JS string to C++ string
-Napi::Value jsValue = info[0];
-std::string cppStr = jsStringToCppString(env, jsValue);
+##### `throwError()`
+*No documentation available*
 
-// Convert C++ vector to JS array
-std::vector<int32_t> cppVec = {1, 2, 3, 4, 5};
-Napi::Array jsArray = cppVectorToJsArray(env, cppVec);
+##### `throwConversionError()`
+*No documentation available*
 
-// Convert JS object to C++ map
-Napi::Object jsObj = info[0].As<Napi::Object>();
-auto cppMap = jsObjectToCppStringMap(env, jsObj);
-```
+##### `throwConfigurationError()`
+*No documentation available*
 
-### Error Handling
+##### `throwResourceError()`
+*No documentation available*
 
-```cpp
-#include "error-handler.hpp"
+##### `createError()`
+*No documentation available*
 
-// Basic error throwing
-try {
-    // Some risky operation
-    if (someCondition) {
-        throwConfigurationError(env, "Invalid configuration parameter");
-    }
-} catch (const std::exception& e) {
-    rethrowAsJSError(env, e);
-}
+##### `handleNativeError()`
+*No documentation available*
 
-// Using ErrorScope for automatic cleanup
-{
-    ErrorScope scope("model_loading");
-    
-    // Add cleanup functions
-    scope.addCleanupFunction([&model]() {
-        if (model) freeModel(model);
-    });
-    
-    // Perform operations
-    model = loadModel(path);
-    configureModel(model, config);
-    
-    scope.success(); // Mark as successful
-    // Cleanup functions won't be called
-}
-  - `throwError()` - Throw JS exceptions from C++
-  - `handleNativeError()` - Convert native RKLLM errors to JS errors
-  - `logError()` - Structured error logging
+##### `getNativeErrorMessage()`
+*No documentation available*
+
+##### `logError()`
+*No documentation available*
+
+##### `exceptionToErrorInfo()`
+*No documentation available*
+
+##### `rethrowAsJSError()`
+*No documentation available*
+
+##### `getErrorCodeString()`
+*No documentation available*
+
+##### `getErrorCategoryFromCode()`
+*No documentation available*
+
+##### `validateParameter()`
+*No documentation available*
+
+##### `validateStringParameter()`
+*No documentation available*
+
+##### `validateNumberParameter()`
+*No documentation available*
+
+##### `validateObjectParameter()`
+*No documentation available*
+
+##### `validateArrayParameter()`
+*No documentation available*
+
+##### `getCategoryString()`
+*No documentation available*
+
+##### `getSeverityString()`
+*No documentation available*
+
+##### `formatErrorMessage()`
+*No documentation available*
+
+##### `createErrorInfo()`
+*No documentation available*
+
+##### `validateNotEmpty()`
+*No documentation available*
+
+##### `validateRange()`
+*No documentation available*
+
+##### `validatePositive()`
+*No documentation available*
+
+##### `ErrorScope()`
+*No documentation available*
+
+##### `success()`
+*No documentation available*
+
+#### type-converters.cpp
+
+##### `trim()`
+*No documentation available*
+
+##### `ss()`
+*No documentation available*
+
+##### `join()`
+*No documentation available*
+
+##### `startsWith()`
+*No documentation available*
+
+##### `endsWith()`
+*No documentation available*
+
+##### `stringToInt32()`
+*No documentation available*
+
+##### `TypeConversionException()`
+*No documentation available*
+
+##### `stringToDouble()`
+*No documentation available*
+
+##### `int32ToString()`
+*No documentation available*
+
+##### `doubleToString()`
+*No documentation available*
+
+##### `mapToString()`
+*No documentation available*
+
+##### `isValidString()`
+*No documentation available*
+
+##### `isValidNumber()`
+*No documentation available*
+
+##### `isValidPath()`
+*No documentation available*
+
+##### `isValidRange()`
+*No documentation available*
+
+##### `bytesToString()`
+*No documentation available*
+
+##### `bytesToHex()`
+*No documentation available*
+
+##### `safeStringToInt32()`
+*No documentation available*
+
+##### `ConversionResult()`
+*No documentation available*
+
+##### `safeStringToDouble()`
+*No documentation available*
+
+##### `validateString()`
+*No documentation available*
+
+##### `normalizeString()`
+*No documentation available*
+
+##### `validateInt32()`
+*No documentation available*
+
+##### `validateDouble()`
+*No documentation available*
+
+##### `jsStringToCppString()`
+*No documentation available*
+
+##### `cppStringToJsString()`
+*No documentation available*
+
+##### `cppStringMapToJsObject()`
+*No documentation available*
+
+##### `jsNumberToCppInt32()`
+*No documentation available*
+
+##### `jsNumberToCppDouble()`
+*No documentation available*
+
+##### `cppInt32ToJsNumber()`
+*No documentation available*
+
+##### `cppDoubleToJsNumber()`
+*No documentation available*
+
+##### `jsBooleanToCppBool()`
+*No documentation available*
+
+##### `cppBoolToJsBoolean()`
+*No documentation available*
+
+##### `isValidType()`
+*No documentation available*
+
+##### `validateNotUndefined()`
+*No documentation available*
+
+##### `validateNotNull()`
+*No documentation available*
+
+#### type-converters.hpp
+
+##### `isSuccess()`
+*No documentation available*
+
+##### `jsStringToCppString()`
+*No documentation available*
+
+##### `cppStringToJsString()`
+*No documentation available*
+
+##### `cppVectorToJsArray()`
+*No documentation available*
+
+##### `cppStringMapToJsObject()`
+*No documentation available*
+
+##### `jsNumberToCppInt32()`
+*No documentation available*
+
+##### `jsNumberToCppDouble()`
+*No documentation available*
+
+##### `cppInt32ToJsNumber()`
+*No documentation available*
+
+##### `cppDoubleToJsNumber()`
+*No documentation available*
+
+##### `jsBooleanToCppBool()`
+*No documentation available*
+
+##### `cppBoolToJsBoolean()`
+*No documentation available*
+
+##### `isValidType()`
+*No documentation available*
+
+##### `validateNotUndefined()`
+*No documentation available*
+
+##### `validateNotNull()`
+*No documentation available*
+
+##### `validateString()`
+*No documentation available*
+
+##### `normalizeString()`
+*No documentation available*
+
+##### `validateVector()`
+*No documentation available*
+
+##### `validateInt32()`
+*No documentation available*
+
+##### `validateDouble()`
+*No documentation available*
+
+##### `trim()`
+*No documentation available*
+
+##### `join()`
+*No documentation available*
+
+##### `startsWith()`
+*No documentation available*
+
+##### `endsWith()`
+*No documentation available*
+
+##### `stringToInt32()`
+*No documentation available*
+
+##### `stringToDouble()`
+*No documentation available*
+
+##### `int32ToString()`
+*No documentation available*
+
+##### `doubleToString()`
+*No documentation available*
+
+##### `mapToString()`
+*No documentation available*
+
+##### `isValidString()`
+*No documentation available*
+
+##### `isValidNumber()`
+*No documentation available*
+
+##### `isValidPath()`
+*No documentation available*
+
+##### `isValidRange()`
+*No documentation available*
+
+##### `bytesToString()`
+*No documentation available*
+
+##### `bytesToHex()`
+*No documentation available*
+
+##### `constexpr()`
+*No documentation available*
+
+##### `static_assert()`
+*No documentation available*
+
+
+
+### Classes
+#### error-handler.hpp
+
+##### `RKLLMException`
+*No documentation available*
+
+##### `TypeConversionException`
+*No documentation available*
+
+##### `ConfigurationException`
+*No documentation available*
+
+##### `ResourceException`
+*No documentation available*
+
+##### `ErrorScope`
+*No documentation available*
+
+#### type-converters.hpp
+
+##### `ConversionResult`
+*No documentation available*
+
+
+
+### Data Structures
+- ErrorInfo 
+
+
+### Enumerations
+- ErrorSeverity ErrorCategory 
+
 
 ## Dependencies
+- ../config/build-config.hpp
+- algorithm
+- cctype
+- chrono
+- cmath
+- error-handler.hpp
+- exception
+- functional
+- iomanip
+- iostream
+- memory
+- napi.h
+- sstream
+- string
+- type-converters.hpp
+- unordered_map
+- vector
 
-- Node.js N-API headers
-- RKLLM native library headers
-- C++ standard library
 
-## Build Requirements
+## Usage Examples
+*Usage examples will be added based on function analysis*
 
-- Standalone compilation via local Makefile
-- Integration with global build system
-- Comprehensive unit testing
+## Error Handling
+*Error handling documentation will be generated from code analysis*
 
-## Testing Strategy
+## Performance Notes
+*Performance considerations will be documented*
 
-- **Unit Tests**: Each conversion function tested individually
-- **Integration Tests**: Cross-module compatibility
-- **Error Tests**: Exception handling and error propagation
-- **Memory Tests**: No memory leaks in type conversions
+## Thread Safety
+*Thread safety analysis will be provided*
 
-## Usage Example
+## Memory Management
+*Memory management details will be documented*
 
-```cpp
-#include "type-converters.hpp"
-#include "error-handler.hpp"
+## Testing
+All components have corresponding unit tests.
 
-// Convert JS string to C++ and handle errors
-try {
-    auto cppStr = utils::jsStringToCppString(env, jsValue);
-    // Use cppStr...
-} catch (const std::exception& e) {
-    utils::throwError(env, "Type conversion failed", e.what());
-}
+### Running Tests
+```bash
+# Build and run tests
+make test
+
+# Run with verbose output
+make test-verbose
+
+# Build debug version for testing
+make debug
 ```
 
-## Integration Points
+## Build Configuration
 
-- **Core Module**: Model configuration type conversion
-- **Inference Module**: Input/output data conversion
-- **Memory Module**: Memory allocation error handling
-- **NAPI Bindings**: Primary consumer of type conversion utilities
+### Standalone Build
+```bash
+# Build the module
+make
 
-## Implementation Status
+# Clean artifacts
+make clean
 
-- [ ] `type-converters.hpp` - Type conversion interface
-- [ ] `type-converters.cpp` - Type conversion implementation
-- [ ] `type-converters.test.cpp` - Comprehensive unit tests
-- [ ] `error-handler.hpp` - Error handling interface
-- [ ] `error-handler.cpp` - Error handling implementation  
-- [ ] `error-handler.test.cpp` - Error handling unit tests
-- [ ] `Makefile` - Standalone build configuration
-- [ ] Integration with global build system
+# Install library for other modules
+make install
+```
+
+## Troubleshooting
+*Common issues and solutions will be documented*
+
+---
+*Generated automatically by RKLLMJS README Generator*

@@ -1,4 +1,14 @@
 /**
+ * @module rkllm-client
+ * @purpose High-level TypeScript client for RKLLM model interaction
+ * @description Promise-based client API providing streamlined interface for RKLLM
+ *              model operations. Features async/await support, event-driven architecture,
+ *              streaming text generation, and comprehensive error handling.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
+/**
  * RKLLM Client - High-level TypeScript wrapper for RKLLM C++ bindings
  * Provides a Promise-based API for easy integration with JavaScript/TypeScript applications
  */

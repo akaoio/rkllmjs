@@ -1,6 +1,16 @@
 #!/usr/bin/env node
 
 /**
+ * @module cli-runner
+ * @purpose Command-line interface for RKLLM model management and operations
+ * @description Full-featured CLI providing model downloading, management, inference
+ *              operations, and system diagnostics. Supports multiple JavaScript runtimes
+ *              with Node.js as primary target and Bun/Deno as alternatives.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
+/**
  * RKLLMJS CLI Runner - Command Line Interface for Model Management
  * Primary runtime: Node.js, Alternative support: Bun, Deno (experimental)
  *

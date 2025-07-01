@@ -9,6 +9,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 README_GENERATOR="$PROJECT_ROOT/src/bindings/readme-generator/readme-generator-cli"
+README_CONFIG="$PROJECT_ROOT/configs/readme-generator.json"
+README_TEMPLATE="$PROJECT_ROOT/configs/readme-template.md"
 
 # Colors for output
 RED='\033[0;31m'
@@ -116,7 +118,7 @@ generate_readmes() {
     
     # Use recursive mode for all C++ modules
     log_info "Generating READMEs for C++ modules..."
-    if "$README_GENERATOR" --recursive $force_flag --verbose "$PROJECT_ROOT/src/bindings"; then
+    if "$README_GENERATOR" --recursive $force_flag --verbose --config "$README_CONFIG" --template "$README_TEMPLATE" "$PROJECT_ROOT/src/bindings"; then
         log_success "C++ modules processed"
         generated=$((generated + 1))
     else
@@ -132,12 +134,13 @@ generate_readmes() {
         "src/runtime-detector"
         "src/rkllm-types"
         "src/model-types"
+        "src/testing"
     )
     
     for module in "${ts_modules[@]}"; do
         if [ -d "$PROJECT_ROOT/$module" ]; then
             log_info "Generating README for: $module"
-            if "$README_GENERATOR" $force_flag "$PROJECT_ROOT/$module"; then
+            if "$README_GENERATOR" $force_flag --config "$README_CONFIG" --template "$README_TEMPLATE" "$PROJECT_ROOT/$module"; then
                 log_success "Generated README for: $module"
                 generated=$((generated + 1))
             else

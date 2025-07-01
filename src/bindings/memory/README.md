@@ -1,91 +1,218 @@
-# Memory Management Module
+# memory
 
-Efficient memory allocation, tracking, and optimization for RKLLM operations.
+## Purpose
+Advanced memory management and optimization for RKLLM model operations
 
 ## Overview
-
-The memory module provides sophisticated memory management for RKLLM models, including NPU memory allocation, system memory tracking, and memory pool optimization.
-
-## Features
-
-- **NPU Memory Management**: Efficient NPU memory allocation and deallocation
-- **Memory Pools**: Pre-allocated memory pools for performance
-- **Memory Tracking**: Real-time memory usage monitoring
-- **Memory Optimization**: Automatic memory defragmentation and cleanup
-- **Resource Limits**: Configurable memory limits and warnings
-- **Memory Profiling**: Detailed memory usage analytics
+Provides sophisticated memory allocation strategies, caching mechanisms, and performance optimization for NPU operations. Handles memory pools, garbage collection, and resource monitoring for efficient RKLLM execution.
 
 ## Architecture
+- **memory-manager.hpp**: IMemoryAllocator, CPUMemoryAllocator, NPUMemoryAllocator, MemoryManager, MemoryGuard
 
-```
-MemoryManager
-├── NPU Management
-│   ├── allocateNPUMemory()
-│   ├── deallocateNPUMemory()
-│   └── getNPUMemoryStats()
-├── System Management
-│   ├── allocateSystemMemory()
-│   ├── deallocateSystemMemory()
-│   └── getSystemMemoryStats()
-├── Pool Management
-│   ├── createMemoryPool()
-│   ├── allocateFromPool()
-│   └── destroyMemoryPool()
-└── Monitoring
-    ├── getMemoryUsage()
-    ├── setMemoryLimits()
-    └── enableMemoryProfiling()
-```
 
-## Build Status
+## Source Files
+- `memory-manager.cpp` (cpp)
+- `memory-manager.hpp` (hpp)
 
-✅ **Built Successfully**: Placeholder module with Makefile structure
+
+## API Reference
+
+### Functions
+#### memory-manager.cpp
+
+##### `block()`
+*No documentation available*
+
+##### `updateStats()`
+*No documentation available*
+
+##### `allocate()`
+*No documentation available*
+
+##### `new_block()`
+*No documentation available*
+
+##### `cleanup()`
+*No documentation available*
+
+#### memory-manager.hpp
+
+##### `updateStats()`
+*No documentation available*
+
+##### `CPUMemoryAllocator()`
+*No documentation available*
+
+##### `allocate()`
+*No documentation available*
+
+##### `deallocate()`
+*No documentation available*
+
+##### `getStats()`
+*No documentation available*
+
+##### `isValidPointer()`
+*No documentation available*
+
+##### `reallocate()`
+*No documentation available*
+
+##### `defragment()`
+*No documentation available*
+
+##### `initializeNPU()`
+*No documentation available*
+
+##### `NPUMemoryAllocator()`
+*No documentation available*
+
+##### `isNPUAvailable()`
+*No documentation available*
+
+##### `initializeNPULazy()`
+*No documentation available*
+
+##### `allocateContiguous()`
+*No documentation available*
+
+##### `mapToNPU()`
+*No documentation available*
+
+##### `MemoryManager()`
+*No documentation available*
+
+##### `initialize()`
+*No documentation available*
+
+##### `cleanup()`
+*No documentation available*
+
+##### `isInitialized()`
+*No documentation available*
+
+##### `allocateCPU()`
+*No documentation available*
+
+##### `allocateNPU()`
+*No documentation available*
+
+##### `getCombinedStats()`
+*No documentation available*
+
+##### `getCPUStats()`
+*No documentation available*
+
+##### `getNPUStats()`
+*No documentation available*
+
+##### `optimizeMemory()`
+*No documentation available*
+
+##### `logMemoryUsage()`
+*No documentation available*
+
+##### `getErrorMessage()`
+*No documentation available*
+
+##### `bool()`
+*No documentation available*
+
+
+
+### Classes
+#### memory-manager.hpp
+
+##### `IMemoryAllocator`
+*No documentation available*
+
+##### `CPUMemoryAllocator`
+*No documentation available*
+
+##### `NPUMemoryAllocator`
+*No documentation available*
+
+##### `MemoryManager`
+*No documentation available*
+
+##### `MemoryGuard`
+*No documentation available*
+
+
+
+### Data Structures
+- MemoryStats MemoryBlock 
+
+
+### Enumerations
+- MemoryResult 
+
 
 ## Dependencies
+- ../config/build-config.hpp
+- algorithm
+- cstddef
+- cstdlib
+- cstring
+- functional
+- iostream
+- memory
+- memory-manager.hpp
+- mutex
+- string
+- sys/mman.h
+- type_traits
+- unistd.h
+- unordered_map
+- vector
 
-- **RKLLM Library**: `../../../libs/rkllm/include/rkllm.h`
-- **System Libraries**: pthread, memory mapping
 
-## Usage Example
+## Usage Examples
+*Usage examples will be added based on function analysis*
 
-```cpp
-#include "memory-manager.hpp"
+## Error Handling
+*Error handling documentation will be generated from code analysis*
 
-// Create memory manager
-rkllmjs::memory::MemoryManager memManager;
+## Performance Notes
+*Performance considerations will be documented*
 
-// Allocate NPU memory
-void* npuBuffer = memManager.allocateNPUMemory(1024 * 1024); // 1MB
+## Thread Safety
+*Thread safety analysis will be provided*
 
-// Track memory usage
-auto stats = memManager.getMemoryStats();
-std::cout << "NPU Memory: " << stats.npu_used << " / " << stats.npu_total << std::endl;
+## Memory Management
+*Memory management details will be documented*
 
-// Clean up
-memManager.deallocateNPUMemory(npuBuffer);
+## Testing
+All components have corresponding unit tests.
+
+### Running Tests
+```bash
+# Build and run tests
+make test
+
+# Run with verbose output
+make test-verbose
+
+# Build debug version for testing
+make debug
 ```
 
-## Files
+## Build Configuration
 
-- `memory-manager.hpp` - Memory management interface (planned)
-- `memory-manager.cpp` - Implementation (planned)
-- `memory-manager.test.cpp` - Unit tests (planned)
-- `Makefile` - Build configuration (placeholder)
+### Standalone Build
+```bash
+# Build the module
+make
 
-## Implementation Status
+# Clean artifacts
+make clean
 
-🚧 **In Development**: Module structure created, implementation pending
+# Install library for other modules
+make install
+```
 
-**Next Steps:**
-1. Implement NPU memory allocation APIs
-2. Add system memory tracking
-3. Create memory pool management
-4. Add memory profiling capabilities
-5. Implement comprehensive testing
+## Troubleshooting
+*Common issues and solutions will be documented*
 
-## Integration
-
-This module will integrate with:
-- **Core Module**: For model memory requirements
-- **Inference Module**: For inference buffer management
-- **N-API Bindings**: For JavaScript memory management APIs
+---
+*Generated automatically by RKLLMJS README Generator*

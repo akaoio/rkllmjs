@@ -1,71 +1,153 @@
 # core
 
 ## Purpose
-The core module manages RKLLM model lifecycle, configuration, and resource allocation. It serves as the central point for all model-related operations and provides a clean interface for other modules.
+Core RKLLM runtime management and model lifecycle operations
+
+## Overview
+Provides thread-safe singleton that manages RKLLM model instances, resource allocation, configuration validation, and cleanup operations. This module handles the fundamental infrastructure needed for RKLLM model management including NPU resource allocation and monitoring.
 
 ## Architecture
-{{ARCHITECTURE}}
+- **rkllm-manager.hpp**: RKLLMManager
+
 
 ## Source Files
 - `rkllm-manager.cpp` (cpp)
 - `rkllm-manager.hpp` (hpp)
 
 
-## Core Components
+## API Reference
 
-{{#CLASSES}}
-### Classes
-### rkllm-manager.hpp
-- `RKLLMManager`
-
-
-{{/CLASSES}}
-
-{{#FUNCTIONS}}
 ### Functions
-### rkllm-manager.cpp
-- `cleanup`
-- `updateResourceStats`
-- `rkllm_destroy`
-- `updateResourceStats`
-- `updateResourceStats`
-- `getDefaultConfig`
+#### rkllm-manager.cpp
 
-### rkllm-manager.hpp
-- `isValid`
-- `getValidationError`
-- `initialize`
-- `cleanup`
-- `isInitialized`
-- `createModel`
-- `destroyModel`
-- `getModelConfig`
-- `getResourceStats`
-- `hasAvailableResources`
-- `validateConfig`
-- `createDefaultConfig`
-- `getDefaultConfig`
-- `getOptimizedConfig`
-- `getActiveModelCount`
-- `getErrorMessage`
-- `generateModelId`
-- `allocateResources`
-- `deallocateResources`
-- `updateResourceStats`
+##### `cleanup()`
+*No documentation available*
+
+##### `updateResourceStats()`
+*No documentation available*
+
+##### `rkllm_destroy()`
+*No documentation available*
+
+##### `getDefaultConfig()`
+*No documentation available*
+
+#### rkllm-manager.hpp
+
+##### `isValid()`
+*No documentation available*
+
+##### `getValidationError()`
+*No documentation available*
+
+##### `initialize()`
+*No documentation available*
+
+##### `cleanup()`
+*No documentation available*
+
+##### `isInitialized()`
+*No documentation available*
+
+##### `createModel()`
+*No documentation available*
+
+##### `destroyModel()`
+*No documentation available*
+
+##### `getModelConfig()`
+*No documentation available*
+
+##### `getResourceStats()`
+*No documentation available*
+
+##### `hasAvailableResources()`
+*No documentation available*
+
+##### `validateConfig()`
+*No documentation available*
+
+##### `createDefaultConfig()`
+*No documentation available*
+
+##### `getDefaultConfig()`
+*No documentation available*
+
+##### `getOptimizedConfig()`
+*No documentation available*
+
+##### `getActiveModelCount()`
+*No documentation available*
+
+##### `getErrorMessage()`
+*No documentation available*
+
+##### `generateModelId()`
+*No documentation available*
+
+##### `allocateResources()`
+*No documentation available*
+
+##### `deallocateResources()`
+*No documentation available*
+
+##### `updateResourceStats()`
+*No documentation available*
 
 
-{{/FUNCTIONS}}
 
-{{#EXPORTS}}
-### Exports
-{{EXPORTS}}
-{{/EXPORTS}}
+### Classes
+#### rkllm-manager.hpp
+
+##### `RKLLMManager`
+*No documentation available*
+
+
+
+### Data Structures
+- sysinfo 
+- RKLLMModelConfig ResourceStats ModelInstance 
+
+
+### Enumerations
+- ManagerResult 
+
 
 ## Dependencies
-{{DEPENDENCIES}}
+- ../../../libs/rkllm/include/rkllm.h
+- ../config/build-config.hpp
+- chrono
+- cstring
+- fstream
+- iostream
+- memory
+- mutex
+- rkllm-manager.hpp
+- sstream
+- string
+- sys/sysinfo.h
+- thread
+- unordered_map
+- vector
+
+
+## Usage Examples
+*Usage examples will be added based on function analysis*
+
+## Error Handling
+*Error handling documentation will be generated from code analysis*
+
+## Performance Notes
+*Performance considerations will be documented*
+
+## Thread Safety
+*Thread safety analysis will be provided*
+
+## Memory Management
+*Memory management details will be documented*
 
 ## Testing
-{{TESTING_INFO}}
+All components have corresponding unit tests.
 
 ### Running Tests
 ```bash
@@ -78,12 +160,6 @@ make test-verbose
 # Build debug version for testing
 make debug
 ```
-
-## Design Principles
-- **Modular Architecture**: Self-contained with clear interfaces
-- **Minimal Dependencies**: Uses standard libraries only
-- **Error Handling**: Graceful handling of edge cases
-- **Performance**: Optimized for fast build times
 
 ## Build Configuration
 
@@ -99,10 +175,8 @@ make clean
 make install
 ```
 
-## Current Status
-{{STATUS}}
+## Troubleshooting
+*Common issues and solutions will be documented*
 
 ---
-
 *Generated automatically by RKLLMJS README Generator*
-*Last updated: {{GENERATED_DATE}}*

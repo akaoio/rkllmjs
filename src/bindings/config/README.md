@@ -1,88 +1,257 @@
-# Config Manager Module
+# config
 
-This module provides configuration management for RKLLMJS, allowing dynamic model and hardware configuration through JSON files.
+## Purpose
+Configuration management and validation for RKLLM components
 
-## Features
-
-- **Dynamic Model Configuration**: Load model configurations from `configs/runtime.json`
-- **Hardware Profile Management**: Support different hardware profiles (high/low-end RK3588)
-- **Automatic Model Selection**: Choose best model based on available hardware
-- **Relative Path Support**: All paths are relative to project root
-- **Cross-Platform**: Works with both C++ and Node.js
+## Overview
+Provides comprehensive configuration loading, validation, and management for RKLLM runtime settings. Handles JSON parsing, environment variables, and configuration schema validation with runtime safety checks.
 
 ## Architecture
+- **config-manager.hpp**: ConfigManager
+- **json-parser.hpp**: JsonValue, JsonParser
 
-```
-ConfigManager
-├── ModelConfig      # Individual model configurations
-├── HardwareProfile  # Hardware capability profiles  
-└── Path Resolution  # Relative path management
-```
 
-## Usage
+## Source Files
+- `build-config.hpp` (hpp)
+- `config-manager.cpp` (cpp)
+- `config-manager.hpp` (hpp)
+- `include-manager.hpp` (hpp)
+- `json-parser.cpp` (cpp)
+- `json-parser.hpp` (hpp)
 
-```cpp
-#include "config-manager.hpp"
-using namespace rkllmjs::config;
 
-// Load configuration
-ConfigManager::loadConfig("configs/runtime.json");
+## API Reference
 
-// Get model by ID
-ModelConfig model = ConfigManager::getModel("qwen_0.5b");
+### Functions
+#### config-manager.cpp
 
-// Auto-select best model for hardware
-std::string best_model = ConfigManager::selectBestModel("rk3588_low");
+##### `file()`
+*No documentation available*
 
-// Check if model exists on filesystem
-bool exists = ConfigManager::modelExists("tinyllama");
-```
+##### `parseModelsFromJson()`
+*No documentation available*
 
-## Configuration Format
+##### `parseHardwareProfilesFromJson()`
+*No documentation available*
 
-The `configs/runtime.json` file contains:
+##### `loadConfig()`
+*No documentation available*
 
-```json
-{
-  "models": {
-    "qwen_0.5b": {
-      "path": "models/qwen/model.rkllm",
-      "size_mb": 512,
-      "min_memory_mb": 1024,
-      "parameters": { ... }
-    }
-  },
-  "hardware_profiles": {
-    "rk3588_low": {
-      "npu_cores": 2,
-      "max_memory_mb": 4096
-    }
-  }
-}
-```
+#### config-manager.hpp
 
-## Build & Test
+##### `isValid()`
+*No documentation available*
 
-```bash
-# Build module
-make
+##### `toString()`
+*No documentation available*
 
-# Run unit tests  
-make test
+##### `canRunModel()`
+*No documentation available*
 
-# Clean build artifacts
-make clean
-```
+##### `loadConfig()`
+*No documentation available*
+
+##### `getModel()`
+*No documentation available*
+
+##### `getHardwareProfile()`
+*No documentation available*
+
+##### `selectBestModel()`
+*No documentation available*
+
+##### `resolvePath()`
+*No documentation available*
+
+##### `modelExists()`
+*No documentation available*
+
+##### `getProjectRoot()`
+*No documentation available*
+
+##### `extractJsonValue()`
+*No documentation available*
+
+##### `parseModelsFromJson()`
+*No documentation available*
+
+##### `parseHardwareProfilesFromJson()`
+*No documentation available*
+
+#### json-parser.cpp
+
+##### `setObject()`
+*No documentation available*
+
+##### `skipWhitespace()`
+*No documentation available*
+
+##### `parseValue()`
+*No documentation available*
+
+##### `JsonValue()`
+*No documentation available*
+
+##### `parseObject()`
+*No documentation available*
+
+##### `parseString()`
+*No documentation available*
+
+##### `parseNumber()`
+*No documentation available*
+
+#### json-parser.hpp
+
+##### `getType()`
+*No documentation available*
+
+##### `asString()`
+*No documentation available*
+
+##### `asNumber()`
+*No documentation available*
+
+##### `asInt()`
+*No documentation available*
+
+##### `asBool()`
+*No documentation available*
+
+##### `isNull()`
+*No documentation available*
+
+##### `isString()`
+*No documentation available*
+
+##### `isNumber()`
+*No documentation available*
+
+##### `isBool()`
+*No documentation available*
+
+##### `isObject()`
+*No documentation available*
+
+##### `hasKey()`
+*No documentation available*
+
+##### `setObject()`
+*No documentation available*
+
+##### `set()`
+*No documentation available*
+
+##### `parse()`
+*No documentation available*
+
+##### `stringify()`
+*No documentation available*
+
+##### `parseValue()`
+*No documentation available*
+
+##### `parseObject()`
+*No documentation available*
+
+##### `parseString()`
+*No documentation available*
+
+##### `parseNumber()`
+*No documentation available*
+
+##### `skipWhitespace()`
+*No documentation available*
+
+
+
+### Classes
+#### config-manager.hpp
+
+##### `ConfigManager`
+*No documentation available*
+
+#### json-parser.hpp
+
+##### `JsonValue`
+*No documentation available*
+
+##### `JsonParser`
+*No documentation available*
+
+
+
+### Data Structures
+- stat stat 
+- ModelConfig HardwareProfile 
+
+
+### Enumerations
+- Type 
+
 
 ## Dependencies
+- algorithm
+- build-config.hpp
+- cctype
+- config-manager.hpp
+- fstream
+- iostream
+- json-parser.hpp
+- map
+- sstream
+- string
+- sys/stat.h
+- unistd.h
+- vector
 
-- Standard C++17 library
-- POSIX file system APIs (stat, getcwd)
-- No external JSON library required
 
-## Integration
+## Usage Examples
+*Usage examples will be added based on function analysis*
 
-This module integrates with:
-- Core RKLLM manager for model loading
-- Utils module for error handling
-- Build system for path resolution
+## Error Handling
+*Error handling documentation will be generated from code analysis*
+
+## Performance Notes
+*Performance considerations will be documented*
+
+## Thread Safety
+*Thread safety analysis will be provided*
+
+## Memory Management
+*Memory management details will be documented*
+
+## Testing
+All components have corresponding unit tests.
+
+### Running Tests
+```bash
+# Build and run tests
+make test
+
+# Run with verbose output
+make test-verbose
+
+# Build debug version for testing
+make debug
+```
+
+## Build Configuration
+
+### Standalone Build
+```bash
+# Build the module
+make
+
+# Clean artifacts
+make clean
+
+# Install library for other modules
+make install
+```
+
+## Troubleshooting
+*Common issues and solutions will be documented*
+
+---
+*Generated automatically by RKLLMJS README Generator*

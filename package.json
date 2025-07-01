@@ -42,6 +42,7 @@
     "test:cpp": "bash scripts/test-cpp.sh",
     "clean:cpp": "bash src/bindings/build.sh clean",
     "readme:validate": "bash scripts/readme-integration.sh validate",
+    "readme:clean": "find src -name 'README.md' -delete",
     "readme:generate": "bash scripts/readme-integration.sh generate",
     "readme:generate-force": "bash scripts/readme-integration.sh generate --force"
   },

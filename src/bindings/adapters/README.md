@@ -1,94 +1,285 @@
-# Adapters Module
+# adapters
 
-Model adapters and fine-tuning support for RKLLM.
+## Purpose
+Platform-specific runtime adapters for RKLLM integration
 
 ## Overview
-
-The adapters module provides support for LoRA (Low-Rank Adaptation) and other fine-tuning adapters, allowing dynamic model customization without full retraining.
-
-## Features
-
-- **LoRA Support**: Load and manage LoRA adapters
-- **Adapter Chaining**: Combine multiple adapters
-- **Dynamic Loading**: Runtime adapter loading and unloading
-- **Adapter Management**: Lifecycle management for adapters
-- **Performance Optimization**: Efficient adapter inference
-- **Adapter Validation**: Compatibility checking and validation
+Implements platform abstraction layer with adapters for different JavaScript runtimes (Node.js, Deno, Bun). Provides unified interface for cross-platform RKLLM deployment and runtime-specific optimizations.
 
 ## Architecture
+- **adapter-manager.hpp**: IAdapter, TextAdapter, JsonAdapter, RKLLMAdapter, AdapterFactory, AdapterManager, AdapterPipeline
 
-```
-AdapterManager
-├── LoRA Management
-│   ├── loadLoraAdapter()
-│   ├── unloadLoraAdapter()
-│   └── getLoraAdapters()
-├── Adapter Chaining
-│   ├── chainAdapters()
-│   ├── unchainAdapters()
-│   └── getAdapterChain()
-├── Validation
-│   ├── validateAdapter()
-│   ├── checkCompatibility()
-│   └── getAdapterInfo()
-└── Performance
-    ├── optimizeAdapters()
-    ├── getAdapterStats()
-    └── enableAdapterProfiling()
-```
 
-## Build Status
+## Source Files
+- `adapter-manager.cpp` (cpp)
+- `adapter-manager.hpp` (hpp)
 
-✅ **Built Successfully**: Placeholder module with Makefile structure
+
+## API Reference
+
+### Functions
+#### adapter-manager.cpp
+
+##### `cleanup()`
+*No documentation available*
+
+##### `whitespace_regex()`
+*No documentation available*
+
+##### `dangerous_regex()`
+*No documentation available*
+
+##### `preparePrompt()`
+*No documentation available*
+
+##### `processResponse()`
+*No documentation available*
+
+##### `cleanup_regex()`
+*No documentation available*
+
+##### `registerAdapter()`
+*No documentation available*
+
+##### `createAdapter()`
+*No documentation available*
+
+##### `loadAdapterInternal()`
+*No documentation available*
+
+##### `clearPipeline()`
+*No documentation available*
+
+#### adapter-manager.hpp
+
+##### `TextAdapter()`
+*No documentation available*
+
+##### `getName()`
+*No documentation available*
+
+##### `getVersion()`
+*No documentation available*
+
+##### `getSupportedFormat()`
+*No documentation available*
+
+##### `initialize()`
+*No documentation available*
+
+##### `cleanup()`
+*No documentation available*
+
+##### `isInitialized()`
+*No documentation available*
+
+##### `convertInput()`
+*No documentation available*
+
+##### `convertOutput()`
+*No documentation available*
+
+##### `validate()`
+*No documentation available*
+
+##### `setEncoding()`
+*No documentation available*
+
+##### `getEncoding()`
+*No documentation available*
+
+##### `normalize()`
+*No documentation available*
+
+##### `sanitize()`
+*No documentation available*
+
+##### `JsonAdapter()`
+*No documentation available*
+
+##### `setPrettyPrint()`
+*No documentation available*
+
+##### `getPrettyPrint()`
+*No documentation available*
+
+##### `parseJson()`
+*No documentation available*
+
+##### `createJson()`
+*No documentation available*
+
+##### `RKLLMAdapter()`
+*No documentation available*
+
+##### `preparePrompt()`
+*No documentation available*
+
+##### `processResponse()`
+*No documentation available*
+
+##### `optimizeInput()`
+*No documentation available*
+
+##### `AdapterFactory()`
+*No documentation available*
+
+##### `isAdapterAvailable()`
+*No documentation available*
+
+##### `getAdapterInfo()`
+*No documentation available*
+
+##### `getErrorMessage()`
+*No documentation available*
+
+##### `formatToString()`
+*No documentation available*
+
+##### `stringToFormat()`
+*No documentation available*
+
+##### `AdapterManager()`
+*No documentation available*
+
+##### `loadAdapterInternal()`
+*No documentation available*
+
+##### `loadAdapter()`
+*No documentation available*
+
+##### `unloadAdapter()`
+*No documentation available*
+
+##### `loadDefaultAdapters()`
+*No documentation available*
+
+##### `convertData()`
+*No documentation available*
+
+##### `validateData()`
+*No documentation available*
+
+##### `chainAdapters()`
+*No documentation available*
+
+##### `AdapterPipeline()`
+*No documentation available*
+
+##### `addAdapter()`
+*No documentation available*
+
+##### `removeAdapter()`
+*No documentation available*
+
+##### `clearPipeline()`
+*No documentation available*
+
+##### `execute()`
+*No documentation available*
+
+##### `getAdapterCount()`
+*No documentation available*
+
+
+
+### Classes
+#### adapter-manager.hpp
+
+##### `IAdapter`
+*No documentation available*
+
+##### `TextAdapter`
+*No documentation available*
+
+##### `JsonAdapter`
+*No documentation available*
+
+##### `RKLLMAdapter`
+*No documentation available*
+
+##### `AdapterFactory`
+*No documentation available*
+
+##### `AdapterManager`
+*No documentation available*
+
+##### `AdapterPipeline`
+*No documentation available*
+
+
+
+### Data Structures
+*None*
+
+### Enumerations
+- AdapterResult DataFormat 
+
 
 ## Dependencies
+- ../config/build-config.hpp
+- ../core/rkllm-manager.hpp
+- ../inference/inference-engine.hpp
+- adapter-manager.hpp
+- algorithm
+- functional
+- iostream
+- memory
+- mutex
+- ostream
+- regex
+- sstream
+- string
+- unordered_map
+- vector
 
-- **RKLLM Library**: `../../../libs/rkllm/include/rkllm.h`
-- **Core Module**: `../core` (Model management)
-- **Utils Module**: `../utils` (Error handling)
 
-## Usage Example
+## Usage Examples
+*Usage examples will be added based on function analysis*
 
-```cpp
-#include "adapter-manager.hpp"
+## Error Handling
+*Error handling documentation will be generated from code analysis*
 
-// Create adapter manager
-rkllmjs::adapters::AdapterManager adapterMgr;
+## Performance Notes
+*Performance considerations will be documented*
 
-// Load LoRA adapter
-auto loraConfig = rkllmjs::adapters::LoraConfig{
-    .adapter_path = "/path/to/lora.bin",
-    .alpha = 32,
-    .rank = 16
-};
+## Thread Safety
+*Thread safety analysis will be provided*
 
-auto result = adapterMgr.loadLoraAdapter(loraConfig);
-if (result.success) {
-    std::cout << "LoRA adapter loaded: " << result.adapter_id << std::endl;
-}
+## Memory Management
+*Memory management details will be documented*
+
+## Testing
+All components have corresponding unit tests.
+
+### Running Tests
+```bash
+# Build and run tests
+make test
+
+# Run with verbose output
+make test-verbose
+
+# Build debug version for testing
+make debug
 ```
 
-## Files
+## Build Configuration
 
-- `adapter-manager.hpp` - Adapter management interface (planned)
-- `adapter-manager.cpp` - Implementation (planned)
-- `adapter-manager.test.cpp` - Unit tests (planned)
-- `Makefile` - Build configuration (placeholder)
+### Standalone Build
+```bash
+# Build the module
+make
 
-## Implementation Status
+# Clean artifacts
+make clean
 
-🚧 **In Development**: Module structure created, implementation pending
+# Install library for other modules
+make install
+```
 
-**Next Steps:**
-1. Implement LoRA adapter loading/unloading
-2. Add adapter validation and compatibility checking
-3. Create adapter chaining capabilities
-4. Add performance optimization
-5. Implement comprehensive testing
+## Troubleshooting
+*Common issues and solutions will be documented*
 
-## Integration
-
-This module will integrate with:
-- **Core Module**: For model handle management
-- **Inference Module**: For adapter-aware inference
-- **N-API Bindings**: For JavaScript adapter management APIs
+---
+*Generated automatically by RKLLMJS README Generator*
