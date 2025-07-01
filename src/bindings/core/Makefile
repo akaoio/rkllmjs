@@ -11,7 +11,7 @@ ifdef SANDBOX_BUILD
     LIBS = -pthread
     RPATH = 
 else
-    CXXFLAGS += -DFULL_BUILD
+    CXXFLAGS += -DREAL_BUILD
     LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
     RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
 endif

@@ -282,7 +282,7 @@ AdapterResult RKLLMAdapter::initialize() {
     }
     
     try {
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
         // Get RKLLM manager instance
         auto& manager_ref = rkllmjs::core::RKLLMManager::getInstance();
         manager_ = std::shared_ptr<rkllmjs::core::RKLLMManager>(&manager_ref, [](rkllmjs::core::RKLLMManager*){});
@@ -314,7 +314,7 @@ AdapterResult RKLLMAdapter::initialize() {
 
 void RKLLMAdapter::cleanup() {
     if (initialized_) {
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
         engine_.reset();
         manager_.reset();
 #else
@@ -413,7 +413,7 @@ AdapterFactory::AdapterFactory() {
     std::cout << "[AdapterFactory] Registering json adapter..." << std::endl;
     registerAdapter("json", []() { return std::make_unique<JsonAdapter>(); });
     
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
     std::cout << "[AdapterFactory] Registering rkllm adapter..." << std::endl;
     registerAdapter("rkllm", []() { return std::make_unique<RKLLMAdapter>(); });
 #endif
@@ -422,7 +422,7 @@ AdapterFactory::AdapterFactory() {
     // Set up format mapping
     format_map_[DataFormat::RAW_TEXT] = "text";
     format_map_[DataFormat::JSON] = "json";
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
     format_map_[DataFormat::CUSTOM] = "rkllm";
 #else
     format_map_[DataFormat::CUSTOM] = "text";  // Fallback to text in SANDBOX mode
@@ -636,7 +636,7 @@ IAdapter* AdapterManager::getAdapter(const std::string& name) {
 }
 
 AdapterResult AdapterManager::loadDefaultAdapters() {
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
     std::vector<std::string> default_adapters = {"text", "json", "rkllm"};
 #else
     std::vector<std::string> default_adapters = {"text", "json"};  // No RKLLM in SANDBOX mode

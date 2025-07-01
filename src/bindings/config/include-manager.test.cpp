@@ -17,7 +17,7 @@ TEST(IncludeManagerTest, ConditionalInclusion) {
     // Test conditional compilation works
 #if RKLLMJS_HAS_NAPI
     // In full build mode
-    EXPECT_TRUE(RKLLMJS_MODE_FULL);
+    EXPECT_TRUE(RKLLMJS_MODE_REAL);
 #else
     // In sandbox build mode
     EXPECT_TRUE(RKLLMJS_MODE_SANDBOX);

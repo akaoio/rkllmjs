@@ -14,11 +14,11 @@ TEST(BuildConfigTest, BuildModeDetection) {
     // Test that exactly one build mode is active
 #ifdef SANDBOX_BUILD
     EXPECT_EQ(RKLLMJS_MODE_SANDBOX, 1);
-    EXPECT_EQ(RKLLMJS_MODE_FULL, 0);
+    EXPECT_EQ(RKLLMJS_MODE_REAL, 0);
     EXPECT_EQ(RKLLMJS_HAS_NAPI, 0);
 #else
     EXPECT_EQ(RKLLMJS_MODE_SANDBOX, 0);
-    EXPECT_EQ(RKLLMJS_MODE_FULL, 1);
+    EXPECT_EQ(RKLLMJS_MODE_REAL, 1);
     EXPECT_EQ(RKLLMJS_HAS_NAPI, 1);
 #endif
 }
@@ -50,7 +50,7 @@ TEST(BuildConfigTest, FeatureAvailability) {
 TEST(BuildConfigTest, MacroDefinitions) {
     // Test that all required macros are defined
     EXPECT_TRUE(RKLLMJS_MODE_SANDBOX == 0 || RKLLMJS_MODE_SANDBOX == 1);
-    EXPECT_TRUE(RKLLMJS_MODE_FULL == 0 || RKLLMJS_MODE_FULL == 1);
+    EXPECT_TRUE(RKLLMJS_MODE_REAL == 0 || RKLLMJS_MODE_REAL == 1);
     EXPECT_TRUE(RKLLMJS_HAS_NAPI == 0 || RKLLMJS_HAS_NAPI == 1);
     EXPECT_TRUE(RKLLMJS_HAS_NODE_INTEGRATION == 0 || RKLLMJS_HAS_NODE_INTEGRATION == 1);
 }

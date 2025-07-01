@@ -220,7 +220,7 @@ bool validateDouble(double value) {
 }
 
 #else
-// FULL mode: Implement N-API conversion functions
+// REAL mode: Implement N-API conversion functions
 
 std::string jsStringToCppString(Napi::Env env, const Napi::Value& jsValue) {
     if (!jsValue.IsString()) {

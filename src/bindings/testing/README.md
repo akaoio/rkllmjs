@@ -10,7 +10,7 @@ The RKLLMJS Test Framework is an in-house testing solution that provides:
 - **Professional Output**: Clean test result formatting with colored output
 - **No External Dependencies**: Completely self-contained, no Google Test or other external frameworks required
 - **Cross-Platform**: Works on Linux, macOS, and other UNIX-like systems
-- **Build Mode Support**: Supports both SANDBOX and FULL build configurations
+- **Build Mode Support**: Supports both SANDBOX and REAL build configurations
 
 ## Features
 
@@ -146,7 +146,7 @@ src/bindings/
 ### Tailored for RKLLMJS
 - Designed specifically for RKLLMJS module testing needs
 - Integrates well with RKLLM library error handling
-- Supports both SANDBOX and FULL build modes
+- Supports both SANDBOX and REAL build modes
 
 ### Professional Output
 - Clean, colored test output
@@ -194,8 +194,8 @@ TEST(MyModuleTest, SandboxMode) {
     EXPECT_TRUE(module.isSandboxMode());
     #endif
     
-    #ifdef FULL_BUILD
-    // Test full build functionality
+    #ifdef REAL_BUILD
+    // Test real build functionality
     EXPECT_TRUE(module.hasFullFeatures());
     #endif
 }
@@ -208,7 +208,7 @@ TEST(MyModuleTest, SandboxMode) {
 - Reduced dependencies
 - Faster compilation
 
-### FULL_BUILD
+### REAL_BUILD
 - Complete functionality
 - Full RKLLM library integration
 - Production-ready features
@@ -236,7 +236,7 @@ When adding new test macros or features:
 1. Maintain compatibility with existing tests
 2. Follow the existing code style
 3. Update this documentation
-4. Test across both SANDBOX and FULL build modes
+4. Test across both SANDBOX and REAL build modes
 
 ## Version History
 

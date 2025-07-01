@@ -11,7 +11,7 @@
  * - Clear success/failure reporting
  * - Performance timing
  * - Memory leak detection support
- * - SANDBOX and FULL mode compatibility
+ * - SANDBOX and REAL mode compatibility
  */
 
 #pragma once

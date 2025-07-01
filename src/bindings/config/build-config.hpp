@@ -14,10 +14,10 @@
 // Build mode detection
 #ifdef SANDBOX_BUILD
     #define RKLLMJS_MODE_SANDBOX 1
-    #define RKLLMJS_MODE_FULL 0
+    #define RKLLMJS_MODE_REAL 0
 #else
     #define RKLLMJS_MODE_SANDBOX 0
-    #define RKLLMJS_MODE_FULL 1
+    #define RKLLMJS_MODE_REAL 1
 #endif
 
 // Header inclusion macros
@@ -37,7 +37,7 @@
 #endif
 
 // Feature availability macros
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
     #define RKLLMJS_HAS_NAPI 1
     #define RKLLMJS_HAS_NODE_INTEGRATION 1
     #define RKLLMJS_HAS_RKLLM_NATIVE 1
@@ -48,7 +48,7 @@
 #endif
 
 // API visibility macros
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
     #define RKLLMJS_API_EXPORT __attribute__((visibility("default")))
     #define RKLLMJS_API_IMPORT
 #else

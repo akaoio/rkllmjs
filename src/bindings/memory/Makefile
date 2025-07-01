@@ -11,7 +11,7 @@ ifdef SANDBOX_BUILD
     LIBS = -pthread
     RPATH = 
 else
-    CXXFLAGS += -DFULL_BUILD
+    CXXFLAGS += -DREAL_BUILD
     LIBS = -pthread -lrt
     RPATH = 
 endif

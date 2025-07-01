@@ -5,10 +5,6 @@
 
 import fs from 'fs';
 import os from 'os';
-import { createRequire } from 'module';
-
-// Create require function for ES modules
-const require = createRequire(import.meta.url);
 
 /**
  * Check if native RKLLM bindings are available
