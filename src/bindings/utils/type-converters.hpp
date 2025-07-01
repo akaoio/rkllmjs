@@ -155,7 +155,7 @@ std::vector<T> jsArrayToCppVector(Napi::Env env, const Napi::Array& jsArray) {
         } else if constexpr (std::is_same_v<T, bool>) {
             result.push_back(jsBooleanToCppBool(env, element));
         } else {
-            static_assert(false, "Unsupported type for array conversion");
+            static_assert(!std::is_same_v<T, T>, "Unsupported type for array conversion");
         }
     }
     
@@ -176,7 +176,7 @@ Napi::Array cppVectorToJsArray(Napi::Env env, const std::vector<T>& cppVector) {
         } else if constexpr (std::is_same_v<T, bool>) {
             jsArray[i] = cppBoolToJsBoolean(env, cppVector[i]);
         } else {
-            static_assert(false, "Unsupported type for array conversion");
+            static_assert(!std::is_same_v<T, T>, "Unsupported type for array conversion");
         }
     }
     

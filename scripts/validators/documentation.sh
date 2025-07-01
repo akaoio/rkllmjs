@@ -107,7 +107,7 @@ validate_protected_assets() {
     print_section "🔒 Checking protected Rockchip assets..."
 
     # Check that protected files exist and haven't been modified
-    PROTECTED_FILES=("libs/rkllm/aarch64/librkllmrt.so" "libs/rkllm/include/rkllm.h" "libs/napi.h" "libs/node_api.h")
+    PROTECTED_FILES=("libs/rkllm/aarch64/librkllmrt.so" "libs/rkllm/include/rkllm.h")
 
     for protected_file in "${PROTECTED_FILES[@]}"; do
         if [ -f "$protected_file" ]; then

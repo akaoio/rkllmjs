@@ -7,7 +7,18 @@ INFERENCE_LIB = ../inference/bin/librkllm-inference.a
 # Compiler settings
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -fPIC
-INCLUDES := -I../core -I../config -I../utils -I../inference -I../testing -I../../../libs
+
+# Auto-detect node-addon-api and Node.js headers
+NODE_ADDON_API_PATH := $(shell find ../../../node_modules -name "napi.h" -type f -exec dirname {} \; 2>/dev/null | head -1)
+NODE_GYP_HEADERS := $(shell find ~/.cache/node-gyp -name "node_api.h" -type f -exec dirname {} \; 2>/dev/null | head -1)
+
+INCLUDES := -I../core -I../config -I../utils -I../inference -I../testing
+ifneq ($(NODE_ADDON_API_PATH),)
+    INCLUDES += -I$(NODE_ADDON_API_PATH)
+endif
+ifneq ($(NODE_GYP_HEADERS),)
+    INCLUDES += -I$(NODE_GYP_HEADERS)
+endif
 
 # Build mode configuration - now supports RKLLM_MODE environment variable
 ifdef RKLLM_COMPILE_MODE_REAL

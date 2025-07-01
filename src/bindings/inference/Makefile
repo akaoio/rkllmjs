@@ -4,7 +4,18 @@
 # Compiler settings
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -fPIC -DRKLLM_COMPILE_MODE_SANDBOX
-INCLUDES := -I../../../libs/rkllm/include -I../../../libs -I../utils -I../core -I../testing
+
+# Auto-detect node-addon-api and Node.js headers
+NODE_ADDON_API_PATH := $(shell find ../../../node_modules -name "napi.h" -type f -exec dirname {} \; 2>/dev/null | head -1)
+NODE_GYP_HEADERS := $(shell find ~/.cache/node-gyp -name "node_api.h" -type f -exec dirname {} \; 2>/dev/null | head -1)
+
+INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core -I../testing
+ifneq ($(NODE_ADDON_API_PATH),)
+    INCLUDES += -I$(NODE_ADDON_API_PATH)
+endif
+ifneq ($(NODE_GYP_HEADERS),)
+    INCLUDES += -I$(NODE_GYP_HEADERS)
+endif
 
 # Library settings
 TEST_LIBS := -pthread

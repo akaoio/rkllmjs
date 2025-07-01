@@ -245,51 +245,6 @@ install_build_tools() {
 }
 
 
-
-# Setup N-API headers for C++ compilation
-setup_napi_headers() {
-    log_info "Copying N-API headers to libs directory..."
-    
-    # Ensure libs directory exists
-    mkdir -p "$SCRIPT_DIR/libs"
-    
-    # Copy node-addon-api headers
-    if [ -f "$SCRIPT_DIR/node_modules/node-addon-api/napi.h" ]; then
-        cp "$SCRIPT_DIR/node_modules/node-addon-api/napi.h" "$SCRIPT_DIR/libs/"
-        cp "$SCRIPT_DIR/node_modules/node-addon-api/napi-inl.h" "$SCRIPT_DIR/libs/"
-        cp "$SCRIPT_DIR/node_modules/node-addon-api/napi-inl.deprecated.h" "$SCRIPT_DIR/libs/"
-        log_success "node-addon-api headers copied"
-    else
-        log_error "node-addon-api headers not found in node_modules"
-        return 1
-    fi
-    
-    # Copy Node.js N-API headers from node-gyp cache
-    local node_version
-    node_version=$(node --version | sed 's/v//')
-    local node_headers_path="$HOME/.cache/node-gyp/$node_version/include/node"
-    
-    if [ -d "$node_headers_path" ]; then
-        cp "$node_headers_path/node_api.h" "$SCRIPT_DIR/libs/" 2>/dev/null || true
-        cp "$node_headers_path/js_native_api.h" "$SCRIPT_DIR/libs/" 2>/dev/null || true
-        cp "$node_headers_path/js_native_api_types.h" "$SCRIPT_DIR/libs/" 2>/dev/null || true
-        cp "$node_headers_path/node_api_types.h" "$SCRIPT_DIR/libs/" 2>/dev/null || true
-        log_success "Node.js N-API headers copied from node-gyp cache"
-    else
-        log_warning "Node.js headers not found in node-gyp cache at $node_headers_path"
-        log_info "Headers may be downloaded during first build - this is normal"
-    fi
-    
-    # Verify critical headers are in place
-    if [ -f "$SCRIPT_DIR/libs/napi.h" ]; then
-        log_success "N-API headers setup completed"
-        return 0
-    else
-        log_error "Critical N-API headers missing after setup"
-        return 1
-    fi
-}
-
 # Setup project dependencies
 setup_project_dependencies() {
     log_step "Setting up project dependencies"
@@ -301,13 +256,6 @@ setup_project_dependencies() {
     log_info "Installing npm dependencies..."
     if ! npm install; then
         log_error "Failed to install npm dependencies"
-        return 1
-    fi
-    
-    # Copy N-API headers to libs directory for stable build access
-    log_info "Setting up N-API headers..."
-    if ! setup_napi_headers; then
-        log_error "Failed to setup N-API headers"
         return 1
     fi
     

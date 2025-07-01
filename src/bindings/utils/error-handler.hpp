@@ -110,6 +110,8 @@ std::string getNativeErrorMessage(int errorCode);
 // Error logging
 void logError(const ErrorInfo& errorInfo);
 void logError(const std::string& message, ErrorSeverity severity = ErrorSeverity::ERROR);
+void logError(ErrorCategory category, ErrorSeverity severity, 
+              const std::string& message, const std::string& details = "");
 
 // Exception conversion utilities
 ErrorInfo exceptionToErrorInfo(const std::exception& e);
