@@ -7,7 +7,7 @@ INFERENCE_LIB = ../inference/bin/librkllm-inference.a
 # Compiler settings
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -fPIC
-INCLUDES := -I../core -I../config -I../utils -I../inference -I../testing
+INCLUDES := -I../core -I../config -I../utils -I../inference -I../testing -I../../../libs
 
 # Build mode configuration - now supports RKLLM_MODE environment variable
 ifdef RKLLM_COMPILE_MODE_REAL

@@ -4,7 +4,7 @@
 # Compiler settings
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -fPIC
-INCLUDES := -I../../../libs/rkllm/include -I../testing
+INCLUDES := -I../../../libs/rkllm/include -I../../../libs -I../testing
 TEST_INCLUDES := $(INCLUDES)
 SANDBOX_BUILD := 1
 

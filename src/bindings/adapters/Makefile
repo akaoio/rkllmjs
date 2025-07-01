@@ -7,7 +7,7 @@ MODULE_NAME := adapter-manager
 # Compiler settings
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -fPIC
-INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core
+INCLUDES := -I../../../libs/rkllm/include -I../../../libs -I../utils -I../core
 TEST_INCLUDES := $(INCLUDES)  # Uses RKLLMJS Test Framework
 
 # Build mode configuration - now supports RKLLM_MODE environment variable
