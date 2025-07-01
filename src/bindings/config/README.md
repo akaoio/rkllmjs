@@ -4,241 +4,195 @@
 Configuration management and validation for RKLLM components
 
 ## Overview
-Provides comprehensive configuration loading, validation, and management for RKLLM runtime settings. Handles JSON parsing, environment variables, and configuration schema validation with runtime safety checks.
+Provides C++ implementation with 6 source files and 4 header files. Handles JSON parsing, environment variables, and configuration schema validation with runtime safety checks.
 
 ## Architecture
-- **config-manager.hpp**: ConfigManager
-- **json-parser.hpp**: JsonValue, JsonParser
-
+Module architecture information will be added here.
 
 ## Source Files
-- `build-config.hpp` (hpp)
-- `config-manager.cpp` (cpp)
-- `config-manager.hpp` (hpp)
-- `include-manager.hpp` (hpp)
-- `json-parser.cpp` (cpp)
-- `json-parser.hpp` (hpp)
+## Source File: build-config.hpp
+
+### Functions
+*No public functions found*
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `algorithm`
+- `cctype`
+- `cstdio`
+- `cstdlib`
+- `string`
+
+## Source File: build-config.test.cpp
+
+### Functions
+- `RKLLMJS_TEST_MAIN()`
+- `TEST()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `../testing/rkllmjs-test.hpp`
+- `build-config.hpp`
+- `cstdlib`
+- `cstring`
+- `include-manager.hpp`
+- `string`
+
+## Source File: config-manager.cpp
+
+### Functions
+- `canRunModel()`
+- `getAvailableModels()`
+- `getProjectRoot()`
+- `isValid()`
+- `string()`
+- `toString()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `algorithm`
+- `config-manager.hpp`
+- `fstream`
+- `iostream`
+- `sstream`
+- `sys/stat.h`
+- `unistd.h`
+
+## Source File: config-manager.hpp
+
+### Functions
+*No public functions found*
+
+### Classes
+- `ConfigManager`
+
+### Dependencies
+- `map`
+- `string`
+- `vector`
+
+## Source File: config-manager.test.cpp
+
+### Functions
+- `bool()`
+- `int()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `cassert`
+- `config-manager.hpp`
+- `iostream`
+
+## Source File: include-manager.hpp
+
+### Functions
+*No public functions found*
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `build-config.hpp`
+
+## Source File: include-manager.test.cpp
+
+### Functions
+- `RKLLMJS_TEST_MAIN()`
+- `TEST()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `../testing/rkllmjs-test.hpp`
+- `include-manager.hpp`
+
+## Source File: json-parser.cpp
+
+### Functions
+- `string()`
+- `stringify()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `cctype`
+- `json-parser.hpp`
+- `sstream`
+
+## Source File: json-parser.hpp
+
+### Functions
+*No public functions found*
+
+### Classes
+- `JsonParser`
+- `JsonValue`
+
+### Dependencies
+- `map`
+- `string`
+- `vector`
+
+## Source File: json-parser.test.cpp
+
+### Functions
+- `int()`
+- `void()`
+
+### Classes
+*No classes found*
+
+### Dependencies
+- `cassert`
+- `iostream`
+- `json-parser.hpp`
+- `sstream`
 
 
 ## API Reference
 
 ### Functions
-#### build-config.hpp
-
-##### `to_lower()`
-*No documentation available*
-
-##### `detect_rk3588()`
-*No documentation available*
-
-##### `detect_arm64()`
-*No documentation available*
-
-##### `detect_real_mode()`
-*No documentation available*
-
-#### config-manager.cpp
-
-##### `file()`
-*No documentation available*
-
-##### `parseModelsFromJson()`
-*No documentation available*
-
-##### `parseHardwareProfilesFromJson()`
-*No documentation available*
-
-##### `loadConfig()`
-*No documentation available*
-
-#### config-manager.hpp
-
-##### `isValid()`
-*No documentation available*
-
-##### `toString()`
-*No documentation available*
-
-##### `canRunModel()`
-*No documentation available*
-
-##### `loadConfig()`
-*No documentation available*
-
-##### `getModel()`
-*No documentation available*
-
-##### `getHardwareProfile()`
-*No documentation available*
-
-##### `selectBestModel()`
-*No documentation available*
-
-##### `resolvePath()`
-*No documentation available*
-
-##### `modelExists()`
-*No documentation available*
-
-##### `getProjectRoot()`
-*No documentation available*
-
-##### `extractJsonValue()`
-*No documentation available*
-
-##### `parseModelsFromJson()`
-*No documentation available*
-
-##### `parseHardwareProfilesFromJson()`
-*No documentation available*
-
-#### json-parser.cpp
-
-##### `setObject()`
-*No documentation available*
-
-##### `skipWhitespace()`
-*No documentation available*
-
-##### `parseValue()`
-*No documentation available*
-
-##### `JsonValue()`
-*No documentation available*
-
-##### `parseObject()`
-*No documentation available*
-
-##### `parseString()`
-*No documentation available*
-
-##### `parseNumber()`
-*No documentation available*
-
-#### json-parser.hpp
-
-##### `getType()`
-*No documentation available*
-
-##### `asString()`
-*No documentation available*
-
-##### `asNumber()`
-*No documentation available*
-
-##### `asInt()`
-*No documentation available*
-
-##### `asBool()`
-*No documentation available*
-
-##### `isNull()`
-*No documentation available*
-
-##### `isString()`
-*No documentation available*
-
-##### `isNumber()`
-*No documentation available*
-
-##### `isBool()`
-*No documentation available*
-
-##### `isObject()`
-*No documentation available*
-
-##### `hasKey()`
-*No documentation available*
-
-##### `setObject()`
-*No documentation available*
-
-##### `set()`
-*No documentation available*
-
-##### `parse()`
-*No documentation available*
-
-##### `stringify()`
-*No documentation available*
-
-##### `parseValue()`
-*No documentation available*
-
-##### `parseObject()`
-*No documentation available*
-
-##### `parseString()`
-*No documentation available*
-
-##### `parseNumber()`
-*No documentation available*
-
-##### `skipWhitespace()`
-*No documentation available*
-
-
+See source files below for detailed function information.
 
 ### Classes
-#### config-manager.hpp
-
-##### `ConfigManager`
-*No documentation available*
-
-#### json-parser.hpp
-
-##### `JsonValue`
-*No documentation available*
-
-##### `JsonParser`
-*No documentation available*
-
-
+See source files below for detailed class information.
 
 ### Data Structures
-- stat stat 
-- ModelConfig HardwareProfile 
-
+Data structures will be documented here.
 
 ### Enumerations
-- Type 
-
+Enumerations will be documented here.
 
 ## Dependencies
-- algorithm
-- build-config.hpp
-- cctype
-- config-manager.hpp
-- cstdio
-- cstdlib
-- fstream
-- iostream
-- json-parser.hpp
-- map
-- sstream
-- string
-- sys/stat.h
-- unistd.h
-- vector
-
+See source files below for dependencies.
 
 ## Usage Examples
-*Usage examples will be added based on function analysis*
+Usage examples will be added here.
 
 ## Error Handling
-*Error handling documentation will be generated from code analysis*
+Error handling information will be added here.
 
 ## Performance Notes
-*Performance considerations will be documented*
+Performance considerations will be documented here.
 
 ## Thread Safety
-*Thread safety analysis will be provided*
+Thread safety information will be added here.
 
 ## Memory Management
-*Memory management details will be documented*
+Memory management details will be documented here.
 
 ## Testing
-All components have corresponding unit tests.
+Testing information will be added here.
 
 ### Running Tests
 ```bash
@@ -267,7 +221,7 @@ make install
 ```
 
 ## Troubleshooting
-*Common issues and solutions will be documented*
+Troubleshooting guide will be added here.
 
 ---
 *Generated automatically by RKLLMJS README Generator*

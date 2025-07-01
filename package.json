@@ -41,14 +41,10 @@
     "test:sandbox": "RKLLM_MODE=sandbox npm run test:cpp",
     "test:cpp": "bash scripts/test-cpp.sh",
     "clean:cpp": "bash src/bindings/build.sh clean",
-    "readme:validate": "bash scripts/readme-integration.sh validate",
-    "readme:clean": "find src -name 'README.md' -delete",
-    "readme:generate": "bash scripts/readme-integration.sh generate",
-    "readme:generate-force": "bash scripts/readme-integration.sh generate --force",
-    "doc": "bash scripts/doc-generator.sh generate && bash scripts/readme-integration.sh generate",
+    "doc": "bash scripts/doc-generator.sh all",
     "doc:rules": "bash scripts/doc-generator.sh generate",
-    "doc:readme": "bash scripts/readme-integration.sh generate",
-    "doc:validate": "bash scripts/doc-generator.sh validate && bash scripts/readme-integration.sh validate"
+    "doc:readme": "bash scripts/doc-generator.sh readme",
+    "doc:validate": "bash scripts/doc-generator.sh validate"
   },
   "keywords": [
     "rockchip",

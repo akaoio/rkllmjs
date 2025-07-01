@@ -53,7 +53,7 @@ validate_cpp_modular_architecture() {
     print_section "🏗️ Checking C++ Modular Architecture..."
 
     # Check required C++ modules exist
-    REQUIRED_CPP_MODULES=("core" "inference" "memory" "adapters" "utils" "readme-generator" "napi-bindings")
+    REQUIRED_CPP_MODULES=("core" "inference" "memory" "adapters" "utils" "napi-bindings")
     CPP_BINDINGS_DIR="src/bindings"
 
     if [ ! -d "$CPP_BINDINGS_DIR" ]; then
