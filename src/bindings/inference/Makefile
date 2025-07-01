@@ -4,7 +4,7 @@
 # Compiler settings
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -fPIC -DRKLLM_COMPILE_MODE_SANDBOX
-INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core -I../testing
+INCLUDES := -I../../../libs/rkllm/include -I../../../libs -I../utils -I../core -I../testing
 
 # Library settings
 TEST_LIBS := -pthread

@@ -13,16 +13,15 @@ TEST_INCLUDES := $(INCLUDES)  # Uses RKLLMJS Test Framework
 # Build mode configuration - now supports RKLLM_MODE environment variable
 ifdef RKLLM_COMPILE_MODE_REAL
     CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL -O2
-    INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core -I../inference
+    INCLUDES += -I../inference
 else ifdef REAL_BUILD
     # Legacy support for REAL_BUILD
     CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL -O2
-    INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core -I../inference
+    INCLUDES += -I../inference
 else
     # Default to sandbox mode
     CXXFLAGS += -DSANDBOX_BUILD -DRKLLM_COMPILE_MODE_SANDBOX -O2
-    # Exclude inference includes in sandbox mode
-    INCLUDES := -I../../../libs/rkllm/include -I../utils
+    # Use base includes for sandbox mode (excluding inference)
 endif
 
 ifdef DEBUG
