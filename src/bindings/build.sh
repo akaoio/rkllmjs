@@ -54,7 +54,6 @@ declare -a MODULES=(
     "memory"
     "inference"
     "adapters"
-    "readme-generator"
     "napi-bindings"
 )
 
@@ -101,9 +100,16 @@ check_prerequisites() {
         exit 1
     fi
     
-    # Check Node.js headers
-    if ! node -p "require('node-addon-api').include" &> /dev/null; then
-        log_error "Node.js addon API not found. Run: npm install -g node-addon-api"
+    # Check Node.js headers (look in local node_modules first)
+    PROJECT_ROOT="$BINDINGS_DIR/../.."
+    if [ -d "$PROJECT_ROOT/node_modules/node-addon-api" ]; then
+        # Use local installation
+        ADDON_API_PATH="$PROJECT_ROOT/node_modules/node-addon-api"
+    elif node -p "require('node-addon-api').include" &> /dev/null; then
+        # Fall back to global installation
+        ADDON_API_PATH=""
+    else
+        log_error "Node.js addon API not found. Run: npm install"
         exit 1
     fi
     
@@ -360,11 +366,6 @@ generate_report() {
                 ;;
             "adapters")
                 if [ -f "$module_dir/bin/librkllm-adapters.a" ] || [ -f "$module_dir/librkllm-adapters.a" ]; then
-                    success=true
-                fi
-                ;;
-            "readme-generator")
-                if [ -f "$module_dir/bin/libreadme-generator.a" ] || [ -f "$module_dir/libreadme-generator.a" ]; then
                     success=true
                 fi
                 ;;

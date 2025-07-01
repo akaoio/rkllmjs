@@ -183,22 +183,26 @@ export class RKLLMModelManager {
 
       if (response.body) {
         const reader = response.body.getReader();
-        
+
         try {
           // eslint-disable-next-line no-constant-condition
           while (true) {
             const { done, value } = await reader.read();
-            
+
             if (done) break;
-            
+
             writer.write(value);
             downloadedSize += value.length;
-            
+
             if (totalSize) {
-              const progress = (downloadedSize / totalSize * 100).toFixed(1);
-              process.stdout.write(`\r📈 Progress: ${progress}% (${(downloadedSize / 1024 / 1024).toFixed(2)} MB)`);
+              const progress = ((downloadedSize / totalSize) * 100).toFixed(1);
+              process.stdout.write(
+                `\r📈 Progress: ${progress}% (${(downloadedSize / 1024 / 1024).toFixed(2)} MB)`
+              );
             } else {
-              process.stdout.write(`\r📈 Downloaded: ${(downloadedSize / 1024 / 1024).toFixed(2)} MB`);
+              process.stdout.write(
+                `\r📈 Downloaded: ${(downloadedSize / 1024 / 1024).toFixed(2)} MB`
+              );
             }
           }
         } finally {
@@ -210,10 +214,9 @@ export class RKLLMModelManager {
       console.log(`\n✅ Model downloaded successfully!`);
       console.log(`📁 Saved to: ${modelPath}`);
       console.log(`📏 Final size: ${(downloadedSize / 1024 / 1024).toFixed(2)} MB`);
-
     } catch (error) {
       console.error(`\n❌ Failed to pull model:`, error);
-      
+
       // Clean up incomplete download
       if (fs.existsSync(modelPath)) {
         try {
@@ -223,7 +226,7 @@ export class RKLLMModelManager {
           console.error(`⚠️  Failed to clean up incomplete file:`, cleanupError);
         }
       }
-      
+
       throw error;
     }
   }

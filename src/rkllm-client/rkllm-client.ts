@@ -25,20 +25,20 @@ import {
   type DefaultParamOptions,
   type ChatTemplateConfig,
   type FunctionToolsConfig,
-  
+
   // Enums
   LLMCallState,
   RKLLMInputType,
   RKLLMInferMode,
   RKLLMStatusCode,
-  
+
   // Error handling
   RKLLMError,
 } from '../rkllm-types/rkllm-types.js';
 
 // Import the main branch's LLM Handle Wrapper
 // TODO: Import from new modular N-API bindings instead of llm-handle
-// import { 
+// import {
 //   LLMHandleWrapper,
 //   type RKLLMParam as MainRKLLMParam,
 //   type RKLLMInput as MainRKLLMInput,
@@ -55,42 +55,52 @@ const LLMHandleWrapper = {
   async init(_param: MainRKLLMParam): Promise<LLMHandle> {
     throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
   },
-  
+
   async destroy(_handle: LLMHandle): Promise<void> {
     throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
   },
-  
+
   async run(_handle: LLMHandle, _input: MainRKLLMInput, _inferParams: any): Promise<number> {
     throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
   },
-  
+
   async abort(_handle: LLMHandle): Promise<void> {
     throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
   },
-  
+
   async loadLora(_handle: LLMHandle, _adapter: any): Promise<void> {
     throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
   },
-  
-  async setChatTemplate(_handle: LLMHandle, _system: string, _prefix: string, _postfix: string): Promise<void> {
+
+  async setChatTemplate(
+    _handle: LLMHandle,
+    _system: string,
+    _prefix: string,
+    _postfix: string
+  ): Promise<void> {
     throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
   },
-  
-  async setFunctionTools(_handle: LLMHandle, _system: string, _tools: string, _response: string): Promise<void> {
+
+  async setFunctionTools(
+    _handle: LLMHandle,
+    _system: string,
+    _tools: string,
+    _response: string
+  ): Promise<void> {
     throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
   },
-  
+
   async loadPromptCache(_handle: LLMHandle, _cachePath: string): Promise<void> {
     throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
   },
-  
+
   async releasePromptCache(_handle: LLMHandle): Promise<void> {
     throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
   },
-  
+
   async createDefaultParam(): Promise<MainRKLLMParam> {
     throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
-  }
+  },
 };
 
 // ============================================================================
@@ -101,52 +111,52 @@ const LLMHandleWrapper = {
  * Configuration options for RKLLM Client initialization
  */
 export interface RKLLMClientConfig extends Partial<RKLLMParam> {
-  modelPath: string;                    // Required: path to model file
-  autoInit?: boolean;                   // Auto-initialize on creation (default: true)
-  enableEventLogging?: boolean;         // Enable detailed event logging (default: false)
-  callbackTimeout?: number;             // Callback timeout in ms (default: 30000)
-  maxRetries?: number;                  // Max retry attempts for failed operations (default: 3)
-  retryDelay?: number;                  // Delay between retries in ms (default: 1000)
+  modelPath: string; // Required: path to model file
+  autoInit?: boolean; // Auto-initialize on creation (default: true)
+  enableEventLogging?: boolean; // Enable detailed event logging (default: false)
+  callbackTimeout?: number; // Callback timeout in ms (default: 30000)
+  maxRetries?: number; // Max retry attempts for failed operations (default: 3)
+  retryDelay?: number; // Delay between retries in ms (default: 1000)
 }
 
 /**
  * Options for inference operations
  */
 export interface InferenceOptions {
-  mode?: RKLLMInferMode;                // Inference mode (default: GENERATE)
-  streaming?: boolean;                  // Enable streaming responses (default: false)
-  onToken?: (token: string) => void;    // Token-by-token callback for streaming
+  mode?: RKLLMInferMode; // Inference mode (default: GENERATE)
+  streaming?: boolean; // Enable streaming responses (default: false)
+  onToken?: (token: string) => void; // Token-by-token callback for streaming
   onProgress?: (progress: number) => void; // Progress callback (0-1)
-  signal?: AbortSignal;                 // Abort signal for cancellation
-  timeout?: number;                     // Operation timeout in ms
-  
+  signal?: AbortSignal; // Abort signal for cancellation
+  timeout?: number; // Operation timeout in ms
+
   // Dynamic inference parameters (override client defaults)
-  maxNewTokens?: number;                // Override max tokens for this inference
-  temperature?: number;                 // Override temperature for this inference
-  topK?: number;                        // Override top-K for this inference
-  topP?: number;                        // Override top-P for this inference
-  repeatPenalty?: number;               // Override repeat penalty for this inference
-  enableProfiler?: boolean;             // Enable performance profiling for this inference
+  maxNewTokens?: number; // Override max tokens for this inference
+  temperature?: number; // Override temperature for this inference
+  topK?: number; // Override top-K for this inference
+  topP?: number; // Override top-P for this inference
+  repeatPenalty?: number; // Override repeat penalty for this inference
+  enableProfiler?: boolean; // Enable performance profiling for this inference
 }
 
 /**
  * Result from inference operations
  */
 export interface InferenceResult {
-  text: string;                         // Generated text
-  tokenCount: number;                   // Number of tokens generated
+  text: string; // Generated text
+  tokenCount: number; // Number of tokens generated
   finishReason: 'completed' | 'stopped' | 'error' | 'timeout'; // Completion reason
   performance: {
-    prefillTimeMs: number;              // Time for prefill stage
-    generateTimeMs: number;             // Time for generation stage
-    totalTimeMs: number;                // Total inference time
-    tokensPerSecond: number;            // Generation speed
-    memoryUsageMb: number;              // Memory usage
+    prefillTimeMs: number; // Time for prefill stage
+    generateTimeMs: number; // Time for generation stage
+    totalTimeMs: number; // Total inference time
+    tokensPerSecond: number; // Generation speed
+    memoryUsageMb: number; // Memory usage
   };
   metadata?: {
-    modelName?: string;                 // Model identifier
-    contextLength?: number;             // Context window used
-    stopSequence?: string;              // Stop sequence that triggered completion
+    modelName?: string; // Model identifier
+    contextLength?: number; // Context window used
+    stopSequence?: string; // Stop sequence that triggered completion
   };
 }
 
@@ -158,8 +168,8 @@ export interface InferenceResult {
  * Events emitted by RKLLMClient
  */
 export interface RKLLMClientEvents {
-  'initialized': () => void;
-  'destroyed': () => void;
+  initialized: () => void;
+  destroyed: () => void;
   'inference:start': (input: RKLLMInput) => void;
   'inference:token': (token: string, tokenId: number) => void;
   'inference:progress': (progress: number) => void;
@@ -173,9 +183,9 @@ export interface RKLLMClientEvents {
   'cache:saved': (cachePath: string) => void;
   'cache:loaded': (cachePath: string) => void;
   'cache:cleared': () => void;
-  'error': (error: RKLLMError) => void;
-  'warning': (message: string) => void;
-  'debug': (message: string, data?: any) => void;
+  error: (error: RKLLMError) => void;
+  warning: (message: string) => void;
+  debug: (message: string, data?: any) => void;
 }
 
 // ============================================================================
@@ -184,15 +194,15 @@ export interface RKLLMClientEvents {
 
 /**
  * High-level TypeScript wrapper for RKLLM C++ library
- * 
- * Provides Promise-based API with event support. Integrates seamlessly with 
- * native C++ N-API bindings (PR #34) when available, falls back to mock 
+ *
+ * Provides Promise-based API with event support. Integrates seamlessly with
+ * native C++ N-API bindings (PR #34) when available, falls back to mock
  * implementation for development without RK3588 hardware.
- * 
+ *
  * Architecture:
  * ┌─────────────────────────────┐
  * │   RKLLMClient (this)        │ ← High-level Promise-based API
- * ├─────────────────────────────┤  
+ * ├─────────────────────────────┤
  * │   LLMHandleWrapper (PR #34) │ ← Native binding TypeScript wrapper
  * ├─────────────────────────────┤
  * │   C++ N-API Bindings       │ ← Native bridge layer (PR #34)
@@ -215,7 +225,7 @@ export class RKLLMClient extends EventEmitter {
 
   constructor(config: RKLLMClientConfig) {
     super();
-    
+
     this.config = {
       // Default configuration
       maxContextLen: 4096,
@@ -241,7 +251,7 @@ export class RKLLMClient extends EventEmitter {
         baseDomainId: 0,
         embedFlash: false,
         enabledCpusNum: 4,
-        enabledCpusMask: 0x0F,
+        enabledCpusMask: 0x0f,
         nBatch: 1,
         useCrossAttn: false,
       },
@@ -253,8 +263,15 @@ export class RKLLMClient extends EventEmitter {
 
     // Auto-initialize if enabled
     if (this.config.autoInit) {
-      this.initialize().catch(error => {
-        this.emit('error', new RKLLMError('Auto-initialization failed', RKLLMStatusCode.ERROR_MODEL_LOAD_FAILED, error.message));
+      this.initialize().catch((error) => {
+        this.emit(
+          'error',
+          new RKLLMError(
+            'Auto-initialization failed',
+            RKLLMStatusCode.ERROR_MODEL_LOAD_FAILED,
+            error.message
+          )
+        );
       });
     }
   }
@@ -276,30 +293,33 @@ export class RKLLMClient extends EventEmitter {
 
       // Convert config to main branch's format
       const mainParam = this.convertToMainParam(this.config);
-      
+
       // Use main branch's LLMHandleWrapper
       this.llmHandle = await LLMHandleWrapper.init(mainParam);
       this.debugLog('LLM Handle initialized successfully', { handle: this.llmHandle });
 
       this.isInitialized = true;
-      
+
       this.emit('initialized');
       this.emit('model:loaded', this.modelPath);
       this.debugLog('RKLLM client initialized successfully');
-
     } catch (error) {
       // Check if the error is specifically about native bindings not being available
       const errorMessage = error instanceof Error ? error.message : String(error);
       let errorCode = RKLLMStatusCode.ERROR_MODEL_LOAD_FAILED;
-      
-      if (errorMessage.includes('Failed to load native binding') || 
-          errorMessage.includes('Native bindings not yet implemented')) {
+
+      if (
+        errorMessage.includes('Failed to load native binding') ||
+        errorMessage.includes('Native bindings not yet implemented')
+      ) {
         errorCode = RKLLMStatusCode.ERROR_NATIVE_BINDING_NOT_AVAILABLE;
       }
-      
-      const rkllmError = error instanceof RKLLMError ? error : 
-        new RKLLMError('Initialization failed', errorCode, errorMessage);
-      
+
+      const rkllmError =
+        error instanceof RKLLMError
+          ? error
+          : new RKLLMError('Initialization failed', errorCode, errorMessage);
+
       this.emit('error', rkllmError);
       throw rkllmError;
     }
@@ -331,15 +351,20 @@ export class RKLLMClient extends EventEmitter {
       }
 
       this.isInitialized = false;
-      
+
       this.emit('destroyed');
       this.emit('model:unloaded');
       this.debugLog('RKLLM client destroyed successfully');
-
     } catch (error) {
-      const rkllmError = error instanceof RKLLMError ? error : 
-        new RKLLMError('Destruction failed', RKLLMStatusCode.ERROR_UNKNOWN, error instanceof Error ? error.message : String(error));
-      
+      const rkllmError =
+        error instanceof RKLLMError
+          ? error
+          : new RKLLMError(
+              'Destruction failed',
+              RKLLMStatusCode.ERROR_UNKNOWN,
+              error instanceof Error ? error.message : String(error)
+            );
+
       this.emit('error', rkllmError);
       throw rkllmError;
     }
@@ -365,7 +390,10 @@ export class RKLLMClient extends EventEmitter {
   /**
    * Generate text from token sequence
    */
-  async generateFromTokens(tokens: Int32Array, options: InferenceOptions = {}): Promise<InferenceResult> {
+  async generateFromTokens(
+    tokens: Int32Array,
+    options: InferenceOptions = {}
+  ): Promise<InferenceResult> {
     const input: RKLLMInput = {
       inputType: RKLLMInputType.TOKEN,
       tokenInput: {
@@ -380,7 +408,11 @@ export class RKLLMClient extends EventEmitter {
   /**
    * Generate text from embedding
    */
-  async generateFromEmbedding(embedding: Float32Array, nTokens: number, options: InferenceOptions = {}): Promise<InferenceResult> {
+  async generateFromEmbedding(
+    embedding: Float32Array,
+    nTokens: number,
+    options: InferenceOptions = {}
+  ): Promise<InferenceResult> {
     const input: RKLLMInput = {
       inputType: RKLLMInputType.EMBED,
       embedInput: {
@@ -397,7 +429,7 @@ export class RKLLMClient extends EventEmitter {
    */
   async infer(input: RKLLMInput, options: InferenceOptions = {}): Promise<InferenceResult> {
     this.ensureInitialized();
-    
+
     if (this.isRunning) {
       throw new RKLLMError('Inference already running', RKLLMStatusCode.ERROR_TASK_RUNNING);
     }
@@ -432,15 +464,15 @@ export class RKLLMClient extends EventEmitter {
         if (result.text) {
           generatedText += result.text;
           tokenCount++;
-          
+
           // Emit token event
           this.emit('inference:token', result.text, result.tokenId ?? 0);
-          
+
           // Call user token callback if provided
           if (options.onToken) {
             options.onToken(result.text);
           }
-          
+
           // Emit progress if callback provided
           if (options.onProgress && this.config.maxNewTokens) {
             const progress = Math.min(tokenCount / this.config.maxNewTokens!, 1);
@@ -469,9 +501,9 @@ export class RKLLMClient extends EventEmitter {
 
       // TODO: Call native inference when C++ bindings are available
       const result = await this.runInference(input, inferParams, callback, options);
-      
+
       const totalTime = Date.now() - startTime;
-      const tokensPerSecond = tokenCount > 0 ? (tokenCount / (generateTime / 1000)) : 0;
+      const tokensPerSecond = tokenCount > 0 ? tokenCount / (generateTime / 1000) : 0;
 
       const inferenceResult: InferenceResult = {
         text: generatedText || result.text || '',
@@ -484,26 +516,32 @@ export class RKLLMClient extends EventEmitter {
           tokensPerSecond,
           memoryUsageMb: memoryUsage,
         },
-        metadata: this.config.maxContextLen ? {
-          modelName: this.modelPath,
-          contextLength: this.config.maxContextLen,
-        } : {
-          modelName: this.modelPath,
-        },
+        metadata: this.config.maxContextLen
+          ? {
+              modelName: this.modelPath,
+              contextLength: this.config.maxContextLen,
+            }
+          : {
+              modelName: this.modelPath,
+            },
       };
 
       this.emit('inference:complete', inferenceResult);
       this.debugLog('Inference completed', { result: inferenceResult });
-      
-      return inferenceResult;
 
+      return inferenceResult;
     } catch (error) {
-      const rkllmError = error instanceof RKLLMError ? error : 
-        new RKLLMError('Inference failed', RKLLMStatusCode.ERROR_INFERENCE_FAILED, error instanceof Error ? error.message : String(error));
-      
+      const rkllmError =
+        error instanceof RKLLMError
+          ? error
+          : new RKLLMError(
+              'Inference failed',
+              RKLLMStatusCode.ERROR_INFERENCE_FAILED,
+              error instanceof Error ? error.message : String(error)
+            );
+
       this.emit('inference:error', rkllmError);
       throw rkllmError;
-
     } finally {
       this.isRunning = false;
       this.currentAbortController = null;
@@ -524,24 +562,29 @@ export class RKLLMClient extends EventEmitter {
 
     try {
       this.debugLog('Aborting inference');
-      
+
       // Signal abort to current operation
       if (this.currentAbortController) {
         this.currentAbortController.abort();
       }
 
-      // Call LLMHandleWrapper abort method  
+      // Call LLMHandleWrapper abort method
       if (this.llmHandle) {
         await LLMHandleWrapper.abort(this.llmHandle);
       }
 
       this.emit('inference:abort');
       this.debugLog('Inference aborted successfully');
-
     } catch (error) {
-      const rkllmError = error instanceof RKLLMError ? error : 
-        new RKLLMError('Abort failed', RKLLMStatusCode.ERROR_UNKNOWN, error instanceof Error ? error.message : String(error));
-      
+      const rkllmError =
+        error instanceof RKLLMError
+          ? error
+          : new RKLLMError(
+              'Abort failed',
+              RKLLMStatusCode.ERROR_UNKNOWN,
+              error instanceof Error ? error.message : String(error)
+            );
+
       this.emit('error', rkllmError);
       throw rkllmError;
     }
@@ -576,11 +619,16 @@ export class RKLLMClient extends EventEmitter {
       this.loadedLoraAdapters.add(adapter.loraAdapterName);
       this.emit('lora:loaded', adapter.loraAdapterName);
       this.debugLog('LoRA adapter loaded successfully');
-
     } catch (error) {
-      const rkllmError = error instanceof RKLLMError ? error : 
-        new RKLLMError('LoRA loading failed', RKLLMStatusCode.ERROR_MODEL_LOAD_FAILED, error instanceof Error ? error.message : String(error));
-      
+      const rkllmError =
+        error instanceof RKLLMError
+          ? error
+          : new RKLLMError(
+              'LoRA loading failed',
+              RKLLMStatusCode.ERROR_MODEL_LOAD_FAILED,
+              error instanceof Error ? error.message : String(error)
+            );
+
       this.emit('error', rkllmError);
       throw rkllmError;
     }
@@ -598,19 +646,24 @@ export class RKLLMClient extends EventEmitter {
       // Call LLMHandleWrapper setChatTemplate method
       if (this.llmHandle) {
         await LLMHandleWrapper.setChatTemplate(
-          this.llmHandle, 
-          config.systemPrompt || '', 
-          config.promptPrefix || '[INST]', 
+          this.llmHandle,
+          config.systemPrompt || '',
+          config.promptPrefix || '[INST]',
           config.promptPostfix || '[/INST]'
         );
       }
 
       this.debugLog('Chat template set successfully');
-
     } catch (error) {
-      const rkllmError = error instanceof RKLLMError ? error : 
-        new RKLLMError('Chat template setting failed', RKLLMStatusCode.ERROR_INVALID_PARAM, error instanceof Error ? error.message : String(error));
-      
+      const rkllmError =
+        error instanceof RKLLMError
+          ? error
+          : new RKLLMError(
+              'Chat template setting failed',
+              RKLLMStatusCode.ERROR_INVALID_PARAM,
+              error instanceof Error ? error.message : String(error)
+            );
+
       this.emit('error', rkllmError);
       throw rkllmError;
     }
@@ -628,7 +681,7 @@ export class RKLLMClient extends EventEmitter {
       // Call LLMHandleWrapper setFunctionTools method
       if (this.llmHandle) {
         await LLMHandleWrapper.setFunctionTools(
-          this.llmHandle, 
+          this.llmHandle,
           config.systemPrompt || '',
           JSON.stringify(config.tools),
           config.toolResponseStr || ''
@@ -636,11 +689,16 @@ export class RKLLMClient extends EventEmitter {
       }
 
       this.debugLog('Function tools set successfully');
-
     } catch (error) {
-      const rkllmError = error instanceof RKLLMError ? error : 
-        new RKLLMError('Function tools setting failed', RKLLMStatusCode.ERROR_INVALID_PARAM, error instanceof Error ? error.message : String(error));
-      
+      const rkllmError =
+        error instanceof RKLLMError
+          ? error
+          : new RKLLMError(
+              'Function tools setting failed',
+              RKLLMStatusCode.ERROR_INVALID_PARAM,
+              error instanceof Error ? error.message : String(error)
+            );
+
       this.emit('error', rkllmError);
       throw rkllmError;
     }
@@ -666,11 +724,16 @@ export class RKLLMClient extends EventEmitter {
 
       this.emit('cache:loaded', cachePath);
       this.debugLog('Prompt cache loaded successfully');
-
     } catch (error) {
-      const rkllmError = error instanceof RKLLMError ? error : 
-        new RKLLMError('Cache loading failed', RKLLMStatusCode.ERROR_FILE_NOT_FOUND, error instanceof Error ? error.message : String(error));
-      
+      const rkllmError =
+        error instanceof RKLLMError
+          ? error
+          : new RKLLMError(
+              'Cache loading failed',
+              RKLLMStatusCode.ERROR_FILE_NOT_FOUND,
+              error instanceof Error ? error.message : String(error)
+            );
+
       this.emit('error', rkllmError);
       throw rkllmError;
     }
@@ -692,11 +755,16 @@ export class RKLLMClient extends EventEmitter {
 
       this.emit('cache:cleared');
       this.debugLog('Prompt cache released successfully');
-
     } catch (error) {
-      const rkllmError = error instanceof RKLLMError ? error : 
-        new RKLLMError('Cache release failed', RKLLMStatusCode.ERROR_UNKNOWN, error instanceof Error ? error.message : String(error));
-      
+      const rkllmError =
+        error instanceof RKLLMError
+          ? error
+          : new RKLLMError(
+              'Cache release failed',
+              RKLLMStatusCode.ERROR_UNKNOWN,
+              error instanceof Error ? error.message : String(error)
+            );
+
       this.emit('error', rkllmError);
       throw rkllmError;
     }
@@ -751,7 +819,7 @@ export class RKLLMClient extends EventEmitter {
         baseDomainId: 0,
         embedFlash: false,
         enabledCpusNum: 4,
-        enabledCpusMask: 0x0F,
+        enabledCpusMask: 0x0f,
         nBatch: 1,
         useCrossAttn: false,
       },
@@ -766,7 +834,7 @@ export class RKLLMClient extends EventEmitter {
     try {
       // Use main branch's LLMHandleWrapper to get default parameters
       const mainParam = await LLMHandleWrapper.createDefaultParam();
-      
+
       // Convert from main branch's format to our format
       const result: RKLLMParam = {
         modelPath: modelPath || mainParam.modelPath || '',
@@ -828,7 +896,7 @@ export class RKLLMClient extends EventEmitter {
           baseDomainId: 0,
           embedFlash: false,
           enabledCpusNum: 4,
-          enabledCpusMask: 0x0F,
+          enabledCpusMask: 0x0f,
           nBatch: 1,
           useCrossAttn: false,
         },
@@ -852,18 +920,12 @@ export class RKLLMClient extends EventEmitter {
     }
   }
 
-
-
-
-
-
-
   /**
    * Run inference using native RKLLM library
    */
   private async runInference(
-    input: RKLLMInput, 
-    inferParams: RKLLMInferParam, 
+    input: RKLLMInput,
+    inferParams: RKLLMInferParam,
     callback: LLMResultCallback,
     _options: InferenceOptions
   ): Promise<RKLLMResult> {
@@ -875,10 +937,10 @@ export class RKLLMClient extends EventEmitter {
       // Convert to main branch formats
       const mainInput = this.convertToMainInput(input);
       const mainInferParams = this.convertToMainInferParams(inferParams);
-      
+
       // Run inference using LLMHandleWrapper
       const statusCode = await LLMHandleWrapper.run(this.llmHandle, mainInput, mainInferParams);
-      
+
       // Check status code
       if (statusCode !== 0) {
         throw new RKLLMError('Inference failed', statusCode);
@@ -899,7 +961,7 @@ export class RKLLMClient extends EventEmitter {
 
       // Call the callback with the result
       await callback(rkllmResult, LLMCallState.FINISH);
-      
+
       return rkllmResult;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -936,7 +998,7 @@ export class RKLLMClient extends EventEmitter {
         baseDomainId: config.extendParam?.baseDomainId ?? 0,
         embedFlash: config.extendParam?.embedFlash ?? false,
         enabledCpusNum: config.extendParam?.enabledCpusNum ?? 4,
-        enabledCpusMask: config.extendParam?.enabledCpusMask ?? 0xFF,
+        enabledCpusMask: config.extendParam?.enabledCpusMask ?? 0xff,
         nBatch: config.extendParam?.nBatch ?? 512,
         useCrossAttn: config.extendParam?.useCrossAttn ?? false,
       },
@@ -971,7 +1033,7 @@ export class RKLLMClient extends EventEmitter {
   private convertToMainInferParams(inferParams: RKLLMInferParam): RKLLMInferParam {
     const result: RKLLMInferParam = {
       mode: inferParams.mode, // Enums are now unified, no conversion needed
-      keepHistory: inferParams.keepHistory
+      keepHistory: inferParams.keepHistory,
     };
 
     if (inferParams.loraParams) {
@@ -986,5 +1048,8 @@ export class RKLLMClient extends EventEmitter {
 export interface IRKLLMClient {
   on<K extends keyof RKLLMClientEvents>(event: K, listener: RKLLMClientEvents[K]): this;
   off<K extends keyof RKLLMClientEvents>(event: K, listener: RKLLMClientEvents[K]): this;
-  emit<K extends keyof RKLLMClientEvents>(event: K, ...args: Parameters<RKLLMClientEvents[K]>): boolean;
+  emit<K extends keyof RKLLMClientEvents>(
+    event: K,
+    ...args: Parameters<RKLLMClientEvents[K]>
+  ): boolean;
 }
