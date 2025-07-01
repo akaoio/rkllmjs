@@ -170,6 +170,10 @@ src/bindings/*/obj/
 **/*.a
 **/*.so
 
+# C++ executables (CLI tools)
+src/bindings/**/*-cli
+src/bindings/**/test-*
+
 # Debug and temporary files  
 debug-test
 debug-test.*

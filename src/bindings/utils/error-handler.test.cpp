@@ -23,7 +23,7 @@ public:
     }
 };
 
-#if RKLLMJS_MODE_SANDBOX
+#ifdef RKLLM_COMPILE_MODE_SANDBOX
 
 // Tests for SANDBOX mode (no NAPI dependencies)
 TEST(ErrorHandlerTest, ErrorCategoryEnum) {

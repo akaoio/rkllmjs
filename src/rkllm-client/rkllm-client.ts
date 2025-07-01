@@ -385,7 +385,7 @@ export class RKLLMClient extends EventEmitter {
       inputType: RKLLMInputType.EMBED,
       embedInput: {
         embed: embedding,
-        nTokens: nTokens,
+        nTokens,
       },
     };
 
@@ -481,7 +481,7 @@ export class RKLLMClient extends EventEmitter {
           prefillTimeMs: prefillTime,
           generateTimeMs: generateTime,
           totalTimeMs: totalTime,
-          tokensPerSecond: tokensPerSecond,
+          tokensPerSecond,
           memoryUsageMb: memoryUsage,
         },
         metadata: this.config.maxContextLen ? {

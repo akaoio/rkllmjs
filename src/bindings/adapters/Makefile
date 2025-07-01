@@ -10,29 +10,27 @@ CXXFLAGS := -std=c++17 -Wall -Wextra -fPIC
 INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core
 TEST_INCLUDES := $(INCLUDES)  # Uses RKLLMJS Test Framework
 
-# Build mode configuration
-ifndef SANDBOX_BUILD
-    SANDBOX_BUILD := 1
-endif
-
-ifdef SANDBOX_BUILD
-    ifeq ($(SANDBOX_BUILD), 1)
-        CXXFLAGS += -DSANDBOX_BUILD -O2
-        # Exclude inference includes in sandbox mode
-        INCLUDES := -I../../../libs/rkllm/include -I../utils
-    else
-        CXXFLAGS += -O2 -DNDEBUG
-        INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core -I../inference
-    endif
-else
-    CXXFLAGS += -O2 -DNDEBUG
+# Build mode configuration - now supports RKLLM_MODE environment variable
+ifdef RKLLM_COMPILE_MODE_REAL
+    CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL -O2
     INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core -I../inference
+else ifdef REAL_BUILD
+    # Legacy support for REAL_BUILD
+    CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL -O2
+    INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core -I../inference
+else
+    # Default to sandbox mode
+    CXXFLAGS += -DSANDBOX_BUILD -DRKLLM_COMPILE_MODE_SANDBOX -O2
+    # Exclude inference includes in sandbox mode
+    INCLUDES := -I../../../libs/rkllm/include -I../utils
 endif
 
 ifdef DEBUG
     CXXFLAGS += -g -O0 -DDEBUG
 else
-    ifndef SANDBOX_BUILD
+    ifdef RKLLM_COMPILE_MODE_REAL
+        CXXFLAGS += -O2 -DNDEBUG
+    else ifndef SANDBOX_BUILD
         CXXFLAGS += -O2 -DNDEBUG
     endif
 endif

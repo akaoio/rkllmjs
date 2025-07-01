@@ -9,14 +9,21 @@ CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -fPIC
 INCLUDES := -I../core -I../config -I../utils -I../inference -I../testing
 
-# Build mode configuration - default to SANDBOX for compatibility
-ifdef REAL_BUILD
-    CXXFLAGS += -DREAL_BUILD -O2
+# Build mode configuration - now supports RKLLM_MODE environment variable
+ifdef RKLLM_COMPILE_MODE_REAL
+    CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL -O2
+    INCLUDES += -I../../../libs/rkllm/include
+    LDFLAGS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
+    LDFLAGS += -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
+else ifdef REAL_BUILD
+    # Legacy support for REAL_BUILD
+    CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL -O2
     INCLUDES += -I../../../libs/rkllm/include
     LDFLAGS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
     LDFLAGS += -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
 else
-    CXXFLAGS += -DSANDBOX_BUILD -O2
+    # Default to sandbox mode
+    CXXFLAGS += -DSANDBOX_BUILD -DRKLLM_COMPILE_MODE_SANDBOX -O2
     LDFLAGS := -pthread
 endif
 

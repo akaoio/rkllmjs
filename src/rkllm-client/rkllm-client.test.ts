@@ -193,7 +193,7 @@ describe('RKLLM Client - Production Tests', () => {
     it('should fail gracefully without native bindings', async () => {
       if (areNativeBindingsAvailable()) {
         testLogger.info('Skipping - native bindings available');
-        console.log("Skipping test - requirements not met"); return;
+        console.log("Skipping test - requirements not met"); 
         return;
       }
       
@@ -385,7 +385,7 @@ describe('RKLLM Client - Production Tests', () => {
       }
       if (!isCompatibleHardware()) {
         testLogger.warn('Not on RK3588 - skipping performance tests');
-        console.log("Skipping test - requirements not met"); return;
+        console.log("Skipping test - requirements not met"); 
         return;
       }
       

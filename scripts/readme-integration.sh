@@ -116,6 +116,16 @@ generate_readmes() {
     local errors=0
     local generated=0
     
+    # First generate README for the main bindings directory
+    log_info "Generating README for main bindings directory..."
+    if "$README_GENERATOR" $force_flag --verbose --config "$README_CONFIG" --template "$README_TEMPLATE" "$PROJECT_ROOT/src/bindings"; then
+        log_success "Main bindings README generated"
+        generated=$((generated + 1))
+    else
+        log_error "Failed to generate main bindings README"
+        errors=$((errors + 1))
+    fi
+    
     # Use recursive mode for all C++ modules
     log_info "Generating READMEs for C++ modules..."
     if "$README_GENERATOR" --recursive $force_flag --verbose --config "$README_CONFIG" --template "$README_TEMPLATE" "$PROJECT_ROOT/src/bindings"; then

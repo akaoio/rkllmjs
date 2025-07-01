@@ -199,7 +199,7 @@ ConversionResult safeStringToDouble(const std::string& str, double& result) {
     }
 }
 
-#if RKLLMJS_MODE_SANDBOX
+#ifdef RKLLM_COMPILE_MODE_SANDBOX
 // SANDBOX mode: Implement the utility functions for testing
 
 bool validateString(const std::string& str) {
