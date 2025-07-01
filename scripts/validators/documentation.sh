@@ -38,6 +38,11 @@ validate_directory_structure() {
         # Count non-README, non-Makefile files
         files=$(find "$dir" -maxdepth 1 -type f -not -name "README.md" -not -name "Makefile" | wc -l)
         if [ $files -eq 0 ] && [ -f "$dir/README.md" ]; then
+            # Check if this is a build artifact directory (contains "artifact" or "compiled" in README)
+            if grep -qi -E "(artifact|compiled|build.*process|generated.*build)" "$dir/README.md" 2>/dev/null; then
+                # This is a build artifact directory - allowed to be empty
+                continue
+            fi
             echo "$dir"
         fi
     done)
