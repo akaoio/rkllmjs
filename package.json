@@ -78,7 +78,7 @@
     "prettier": "^3.0.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
-    "typedoc": "^0.25.0",
+    "typedoc": "^0.28.7",
     "typescript": "^5.3.0",
     "vitest": "^3.2.4"
   },
