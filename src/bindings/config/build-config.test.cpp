@@ -3,6 +3,7 @@
 #include "include-manager.hpp"
 #include <string>
 #include <cstring>
+#include <cstdlib>
 
 using namespace rkllmjs::testing;
 
@@ -11,15 +12,48 @@ namespace config {
 namespace test {
 
 TEST(BuildConfigTest, BuildModeDetection) {
-    // Test that exactly one build mode is active
-#ifdef SANDBOX_BUILD
-    EXPECT_EQ(RKLLMJS_MODE_SANDBOX, 1);
-    EXPECT_EQ(RKLLMJS_MODE_REAL, 0);
-    EXPECT_EQ(RKLLMJS_HAS_NAPI, 0);
-#else
-    EXPECT_EQ(RKLLMJS_MODE_SANDBOX, 0);
-    EXPECT_EQ(RKLLMJS_MODE_REAL, 1);
+    // Test the dynamic mode detection functions
+    using namespace rkllmjs::config;
+    
+    // Test case insensitive parsing
+    setenv("RKLLM_MODE", "REAL", 1);
+    EXPECT_TRUE(detect_real_mode());
+    
+    setenv("RKLLM_MODE", "real", 1);
+    EXPECT_TRUE(detect_real_mode());
+    
+    setenv("RKLLM_MODE", "ReAl", 1);
+    EXPECT_TRUE(detect_real_mode());
+    
+    setenv("RKLLM_MODE", "SANDBOX", 1);
+    EXPECT_FALSE(detect_real_mode());
+    
+    setenv("RKLLM_MODE", "sandbox", 1);
+    EXPECT_FALSE(detect_real_mode());
+    
+    setenv("RKLLM_MODE", "SaNdBoX", 1);
+    EXPECT_FALSE(detect_real_mode());
+    
+    // Test invalid mode falls back to auto-detection
+    setenv("RKLLM_MODE", "invalid", 1);
+    // Result depends on hardware, but should not crash
+    bool result = detect_real_mode();
+    (void)result; // Suppress unused variable warning
+    
+    // Test with no environment variable (auto-detection)
+    unsetenv("RKLLM_MODE");
+    bool auto_result = detect_real_mode();
+    (void)auto_result; // Result depends on hardware detection
+    
+    // Test compile-time features based on current build mode
+#ifdef RKLLM_COMPILE_MODE_REAL
     EXPECT_EQ(RKLLMJS_HAS_NAPI, 1);
+    EXPECT_EQ(RKLLMJS_HAS_NODE_INTEGRATION, 1);
+    EXPECT_EQ(RKLLMJS_HAS_RKLLM_NATIVE, 1);
+#else
+    EXPECT_EQ(RKLLMJS_HAS_NAPI, 0);
+    EXPECT_EQ(RKLLMJS_HAS_NODE_INTEGRATION, 0);
+    EXPECT_EQ(RKLLMJS_HAS_RKLLM_NATIVE, 0);
 #endif
 }
 
@@ -37,13 +71,15 @@ TEST(BuildConfigTest, HeaderPathConfiguration) {
 }
 
 TEST(BuildConfigTest, FeatureAvailability) {
-    // Test feature flags consistency
-#ifdef SANDBOX_BUILD
-    EXPECT_FALSE(RKLLMJS_HAS_NAPI);
-    EXPECT_FALSE(RKLLMJS_HAS_NODE_INTEGRATION);
-#else
+    // Test feature flags consistency based on compile-time mode
+#ifdef RKLLM_COMPILE_MODE_REAL
     EXPECT_TRUE(RKLLMJS_HAS_NAPI);
     EXPECT_TRUE(RKLLMJS_HAS_NODE_INTEGRATION);
+    EXPECT_TRUE(RKLLMJS_HAS_RKLLM_NATIVE);
+#else
+    EXPECT_FALSE(RKLLMJS_HAS_NAPI);
+    EXPECT_FALSE(RKLLMJS_HAS_NODE_INTEGRATION);
+    EXPECT_FALSE(RKLLMJS_HAS_RKLLM_NATIVE);
 #endif
 }
 

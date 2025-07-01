@@ -22,11 +22,17 @@ SOURCES := type-converters.cpp error-handler.cpp
 TEST_SOURCES := type-converters.test.cpp error-handler.test.cpp
 
 # Use sandbox headers when building standalone
-ifdef SANDBOX_BUILD
+ifdef RKLLM_COMPILE_MODE_REAL
     HEADERS := type-converters.hpp error-handler.hpp
-    CXXFLAGS += -DSANDBOX_BUILD
+    CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL
+else ifdef REAL_BUILD
+    # Legacy support for REAL_BUILD
+    HEADERS := type-converters.hpp error-handler.hpp
+    CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL
 else
+    # Default to sandbox mode
     HEADERS := type-converters.hpp error-handler.hpp
+    CXXFLAGS += -DSANDBOX_BUILD -DRKLLM_COMPILE_MODE_SANDBOX
 endif
 
 # Object files
@@ -125,5 +131,5 @@ help:
 	@echo "  help        - Show this help message"
 	@echo ""
 	@echo "Build modes:"
-	@echo "  SANDBOX_BUILD=1  - Use sandbox headers (default)"
-	@echo "  SANDBOX_BUILD=0  - Use full N-API headers"
+	@echo "  RKLLM_MODE=sandbox  - Use sandbox headers (default)"
+	@echo "  RKLLM_MODE=real     - Use full N-API headers"

@@ -5,22 +5,30 @@ MODULE_NAME = rkllm-manager
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -fPIC -I../../../libs/rkllm/include -I../config -I../testing
 
-# Build mode configuration
-ifdef SANDBOX_BUILD
-    CXXFLAGS += -DSANDBOX_BUILD -O2
-    LIBS = -pthread
-    RPATH = 
-else
-    CXXFLAGS += -DREAL_BUILD
+# Build mode configuration - now supports RKLLM_MODE environment variable
+ifdef RKLLM_COMPILE_MODE_REAL
+    CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL -O2
     LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
     RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
+else ifdef REAL_BUILD
+    # Legacy support for REAL_BUILD
+    CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL -O2
+    LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
+    RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
+else
+    # Default to sandbox mode
+    CXXFLAGS += -DSANDBOX_BUILD -DRKLLM_COMPILE_MODE_SANDBOX -O2
+    LIBS = -pthread
+    RPATH = 
 endif
 
 # Debug/Release configuration
 ifdef DEBUG
     CXXFLAGS += -g -O0 -DDEBUG
 else
-    ifndef SANDBOX_BUILD
+    ifdef RKLLM_COMPILE_MODE_REAL
+        CXXFLAGS += -O2 -DNDEBUG
+    else ifndef SANDBOX_BUILD
         CXXFLAGS += -O2 -DNDEBUG
     endif
 endif
