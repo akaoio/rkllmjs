@@ -12,15 +12,20 @@ const require = createRequire(import.meta.url);
 
 /**
  * Check if native RKLLM bindings are available
+ * Currently returns false until N-API integration is complete
  */
 export function areNativeBindingsAvailable(): boolean {
-  try {
-    // Use createRequire for native bindings in ES modules
-    require('../../build/Release/binding.node');
-    return true;
-  } catch {
-    return false;
-  }
+  // TODO: Re-enable when N-API integration is complete
+  // For now, skip all native binding tests
+  return false;
+  
+  // Original implementation (disabled):
+  // try {
+  //   require('../../build/Release/binding.node');
+  //   return true;
+  // } catch {
+  //   return false;
+  // }
 }
 
 /**

@@ -9,15 +9,15 @@ CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -fPIC
 INCLUDES := -I../core -I../config -I../utils -I../inference -I../testing
 
-# Build mode configuration
-ifdef SANDBOX_BUILD
-    CXXFLAGS += -DSANDBOX_BUILD -O2
-    LDFLAGS := -pthread
-else
+# Build mode configuration - default to SANDBOX for compatibility
+ifdef FULL_BUILD
     CXXFLAGS += -DFULL_BUILD -O2
     INCLUDES += -I../../../libs/rkllm/include
     LDFLAGS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
     LDFLAGS += -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
+else
+    CXXFLAGS += -DSANDBOX_BUILD -O2
+    LDFLAGS := -pthread
 endif
 
 # Debug configuration

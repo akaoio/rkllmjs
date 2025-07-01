@@ -193,9 +193,44 @@ AdapterResult JsonAdapter::validate(const std::string& data) {
     
     // Count braces
     int brace_count = 0;
-    for (char c : data) {
-        if (c == '{') brace_count++;
-        else if (c == '}') brace_count--;
+    bool in_string = false;
+    bool escape_next = false;
+    
+    for (size_t i = 0; i < data.length(); i++) {
+        char c = data[i];
+        
+        if (escape_next) {
+            escape_next = false;
+            continue;
+        }
+        
+        if (c == '\\') {
+            escape_next = true;
+            continue;
+        }
+        
+        if (c == '"') {
+            in_string = !in_string;
+            continue;
+        }
+        
+        if (!in_string) {
+            if (c == '{') brace_count++;
+            else if (c == '}') brace_count--;
+            
+            // Check for unquoted values (simple check)
+            if (c == ':') {
+                // Look ahead for the value after colon
+                size_t j = i + 1;
+                while (j < data.length() && (data[j] == ' ' || data[j] == '\t')) j++;
+                if (j < data.length() && data[j] != '"' && data[j] != '{' && 
+                    data[j] != '[' && !std::isdigit(data[j]) && 
+                    data.substr(j, 4) != "true" && data.substr(j, 5) != "false" && 
+                    data.substr(j, 4) != "null") {
+                    return AdapterResult::ERROR_CONVERSION_FAILED;
+                }
+            }
+        }
     }
     
     if (brace_count != 0) {

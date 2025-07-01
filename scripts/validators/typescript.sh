@@ -10,8 +10,8 @@ source "$VALIDATOR_DIR/core.sh"
 validate_typescript() {
     print_section "📁 Scanning TypeScript source files..."
     
-    # Find all TypeScript source files (excluding generated, test, tmp files, and tests/ directory)
-    TS_FILES=$(find . -name "*.ts" -not -path "./tmp/*" -not -path "./node_modules/*" -not -path "./dist/*" -not -path "./build/*" -not -path "./tests/*" -not -name "*.test.ts" -not -name "*.d.ts")
+    # Find all TypeScript source files and filter using .gitignore
+    TS_FILES=$(find . -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | filter_ignored_paths)
 
     if [ -z "$TS_FILES" ]; then
         report_info "No TypeScript source files found"
@@ -27,6 +27,9 @@ validate_typescript() {
 
     # Check each TypeScript file for corresponding test file
     for ts_file in $TS_FILES; do
+        # Skip if file should be ignored
+        should_ignore_path "$ts_file" && continue
+        
         # Get directory and filename without extension
         dir=$(dirname "$ts_file")
         filename=$(basename "$ts_file" .ts)

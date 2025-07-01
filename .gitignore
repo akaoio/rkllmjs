@@ -155,35 +155,24 @@ prebuilds/
 
 # C++ Build artifacts and temporary files
 src/bindings/*/bin/
-src/bindings/core/rkllm-manager.test
-src/bindings/config/config-manager.test
-src/bindings/real-test-simple
-src/bindings/real-inference-test
+src/bindings/*/obj/
 *.a
+*.o
+*.so
+*.dylib
+*.dll
 
-# Test coverage
-coverage/
-
-# Test cache and temporary directories
-tests/.test-cache/
-tests/.tmp/
-.test-*/
-**/test-cache/
-**/test-tmp/
-tmp/
-
-# CI/CD artifacts
-secrets-report.json
-validation-output.txt
-CHANGELOG.md
-.github/workflows/*.log
-
-# IDE
-.idea/
-*.swp
-*.swo
-
-# Backup files
-*.backup# Build artifacts in C++ modules
+# Build artifacts in C++ modules
 **/obj/
 **/bin/
+**/*.test
+**/*.o
+**/*.a
+**/*.so
+
+# Debug and temporary files  
+debug-test
+debug-test.*
+*.backup
+*.tmp
+*.log

@@ -57,7 +57,79 @@ reset_counters() {
     WARNINGS=0
 }
 
+# Function to check if a path should be ignored based on .gitignore
+should_ignore_path() {
+    local path="$1"
+    local gitignore_file=".gitignore"
+    
+    # If .gitignore doesn't exist, don't ignore anything
+    [ ! -f "$gitignore_file" ] && return 1
+    
+    # Common build directories to ignore
+    case "$path" in
+        */bin|*/bin/|*/bin/*)
+            return 0  # Should ignore
+            ;;
+        */obj|*/obj/|*/obj/*)
+            return 0  # Should ignore
+            ;;
+        */build|*/build/|*/build/*)
+            return 0  # Should ignore
+            ;;
+        */dist|*/dist/|*/dist/*)
+            return 0  # Should ignore
+            ;;
+        */node_modules|*/node_modules/|*/node_modules/*)
+            return 0  # Should ignore
+            ;;
+        */tmp|*/tmp/|*/tmp/*)
+            return 0  # Should ignore
+            ;;
+        */logs|*/logs/|*/logs/*)
+            return 0  # Should ignore
+            ;;
+        */.git|*/.git/|*/.git/*)
+            return 0  # Should ignore
+            ;;
+        */.vscode|*/.vscode/|*/.vscode/*)
+            return 0  # Should ignore
+            ;;
+        *.o|*.a|*.so|*.test|*.log)
+            return 0  # Should ignore
+            ;;
+    esac
+    
+    # Check against .gitignore file content
+    while IFS= read -r line; do
+        # Skip comments and empty lines
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+        
+        # Remove leading/trailing whitespace
+        line=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        
+        # Check if path matches pattern
+        case "$path" in
+            $line|*/$line|*$line*)
+                return 0  # Should ignore
+                ;;
+        esac
+    done < "$gitignore_file"
+    
+    return 1  # Don't ignore
+}
+
+# Function to filter paths based on .gitignore
+filter_ignored_paths() {
+    while IFS= read -r path; do
+        if ! should_ignore_path "$path"; then
+            echo "$path"
+        fi
+    done
+}
+
 # Export functions for use in other modules
 export -f report_error report_warning report_success report_info print_section
 export -f get_error_count get_warning_count reset_counters
+export -f should_ignore_path filter_ignored_paths
 export ERRORS WARNINGS RED YELLOW GREEN BLUE NC

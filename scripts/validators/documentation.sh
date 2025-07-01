@@ -21,15 +21,20 @@ validate_naming_conventions() {
 }
 
 validate_directory_structure() {
-    # Check for empty directories (only README.md)
+    # Check for empty directories (only README.md) but respect .gitignore
     print_section "🗂️ Checking for empty directories..."
-    empty_dirs=$(find src -type d -exec sh -c '
-        dir="$1"
+    
+    # Find directories and filter by .gitignore
+    empty_dirs=$(find src -type d | filter_ignored_paths | while IFS= read -r dir; do
+        # Skip if directory should be ignored
+        should_ignore_path "$dir" && continue
+        
+        # Count non-README, non-Makefile files
         files=$(find "$dir" -maxdepth 1 -type f -not -name "README.md" -not -name "Makefile" | wc -l)
         if [ $files -eq 0 ] && [ -f "$dir/README.md" ]; then
             echo "$dir"
         fi
-    ' _ {} \;)
+    done)
 
     if [ -n "$empty_dirs" ]; then
         for dir in $empty_dirs; do
@@ -41,7 +46,7 @@ validate_directory_structure() {
 
     # Check for test files in root (prohibited)
     print_section "🚫 Checking for prohibited test files in root..."
-    root_test_files=$(find . -maxdepth 1 -name "*.test.*" -o -name "test-*" 2>/dev/null | grep -v "scripts/" || true)
+    root_test_files=$(find . -maxdepth 1 -name "*.test.*" -o -name "test-*" 2>/dev/null | grep -v "scripts/" | filter_ignored_paths || true)
     if [ -n "$root_test_files" ]; then
         for file in $root_test_files; do
             report_error "Test file in root directory: $file - violates RULES.md test placement rules"
@@ -55,18 +60,14 @@ validate_documentation() {
     print_section "📚 Checking documentation coverage..."
 
     # Check that each feature directory has README.md
-    # Exclude build artifacts and auto-generated directories
-    FEATURE_DIRS=$(find src -mindepth 1 -type d \
-        -not -path "./tmp/*" \
-        -not -path "./node_modules/*" \
-        -not -path "*/bin" \
-        -not -path "*/obj" \
-        -not -path "*/build" \
-        -not -path "*/logs" \
-        -not -path "*/.git")
+    # Exclude build artifacts and auto-generated directories using .gitignore
+    FEATURE_DIRS=$(find src -mindepth 1 -type d | filter_ignored_paths)
 
     if [ -n "$FEATURE_DIRS" ]; then
         for dir in $FEATURE_DIRS; do
+            # Skip if directory should be ignored
+            should_ignore_path "$dir" && continue
+            
             if [ ! -f "$dir/README.md" ]; then
                 report_error "Missing README.md in feature directory: $dir"
             else
@@ -76,7 +77,7 @@ validate_documentation() {
     fi
 
     # Check configs directory documentation
-    if [ -d "configs" ]; then
+    if [ -d "configs" ] && ! should_ignore_path "configs"; then
         if [ ! -f "configs/README.md" ]; then
             report_error "Missing README.md in configs directory"
         else

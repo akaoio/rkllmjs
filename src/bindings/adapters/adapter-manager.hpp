@@ -7,6 +7,7 @@
 #include <functional>
 #include <unordered_map>
 #include <mutex>
+#include <ostream>
 
 #if RKLLMJS_MODE_FULL
     #include "../core/rkllm-manager.hpp"
@@ -27,6 +28,21 @@ enum class AdapterResult {
     ERROR_UNSUPPORTED_FORMAT,
     ERROR_INITIALIZATION_FAILED
 };
+
+/**
+ * Stream operator for AdapterResult (for testing)
+ */
+inline std::ostream& operator<<(std::ostream& os, const AdapterResult& result) {
+    switch (result) {
+        case AdapterResult::SUCCESS: return os << "SUCCESS";
+        case AdapterResult::ERROR_INVALID_CONFIG: return os << "ERROR_INVALID_CONFIG";
+        case AdapterResult::ERROR_ADAPTER_NOT_FOUND: return os << "ERROR_ADAPTER_NOT_FOUND";
+        case AdapterResult::ERROR_CONVERSION_FAILED: return os << "ERROR_CONVERSION_FAILED";
+        case AdapterResult::ERROR_UNSUPPORTED_FORMAT: return os << "ERROR_UNSUPPORTED_FORMAT";
+        case AdapterResult::ERROR_INITIALIZATION_FAILED: return os << "ERROR_INITIALIZATION_FAILED";
+        default: return os << "UNKNOWN";
+    }
+}
 
 /**
  * Data format types supported by adapters
