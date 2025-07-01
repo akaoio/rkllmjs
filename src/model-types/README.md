@@ -1,65 +1,82 @@
-# Model Types
+# model-types
 
 ## Purpose
-Defines TypeScript interfaces and types for RKLLM model management and metadata.
+Type definitions for RKLLM model management and metadata
 
-## Components
+## Overview
+Provides TypeScript interfaces for model information, repository metadata, download progress tracking, and validation structures. Essential for type-safe model management operations.
 
-### `ModelInfo` Interface
-Core interface representing a downloaded RKLLM model with all its metadata:
+## Architecture
 
-```typescript
-interface ModelInfo {
-  name: string;        // Human-readable model name
-  path: string;        // Absolute path to .rkllm file
-  size: number;        // File size in bytes
-  created: Date;       // Download/creation timestamp
-  repo?: string;       // HuggingFace repository name
-  filename?: string;   // Original filename
-}
-```
 
-## Usage
+## Source Files
+- `model-types.ts` (ts)
 
-### Import
-```typescript
-import type { ModelInfo } from '../model-types/model-types';
-```
 
-### Example
-```typescript
-const model: ModelInfo = {
-  name: "Qwen2.5-0.5B-Instruct",
-  path: "/home/user/models/limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4/model.rkllm",
-  size: 524288000,
-  created: new Date(),
-  repo: "limcheekin/Qwen2.5-0.5B-Instruct-rk3588-1.1.4",
-  filename: "Qwen2.5-0.5B-Instruct-rk3588-w8a8-opt-0-hybrid-ratio-0.0.rkllm"
-};
-```
+## API Reference
 
-## Design Principles
+### Functions
 
-### Type Safety
-- All properties properly typed with exact types
-- Optional fields marked with `?` for flexible usage
-- No `any` types - strict TypeScript compliance
 
-### Consistency
-- Used across all model management components
-- Consistent naming with filesystem conventions
-- Compatible with JSON serialization/deserialization
+### Classes
 
-### Extensibility
-- Easy to add new properties without breaking changes
-- Optional fields allow gradual feature adoption
-- Compatible with future RKLLM model formats
+
+### Data Structures
+*None*
+
+### Enumerations
+*None*
 
 ## Dependencies
-- None - pure TypeScript interfaces
-- Compatible with all runtimes (Node.js, Bun, Deno)
+- Standard C++ libraries
+- RKLLM runtime
+
+## Usage Examples
+*Usage examples will be added based on function analysis*
+
+## Error Handling
+*Error handling documentation will be generated from code analysis*
+
+## Performance Notes
+*Performance considerations will be documented*
+
+## Thread Safety
+*Thread safety analysis will be provided*
+
+## Memory Management
+*Memory management details will be documented*
 
 ## Testing
-- `model-types.test.ts` - Validates interface definitions and type safety
-- Tests cover all required and optional properties
-- Validates serialization compatibility
+All components have corresponding unit tests.
+
+### Running Tests
+```bash
+# Build and run tests
+make test
+
+# Run with verbose output
+make test-verbose
+
+# Build debug version for testing
+make debug
+```
+
+## Build Configuration
+
+### Standalone Build
+```bash
+# Build the module
+make
+
+# Clean artifacts
+make clean
+
+# Install library for other modules
+make install
+```
+
+## Troubleshooting
+*Common issues and solutions will be documented*
+
+---
+*Generated automatically by RKLLMJS README Generator*

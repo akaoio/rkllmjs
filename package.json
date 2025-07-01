@@ -40,7 +40,11 @@
     "test:real": "SANDBOX_BUILD=0 npm run test:cpp",
     "test:sandbox": "SANDBOX_BUILD=1 npm run test:cpp",
     "test:cpp": "bash scripts/test-cpp.sh",
-    "clean:cpp": "bash src/bindings/build.sh clean"
+    "clean:cpp": "bash src/bindings/build.sh clean",
+    "readme:validate": "bash scripts/readme-integration.sh validate",
+    "readme:clean": "find src -name 'README.md' -delete",
+    "readme:generate": "bash scripts/readme-integration.sh generate",
+    "readme:generate-force": "bash scripts/readme-integration.sh generate --force"
   },
   "keywords": [
     "rockchip",

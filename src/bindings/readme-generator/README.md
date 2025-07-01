@@ -1,133 +1,159 @@
-# core
+# readme-generator
 
 ## Purpose
-Core RKLLM runtime management and model lifecycle operations
+std::regex purposeRegex(R"(
 
 ## Overview
-Provides thread-safe singleton that manages RKLLM model instances, resource allocation, configuration validation, and cleanup operations. This module handles the fundamental infrastructure needed for RKLLM model management including NPU resource allocation and monitoring.
+for additional info std::regex descRegex(R"(
 
 ## Architecture
-- **rkllm-manager.hpp**: RKLLMManager
+- **readme-generator.hpp**: ReadmeGenerator
 
 
 ## Source Files
-- `rkllm-manager.cpp` (cpp)
-- `rkllm-manager.hpp` (hpp)
+- `readme-generator-cli.cpp` (cpp)
+- `readme-generator.cpp` (cpp)
+- `readme-generator.hpp` (hpp)
 
 
 ## API Reference
 
 ### Functions
-#### rkllm-manager.cpp
+#### readme-generator-cli.cpp
 
-##### `cleanup()`
+##### `printUsage()`
 *No documentation available*
 
-##### `updateResourceStats()`
+##### `main()`
 *No documentation available*
 
-##### `rkllm_destroy()`
+#### readme-generator.cpp
+
+##### `file()`
 *No documentation available*
 
-##### `getDefaultConfig()`
+##### `parseCppFile()`
 *No documentation available*
 
-#### rkllm-manager.hpp
-
-##### `isValid()`
+##### `parseTypeScriptFile()`
 *No documentation available*
 
-##### `getValidationError()`
+##### `path()`
 *No documentation available*
 
-##### `initialize()`
+##### `replaceTemplateVariables()`
 *No documentation available*
 
-##### `cleanup()`
+##### `generateReadme()`
 *No documentation available*
 
-##### `isInitialized()`
+#### readme-generator.hpp
+
+##### `ReadmeGenerator()`
 *No documentation available*
 
-##### `createModel()`
+##### `loadConfig()`
 *No documentation available*
 
-##### `destroyModel()`
+##### `setConfig()`
 *No documentation available*
 
-##### `getModelConfig()`
+##### `getConfig()`
 *No documentation available*
 
-##### `getResourceStats()`
+##### `analyzeSourceFile()`
 *No documentation available*
 
-##### `hasAvailableResources()`
+##### `analyzeModule()`
 *No documentation available*
 
-##### `validateConfig()`
+##### `loadTemplate()`
 *No documentation available*
 
-##### `createDefaultConfig()`
+##### `processTemplate()`
 *No documentation available*
 
-##### `getDefaultConfig()`
+##### `generateReadme()`
 *No documentation available*
 
-##### `getOptimizedConfig()`
+##### `detectFileType()`
 *No documentation available*
 
-##### `getActiveModelCount()`
+##### `isSourceFile()`
 *No documentation available*
 
-##### `getErrorMessage()`
+##### `inferPurpose()`
 *No documentation available*
 
-##### `generateModelId()`
+##### `validateTemplate()`
 *No documentation available*
 
-##### `allocateResources()`
+##### `validateModule()`
 *No documentation available*
 
-##### `deallocateResources()`
+##### `parseCppFile()`
 *No documentation available*
 
-##### `updateResourceStats()`
+##### `parseTypeScriptFile()`
+*No documentation available*
+
+##### `extractFunctions()`
+*No documentation available*
+
+##### `extractClasses()`
+*No documentation available*
+
+##### `extractComments()`
+*No documentation available*
+
+##### `replaceTemplateVariables()`
+*No documentation available*
+
+##### `readFile()`
+*No documentation available*
+
+##### `writeFile()`
+*No documentation available*
+
+##### `fileExists()`
+*No documentation available*
+
+##### `getFileName()`
+*No documentation available*
+
+##### `getDirectory()`
 *No documentation available*
 
 
 
 ### Classes
-#### rkllm-manager.hpp
+#### readme-generator.hpp
 
-##### `RKLLMManager`
+##### `ReadmeGenerator`
 *No documentation available*
 
 
 
 ### Data Structures
-- sysinfo 
-- RKLLMModelConfig ResourceStats ModelInstance 
+- ReadmeConfig SourceInfo ModuleInfo 
 
 
 ### Enumerations
-- ManagerResult 
-
+*None*
 
 ## Dependencies
-- ../../../libs/rkllm/include/rkllm.h
 - ../config/build-config.hpp
-- chrono
-- cstring
+- algorithm
+- filesystem
 - fstream
 - iostream
+- map
 - memory
-- mutex
-- rkllm-manager.hpp
+- readme-generator.hpp
+- regex
+- set
 - sstream
 - string
-- sys/sysinfo.h
-- thread
-- unordered_map
 - vector
 
 

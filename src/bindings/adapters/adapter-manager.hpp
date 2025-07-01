@@ -1,3 +1,13 @@
+/**
+ * @module adapters
+ * @purpose Platform-specific runtime adapters for RKLLM integration
+ * @description Implements platform abstraction layer with adapters for different
+ *              JavaScript runtimes (Node.js, Deno, Bun). Provides unified interface
+ *              for cross-platform RKLLM deployment and runtime-specific optimizations.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
 #pragma once
 
 #include "../config/build-config.hpp"

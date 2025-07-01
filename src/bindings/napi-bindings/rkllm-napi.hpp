@@ -1,3 +1,13 @@
+/**
+ * @module napi-bindings
+ * @purpose Node.js N-API binding layer for RKLLM functionality exposure
+ * @description Provides stable and efficient Node.js bindings using N-API for
+ *              RKLLM operations. Handles JavaScript to C++ bridging, async operations,
+ *              memory safety, and error propagation between runtime environments.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
 #pragma once
 
 #include "../config/build-config.hpp"

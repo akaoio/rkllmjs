@@ -1,3 +1,14 @@
+/**
+ * @module core
+ * @purpose Core RKLLM runtime management and model lifecycle operations
+ * @description Provides thread-safe singleton that manages RKLLM model instances,
+ *              resource allocation, configuration validation, and cleanup operations.
+ *              This module handles the fundamental infrastructure needed for RKLLM
+ *              model management including NPU resource allocation and monitoring.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
 #pragma once
 
 #include "../config/build-config.hpp"
@@ -102,18 +113,63 @@ public:
     // Singleton access
     static RKLLMManager& getInstance();
     
-    // Lifecycle
+    /**
+     * @brief Initialize the RKLLM runtime and allocate system resources
+     * @return ManagerResult::SUCCESS on success, error code on failure
+     * @note Must be called before any model operations. Thread-safe.
+     */
     ManagerResult initialize();
+    
+    /**
+     * @brief Cleanup all models and release system resources
+     * @return ManagerResult::SUCCESS on success, error code on failure
+     * @note Destroys all active models and releases NPU resources. Thread-safe.
+     */
     ManagerResult cleanup();
+    
+    /**
+     * @brief Check if the manager has been initialized
+     * @return true if initialized, false otherwise
+     */
     bool isInitialized() const;
     
-    // Model management
+    /**
+     * @brief Create a new model instance with the given configuration
+     * @param config Model configuration parameters
+     * @param handle Output parameter for the created model handle
+     * @return ManagerResult::SUCCESS on success, error code on failure
+     * @note Validates config and allocates NPU resources. Thread-safe.
+     */
     ManagerResult createModel(const RKLLMModelConfig& config, LLMHandle* handle);
+    
+    /**
+     * @brief Destroy an existing model instance and free its resources
+     * @param handle Handle to the model to destroy
+     * @return ManagerResult::SUCCESS on success, error code on failure
+     * @note Releases NPU cores and memory allocated to the model. Thread-safe.
+     */
     ManagerResult destroyModel(LLMHandle handle);
+    
+    /**
+     * @brief Get the configuration of an existing model
+     * @param handle Handle to the model
+     * @param config Output parameter for the model configuration
+     * @return ManagerResult::SUCCESS on success, error code on failure
+     */
     ManagerResult getModelConfig(LLMHandle handle, RKLLMModelConfig* config);
     
-    // Resource monitoring
+    /**
+     * @brief Get current resource usage statistics
+     * @return ResourceStats structure with current usage information
+     * @note Includes NPU utilization, memory usage, and active model count
+     */
     ResourceStats getResourceStats() const;
+    
+    /**
+     * @brief Check if sufficient resources are available for a configuration
+     * @param config Model configuration to check resource requirements for
+     * @return true if resources are available, false otherwise
+     */
     bool hasAvailableResources(const RKLLMModelConfig& config) const;
     
     // Configuration validation

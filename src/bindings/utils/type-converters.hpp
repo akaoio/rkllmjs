@@ -1,3 +1,13 @@
+/**
+ * @module utils
+ * @purpose Type conversion utilities for JavaScript and C++ interoperability
+ * @description Provides safe and efficient type conversion functions between JavaScript 
+ *              values and C++ types. Includes comprehensive error handling, validation,
+ *              and support for complex data structures. Essential for N-API bindings.
+ * @author RKLLMJS Team  
+ * @version 1.0.0
+ */
+
 #pragma once
 
 #include "../config/build-config.hpp"

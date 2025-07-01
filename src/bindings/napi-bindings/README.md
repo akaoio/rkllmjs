@@ -1,102 +1,151 @@
-# N-API Bindings Module
+# napi-bindings
 
-Node.js N-API bindings for RKLLM functionality.
+## Purpose
+Node.js N-API binding layer for RKLLM functionality exposure
 
 ## Overview
-
-The N-API bindings module provides the bridge between JavaScript/TypeScript and the C++ RKLLM implementation, exposing all RKLLM functionality to Node.js applications.
-
-## Features
-
-- **Complete API Coverage**: All RKLLM functions exposed to JavaScript
-- **Type Safety**: Comprehensive type validation and conversion
-- **Error Handling**: JavaScript-friendly error reporting
-- **Async Support**: Promise-based and callback-based async APIs
-- **Memory Management**: Automatic cleanup and garbage collection
-- **Performance Optimization**: Efficient data marshaling
+Provides stable and efficient Node.js bindings using N-API for RKLLM operations. Handles JavaScript to C++ bridging, async operations, memory safety, and error propagation between runtime environments.
 
 ## Architecture
+- **rkllm-napi.cpp**: JSRKLLMManager
+- **rkllm-napi.hpp**: JSRKLLMManager
 
-```
-N-API Bindings
-├── Core Bindings
-│   ├── Model Management
-│   ├── Configuration
-│   └── Lifecycle Management
-├── Inference Bindings
-│   ├── Text Generation
-│   ├── Streaming APIs
-│   └── Batch Processing
-├── Memory Bindings
-│   ├── Memory Stats
-│   ├── Resource Management
-│   └── NPU Management
-└── Utility Bindings
-    ├── Type Conversion
-    ├── Error Handling
-    └── Validation
-```
 
-## Build Status
+## Source Files
+- `rkllm-napi.cpp` (cpp)
+- `rkllm-napi.hpp` (hpp)
 
-✅ **Built Successfully**: Placeholder module with Makefile structure
+
+## API Reference
+
+### Functions
+#### rkllm-napi.cpp
+
+##### `engine()`
+*No documentation available*
+
+##### `test_napi_bindings()`
+*No documentation available*
+
+##### `InitRKLLMBindings()`
+*No documentation available*
+
+##### `napi_get_undefined()`
+*No documentation available*
+
+#### rkllm-napi.hpp
+
+##### `InitRKLLMBindings()`
+*No documentation available*
+
+##### `JSRKLLMManager()`
+*No documentation available*
+
+##### `initializeModel()`
+*No documentation available*
+
+##### `generateText()`
+*No documentation available*
+
+##### `cleanup()`
+*No documentation available*
+
+##### `isInitialized()`
+*No documentation available*
+
+##### `setParameter()`
+*No documentation available*
+
+##### `getParameter()`
+*No documentation available*
+
+##### `getMemoryUsage()`
+*No documentation available*
+
+##### `isNPUAvailable()`
+*No documentation available*
+
+##### `test_napi_bindings()`
+*No documentation available*
+
+
+
+### Classes
+#### rkllm-napi.cpp
+
+##### `JSRKLLMManager`
+*No documentation available*
+
+#### rkllm-napi.hpp
+
+##### `JSRKLLMManager`
+*No documentation available*
+
+
+
+### Data Structures
+*None*
+
+### Enumerations
+*None*
 
 ## Dependencies
+- ../config/build-config.hpp
+- ../core/rkllm-manager.hpp
+- ../inference/inference-engine.hpp
+- iostream
+- memory
+- node_api.h
+- rkllm-napi.hpp
+- string
 
-- **Node.js N-API**: Native addon development
-- **All C++ Modules**: core, inference, memory, adapters, utils
-- **RKLLM Library**: `../../../libs/rkllm/include/rkllm.h`
 
-## Usage Example
+## Usage Examples
+*Usage examples will be added based on function analysis*
 
-```javascript
-const rkllm = require('rkllmjs');
+## Error Handling
+*Error handling documentation will be generated from code analysis*
 
-// Create model configuration
-const config = {
-    modelPath: '/path/to/model.rkllm',
-    maxContextLen: 2048,
-    maxNewTokens: 512,
-    temperature: 0.7
-};
+## Performance Notes
+*Performance considerations will be documented*
 
-// Initialize model
-const model = await rkllm.createModel(config);
+## Thread Safety
+*Thread safety analysis will be provided*
 
-// Generate text
-const result = await model.generate('Hello, world!');
-console.log('Generated:', result.text);
+## Memory Management
+*Memory management details will be documented*
 
-// Clean up
-await model.destroy();
+## Testing
+All components have corresponding unit tests.
+
+### Running Tests
+```bash
+# Build and run tests
+make test
+
+# Run with verbose output
+make test-verbose
+
+# Build debug version for testing
+make debug
 ```
 
-## Files
+## Build Configuration
 
-- `binding.cpp` - Main N-API binding entry point (planned)
-- `model-bindings.hpp/cpp` - Model management bindings (planned)
-- `inference-bindings.hpp/cpp` - Inference bindings (planned)
-- `memory-bindings.hpp/cpp` - Memory management bindings (planned)
-- `adapter-bindings.hpp/cpp` - Adapter bindings (planned)
-- `utils-bindings.hpp/cpp` - Utility bindings (planned)
-- `Makefile` - Build configuration (placeholder)
+### Standalone Build
+```bash
+# Build the module
+make
 
-## Implementation Status
+# Clean artifacts
+make clean
 
-🚧 **In Development**: Module structure created, implementation pending
+# Install library for other modules
+make install
+```
 
-**Next Steps:**
-1. Create main N-API binding entry point
-2. Implement model management bindings
-3. Add inference API bindings
-4. Create memory management bindings
-5. Add adapter management bindings
-6. Implement comprehensive error handling
-7. Add TypeScript type definitions
+## Troubleshooting
+*Common issues and solutions will be documented*
 
-## Integration
-
-This module integrates with:
-- **All C++ Modules**: Provides JavaScript access to all functionality
-- **TypeScript Layer**: Via generated type definitions
-- **Node.js Runtime**: Through N-API native addon interface
+---
+*Generated automatically by RKLLMJS README Generator*

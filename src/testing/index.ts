@@ -1,4 +1,14 @@
 /**
+ * @module testing
+ * @purpose Comprehensive testing infrastructure and utilities for RKLLM JavaScript bindings
+ * @description Provides structured testing framework with logging, hardware validation,
+ *              native binding testing, and production-ready test utilities. Supports
+ *              both unit testing and integration testing for RKLLM components.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
+/**
  * Unified Testing Module for RKLLMJS
  * 
  * Provides a comprehensive testing infrastructure with:

@@ -1,4 +1,14 @@
 /**
+ * @module runtime-detector
+ * @purpose JavaScript runtime detection and cross-platform compatibility layer
+ * @description Intelligent runtime detection supporting Node.js, Bun, and Deno with
+ *              unified API abstraction. Provides runtime-specific optimizations and
+ *              feature detection for seamless cross-platform deployment.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
+/**
  * Runtime Detector - Detects current JavaScript runtime and provides appropriate APIs
  */
 

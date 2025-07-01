@@ -1,4 +1,14 @@
 /**
+ * @module rkllm-types
+ * @purpose TypeScript type definitions and interfaces for RKLLM C API binding
+ * @description Comprehensive type safety layer providing TypeScript interfaces
+ *              that mirror RKLLM C API structures. Ensures type-safe interaction
+ *              between JavaScript and native RKLLM library functions.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
+/**
  * TypeScript interfaces for RKLLM C API structures
  * Mirrors the definitions from libs/rkllm/include/rkllm.h
  */

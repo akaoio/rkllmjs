@@ -1,96 +1,264 @@
-# Inference Engine Module
+# inference
 
-High-level inference orchestration and text generation for RKLLM models.
+## Purpose
+High-performance text generation and streaming inference engine
 
 ## Overview
-
-The inference module provides a comprehensive engine for text generation, batch processing, streaming inference, and advanced sampling strategies. It builds on top of the core model management and provides JavaScript-friendly APIs.
-
-## Features
-
-- **Text Generation**: Single and batch text generation
-- **Streaming Inference**: Real-time token streaming with callbacks
-- **Advanced Sampling**: Temperature, top-k, top-p, repetition penalty
-- **Batch Processing**: Efficient multi-request processing
-- **Performance Monitoring**: Latency, throughput, and resource metrics
-- **Error Handling**: Comprehensive error reporting and recovery
+Implements advanced inference capabilities with multiple sampling strategies, streaming text generation, batch processing, and KV-cache optimization. Supports concurrent inference management and real-time performance monitoring.
 
 ## Architecture
+- **inference-engine.hpp**: InferenceEngine, SamplingStrategy, GreedySampling, TopKSampling, TopPSampling
 
-```
-InferenceEngine
-├── Core Features
-│   ├── generate() - Single text generation
-│   ├── generateStream() - Streaming generation
-│   ├── generateBatch() - Batch processing
-│   └── generateStreamAsync() - Async streaming
-├── Configuration
-│   ├── setMaxConcurrentInferences()
-│   ├── setStreamBufferSize()
-│   └── validateParams()
-└── Monitoring
-    ├── getStats()
-    ├── resetStats()
-    └── updateStats()
-```
 
-## Build Status
+## Source Files
+- `inference-engine.cpp` (cpp)
+- `inference-engine.hpp` (hpp)
 
-✅ **Built Successfully**: Library compiled and available at `bin/librkllm-inference.a`
+
+## API Reference
+
+### Functions
+#### inference-engine.cpp
+
+##### `stop()`
+*No documentation available*
+
+##### `validateParams()`
+*No documentation available*
+
+##### `updateStats()`
+*No documentation available*
+
+##### `callback()`
+*No documentation available*
+
+##### `whitespaceRegex()`
+*No documentation available*
+
+##### `iss()`
+*No documentation available*
+
+##### `detokenize()`
+*No documentation available*
+
+##### `formatPrompt()`
+*No documentation available*
+
+##### `escapeSpecialTokens()`
+*No documentation available*
+
+##### `calculatePerplexity()`
+*No documentation available*
+
+##### `isValidPrompt()`
+*No documentation available*
+
+##### `isValidInferenceParams()`
+*No documentation available*
+
+#### inference-engine.hpp
+
+##### `isValid()`
+*No documentation available*
+
+##### `validate()`
+*No documentation available*
+
+##### `InferenceEngine()`
+*No documentation available*
+
+##### `generate()`
+*No documentation available*
+
+##### `setModelHandle()`
+*No documentation available*
+
+##### `getModelHandle()`
+*No documentation available*
+
+##### `generateStream()`
+*No documentation available*
+
+##### `pause()`
+*No documentation available*
+
+##### `resume()`
+*No documentation available*
+
+##### `stop()`
+*No documentation available*
+
+##### `isRunning()`
+*No documentation available*
+
+##### `getState()`
+*No documentation available*
+
+##### `setMaxConcurrentInferences()`
+*No documentation available*
+
+##### `setStreamBufferSize()`
+*No documentation available*
+
+##### `enableKVCache()`
+*No documentation available*
+
+##### `setDefaultParams()`
+*No documentation available*
+
+##### `getStats()`
+*No documentation available*
+
+##### `resetStats()`
+*No documentation available*
+
+##### `executeInference()`
+*No documentation available*
+
+##### `validateParams()`
+*No documentation available*
+
+##### `updateStats()`
+*No documentation available*
+
+##### `streamingWorker()`
+*No documentation available*
+
+##### `processBatchRequests()`
+*No documentation available*
+
+##### `preprocessPrompt()`
+*No documentation available*
+
+##### `shouldStop()`
+*No documentation available*
+
+##### `calculateTokensPerSecond()`
+*No documentation available*
+
+##### `sample()`
+*No documentation available*
+
+##### `getName()`
+*No documentation available*
+
+##### `detokenize()`
+*No documentation available*
+
+##### `formatPrompt()`
+*No documentation available*
+
+##### `escapeSpecialTokens()`
+*No documentation available*
+
+##### `calculatePerplexity()`
+*No documentation available*
+
+##### `isValidPrompt()`
+*No documentation available*
+
+##### `isValidInferenceParams()`
+*No documentation available*
+
+
+
+### Classes
+#### inference-engine.hpp
+
+##### `InferenceEngine`
+*No documentation available*
+
+##### `SamplingStrategy`
+*No documentation available*
+
+##### `GreedySampling`
+*No documentation available*
+
+##### `TopKSampling`
+*No documentation available*
+
+##### `TopPSampling`
+*No documentation available*
+
+
+
+### Data Structures
+- InferenceParams InferenceResult BatchRequest BatchResult Stats 
+
+
+### Enumerations
+- InferenceState 
+
 
 ## Dependencies
+- ../../../libs/rkllm/include/rkllm.h
+- ../config/build-config.hpp
+- ../core/rkllm-manager.hpp
+- ../utils/error-handler.hpp
+- ../utils/type-converters.hpp
+- algorithm
+- atomic
+- chrono
+- functional
+- future
+- inference-engine.hpp
+- map
+- memory
+- numeric
+- random
+- regex
+- sstream
+- string
+- thread
+- vector
 
-- **Core Module**: `../core` (RKLLMManager)
-- **Utils Module**: `../utils` (Error handling, type conversion)
-- **RKLLM Library**: `../../../libs/rkllm/include/rkllm.h`
 
-## Usage Example
+## Usage Examples
+*Usage examples will be added based on function analysis*
 
-```cpp
-#include "inference-engine.hpp"
+## Error Handling
+*Error handling documentation will be generated from code analysis*
 
-// Create inference engine with core manager
-auto manager = std::make_shared<rkllmjs::core::RKLLMManager>();
-rkllmjs::inference::InferenceEngine engine(manager);
+## Performance Notes
+*Performance considerations will be documented*
 
-// Configure inference parameters
-rkllmjs::inference::InferenceParams params;
-params.prompt = "Hello, world!";
-params.max_tokens = 50;
-params.temperature = 0.7f;
+## Thread Safety
+*Thread safety analysis will be provided*
 
-// Generate text
-auto result = engine.generate(params);
-std::cout << "Generated: " << result.text << std::endl;
-```
-
-## Files
-
-- `inference-engine.hpp` - Main inference engine class
-- `inference-engine.cpp` - Implementation
-- `inference-engine.test.cpp` - Unit tests
-- `Makefile` - Build configuration
-- `bin/librkllm-inference.a` - Compiled library
+## Memory Management
+*Memory management details will be documented*
 
 ## Testing
+All components have corresponding unit tests.
 
-Run tests with:
+### Running Tests
 ```bash
+# Build and run tests
 make test
+
+# Run with verbose output
+make test-verbose
+
+# Build debug version for testing
+make debug
 ```
 
-Tests cover:
-- Parameter validation
-- Text generation
-- Streaming inference
-- Batch processing
-- Error handling
-- Performance metrics
+## Build Configuration
 
-## Integration
+### Standalone Build
+```bash
+# Build the module
+make
 
-This module integrates with:
-- **JavaScript Layer**: Via N-API bindings
-- **Core Module**: For model lifecycle management
-- **Utils Module**: For error handling and type conversion
-- **Memory Module**: For efficient resource management
+# Clean artifacts
+make clean
+
+# Install library for other modules
+make install
+```
+
+## Troubleshooting
+*Common issues and solutions will be documented*
+
+---
+*Generated automatically by RKLLMJS README Generator*

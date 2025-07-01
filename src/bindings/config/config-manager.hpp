@@ -1,3 +1,13 @@
+/**
+ * @module config
+ * @purpose Configuration management and validation for RKLLM components
+ * @description Provides comprehensive configuration loading, validation, and management
+ *              for RKLLM runtime settings. Handles JSON parsing, environment variables,
+ *              and configuration schema validation with runtime safety checks.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
 #pragma once
 
 #include <string>

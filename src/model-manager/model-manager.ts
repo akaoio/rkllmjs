@@ -1,4 +1,14 @@
 /**
+ * @module model-manager
+ * @purpose RKLLM model downloading, caching, and lifecycle management
+ * @description Comprehensive model management system with automatic downloading,
+ *              intelligent caching, version control, and integrity validation.
+ *              Supports multiple model sources and runtime-agnostic deployment.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
+/**
  * RKLLM Model Manager - handles downloading and managing .rkllm models
  * ES Modules implementation for Node.js (primary), Bun, Deno
  */

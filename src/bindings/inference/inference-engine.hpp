@@ -1,3 +1,13 @@
+/**
+ * @module inference
+ * @purpose High-performance text generation and streaming inference engine
+ * @description Implements advanced inference capabilities with multiple sampling strategies,
+ *              streaming text generation, batch processing, and KV-cache optimization.
+ *              Supports concurrent inference management and real-time performance monitoring.
+ * @author RKLLMJS Team
+ * @version 1.0.0
+ */
+
 #pragma once
 
 #include <memory>
