@@ -17,10 +17,12 @@
   },
   "globals": {
     "Bun": "readonly",
-    "Deno": "readonly"
+    "Deno": "readonly",
+    "globalThis": "readonly"
   },
   "rules": {
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "prefer-const": "error",
     "no-var": "error",
     "object-shorthand": "error",
