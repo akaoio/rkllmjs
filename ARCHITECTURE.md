@@ -1,180 +1,396 @@
-# RKLLMJS Standardized Architecture
+# RKLLMJS Architecture Documentation
 
-## 🏗️ Overview
+> **Detailed architecture documentation for RKLLMJS - TypeScript/Node.js interface for Rockchip RK3588 NPU**
 
-RKLLMJS provides a comprehensive TypeScript/JavaScript interface for Rockchip RK3588 NPU-accelerated Large Language Model inference. The codebase has been standardized to eliminate duplications and ensure production stability.
+---
 
-## 📋 Architecture Principles
+## 🏗️ System Architecture Overview
 
-### ✅ Single Source of Truth
-- **Core Types**: All RKLLM API definitions centralized in `src/rkllm-types/`
-- **Testing**: All testing utilities consolidated in `src/testing/`
-- **No Duplications**: Enhanced validator prevents type/functionality duplication
-
-### ✅ Clear Module Boundaries
-- Each module has a single, well-defined responsibility
-- Clean import dependencies with no circular references
-- Standardized naming conventions (PascalCase for types)
-
-### ✅ Production Ready
-- No mock implementations or fallbacks
-- Requires real RK3588 hardware and RKLLM models
-- Comprehensive error handling and validation
-
-## 🗂️ Module Structure
+RKLLMJS implements a **4-layer architecture** that bridges TypeScript/Node.js applications with the Rockchip RK3588 NPU:
 
 ```
-src/
-├── rkllm-types/           # 🎯 Core RKLLM API types (CANONICAL)
-├── rkllm-client/          # 🚀 High-level Promise-based API
-├── bindings/              # ⚡ Low-level C++ N-API wrapper
-├── testing/               # 🧪 Unified testing infrastructure
-├── model-manager/         # 📦 Model downloading and management
-├── model-types/           # 📋 Model manager type definitions
-├── runtime-detector/      # 🔍 JavaScript runtime detection
-└── cli-runner/            # 💻 Command-line interface
+┌─────────────────────────────────────────────────────────────┐
+│                    Application Layer                        │
+│  (User TypeScript/JavaScript code using RKLLMJS API)        │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────┐
+│                  TypeScript API Layer                       │
+│  ┌─────────────────┐  ┌──────────────┐  ┌────────────────┐  │
+│  │   RKLLMClient   │  │ ModelManager │  │ RuntimeDetector│  │
+│  │   (Primary API) │  │  (Download)  │  │   (Multi-RT)   │  │
+│  └─────────────────┘  └──────────────┘  └────────────────┘  │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────┐
+│                   C++ N-API Layer                           │
+│  ┌─────────────────┐  ┌──────────────┐  ┌────────────────┐  │
+│  │ NAPI Bindings   │  │ Type Convert │  │ Error Handler  │  │
+│  │ (Node.js bridge)│  │ (JS ↔ C++)   │  │ (Unified logs) │  │
+│  └─────────────────┘  └──────────────┘  └────────────────┘  │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────┐
+│                   C++ Modular Core                          │
+│  ┌─────────────────┐  ┌──────────────┐  ┌────────────────┐  │
+│  │  RKLLM Manager  │  │Inference Eng.│  │ Memory Manager │  │
+│  │ (Model loading) │  │(Text gen.)   │  │(NPU resources) │  │
+│  └─────────────────┘  └──────────────┘  └────────────────┘  │
+│  ┌─────────────────┐  ┌──────────────┐  ┌────────────────┐  │
+│  │ Config Manager  │  │Model Adapters│  │   Utilities    │  │
+│  │ (JSON configs)  │  │ (Format conv)│  │ (Shared logic) │  │
+│  └─────────────────┘  └──────────────┘  └────────────────┘  │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────┐
+│                Rockchip NPU Library                         │
+│              librkllmrt.so (RK3588)                         │
+│        (Hardware acceleration via NPU cores)                │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## 📊 Module Responsibilities
+---
 
-### 🎯 `src/rkllm-types/` - Core Types (Canonical)
-**Purpose**: Single source of truth for all RKLLM API type definitions
-- **Enums**: `LLMCallState`, `RKLLMInputType`, `RKLLMInferMode`
-- **Interfaces**: `RKLLMParam`, `RKLLMInput`, `RKLLMResult`, etc.
-- **Naming**: TypeScript-style camelCase (e.g., `maxNewTokens`)
-- **Status**: ✅ Complete, standardized
+## 📊 Data Flow Architecture
 
-### 🚀 `src/rkllm-client/` - High-Level API
-**Purpose**: Promise-based client for easy application integration
-- **Features**: Event-driven, streaming, progress callbacks
-- **API Style**: Modern async/await patterns
-- **Integration**: Uses canonical types, converts to C API format
-- **Status**: ✅ Complete, production-ready
-
-### ⚡ `src/bindings/` - Low-Level Wrapper
-**Purpose**: Direct C++ N-API interface to RKLLM library
-- **Format**: C-style snake_case (e.g., `max_new_tokens`)
-- **Conversion**: Provides `toC_RKLLMParam()`, `toC_RKLLMInput()` utilities
-- **Hardware**: Requires RK3588 NPU and native bindings
-- **Status**: ✅ Complete, unified with canonical types
-
-### 🧪 `src/testing/` - Testing Infrastructure
-**Purpose**: Unified testing utilities and logging
-- **Components**: TestLogger (structured logging) + test utilities (production testing)
-- **Hardware**: Real RK3588 validation, no mocks
-- **Consolidation**: Replaced 2+ duplicate testing modules
-- **Status**: ✅ Complete, fully consolidated
-
-### 📦 `src/model-manager/` - Model Management
-**Purpose**: Download and manage .rkllm model files
-- **Sources**: Hugging Face repositories
-- **Features**: Download, list, info, remove, clean
-- **CLI Integration**: Used by cli-runner
-- **Status**: ✅ Complete, production-ready
-
-### 📋 `src/model-types/` - Model Manager Types
-**Purpose**: Type definitions specific to model management
-- **Interfaces**: `ModelInfo`, `ModelConfig`, `ModelMetadata`
-- **Scope**: Model file metadata, not RKLLM API types
-- **Status**: ✅ Complete, complementary to model-manager
-
-### 🔍 `src/runtime-detector/` - Runtime Detection
-**Purpose**: Detect and adapt to JavaScript runtime environment
-- **Runtimes**: Node.js (primary), Bun, Deno (experimental)
-- **Capabilities**: File system, process, native module support
-- **Usage**: Used by CLI and model manager
-- **Status**: ✅ Complete, cross-runtime support
-
-### 💻 `src/cli-runner/` - Command Line Interface
-**Purpose**: CLI for model management and testing
-- **Commands**: pull, list, info, remove, clean
-- **Integration**: Uses model-manager and runtime-detector
-- **Runtimes**: Node.js (primary), Bun/Deno (alternative)
-- **Status**: ✅ Complete, production-ready
-
-## 🔄 Data Flow Architecture
+### Request Flow (TypeScript → NPU)
 
 ```
-┌─────────────────────┐
-│   CLI / Application │ ← User Entry Point
-├─────────────────────┤
-│   RKLLMClient       │ ← High-level Promise API
-│   (TypeScript)      │   (camelCase canonical types)
-├─────────────────────┤
-│   Type Conversion   │ ← toC_RKLLMParam(), toC_RKLLMInput()
-│   (Canonical → C)   │   (camelCase → snake_case)
-├─────────────────────┤
-│   LLMHandleWrapper  │ ← Low-level C++ N-API
-│   (C++ Bindings)    │   (snake_case C types)
-├─────────────────────┤
-│   librkllmrt.so     │ ← Rockchip NPU Library
-│   (Native Library)  │   (RK3588 Hardware)
-└─────────────────────┘
+1. TypeScript Application
+   └── calls RKLLMClient.generate("prompt")
+       │
+2. TypeScript API Layer  
+   └── validates input, prepares request
+       │
+3. N-API Layer
+   └── converts JS types to C++ (type-converters)
+       │ 
+4. C++ Core
+   └── RKLLM Manager loads model
+   └── Inference Engine processes request
+   └── Memory Manager handles NPU resources
+       │
+5. Rockchip Library
+   └── librkllmrt.so sends to NPU hardware
+       │
+6. RK3588 NPU
+   └── parallel processing on 3 NPU cores
 ```
 
-## 🛡️ Validation & Compliance
+### Response Flow (NPU → TypeScript)
 
-### Enhanced Validator (`scripts/validate.sh`)
-The validator enforces standardization with 6 compliance categories:
-
-1. **📁 Test Coverage**: Every source file has corresponding test
-2. **🔍 Duplicate Detection**: No duplicate enum/interface definitions
-3. **🎯 Naming Conventions**: Consistent PascalCase for types
-4. **🏗️ Architectural Compliance**: Core types only in rkllm-types
-5. **📋 Import Consistency**: No deprecated import paths
-6. **🔒 Protected Assets**: Rockchip libraries intact
-
-### Current Status: ✅ FULLY COMPLIANT
-```bash
-npm run validate
-# ✅ No duplicate enum definitions found
-# ✅ No duplicate interface definitions found  
-# ✅ Enum naming conventions are consistent
-# ✅ Interface naming conventions are consistent
-# ✅ Core types properly centralized in rkllm-types module
-# ✅ Testing utilities properly centralized in testing module
-# ✅ No deprecated import paths found
-# ✅ No problematic deep relative imports found
+```
+1. RK3588 NPU
+   └── generates tokens via neural network
+       │
+2. Rockchip Library
+   └── librkllmrt.so receives NPU output
+       │
+3. C++ Core
+   └── Inference Engine processes tokens
+   └── Memory Manager cleans up resources
+   └── Error Handler logs any issues
+       │
+4. N-API Layer  
+   └── converts C++ results to JS (type-converters)
+       │
+5. TypeScript API Layer
+   └── formats response, updates progress
+       │
+6. TypeScript Application
+   └── receives Promise<GenerationResult>
 ```
 
-## 🚀 Production Deployment
+---
 
-### Hardware Requirements
-- **Platform**: ARM64 Linux (RK3588)
-- **NPU**: Rockchip NPU with driver support
-- **Models**: Real .rkllm model files (no mocks)
+## 🔧 Module Architecture
 
-### Build Process
-```bash
-npm run build        # TypeScript + Native bindings
-npm run validate     # Compliance checking
-npm run test         # Production tests with real hardware
+### TypeScript Layer Modules
+
+#### 1. RKLLMClient (`src/rkllm-client/`)
+- **Purpose**: Primary user-facing API
+- **Key Features**: 
+  - Promise-based interface
+  - Streaming support with callbacks
+  - Event-driven monitoring
+  - Error handling and recovery
+- **Dependencies**: rkllm-types, native bindings
+- **Tests**: Comprehensive unit and integration tests
+
+#### 2. Model Manager (`src/model-manager/`)
+- **Purpose**: Model downloading and lifecycle management
+- **Key Features**:
+  - Hugging Face integration
+  - Model validation and verification
+  - Local model caching
+  - Metadata management
+- **Dependencies**: node-fetch, file system utilities
+- **Tests**: Mock-free testing with real downloads
+
+#### 3. Runtime Detector (`src/runtime-detector/`)
+- **Purpose**: JavaScript runtime detection and optimization
+- **Key Features**:
+  - Node.js, Bun, Deno support
+  - Runtime-specific optimizations
+  - Feature capability detection
+  - Performance profiling
+- **Dependencies**: None (pure detection logic)
+- **Tests**: Multi-runtime compatibility tests
+
+#### 4. RKLLM Types (`src/rkllm-types/`)
+- **Purpose**: Canonical type definitions
+- **Key Features**:
+  - Complete API type coverage
+  - Runtime type validation
+  - Cross-layer type safety
+  - Documentation generation
+- **Dependencies**: None (pure types)
+- **Tests**: Type validation and serialization tests
+
+### C++ Layer Modules
+
+#### 1. Core Module (`src/bindings/core/`)
+- **Components**: `rkllm-manager.cpp/hpp`
+- **Purpose**: Central model lifecycle management
+- **Key Features**:
+  - Model loading and unloading
+  - Resource lifecycle tracking
+  - Thread-safe operations
+  - Error state management
+- **Dependencies**: librkllmrt.so, memory module
+- **Tests**: Model loading, lifecycle, error scenarios
+
+#### 2. Inference Module (`src/bindings/inference/`)
+- **Components**: `inference-engine.cpp/hpp`
+- **Purpose**: Text generation and inference logic
+- **Key Features**:
+  - Token generation
+  - Stream processing
+  - Performance monitoring
+  - Cancellation support
+- **Dependencies**: core module, utils module
+- **Tests**: Generation accuracy, performance, streaming
+
+#### 3. Memory Module (`src/bindings/memory/`)
+- **Components**: `memory-manager.cpp/hpp`
+- **Purpose**: NPU memory and resource management
+- **Key Features**:
+  - NPU memory allocation
+  - Resource pooling
+  - Garbage collection
+  - Memory leak prevention
+- **Dependencies**: core module
+- **Tests**: Allocation, deallocation, leak detection
+
+#### 4. Config Module (`src/bindings/config/`)
+- **Components**: `config-manager.cpp/hpp`, `json-parser.cpp`
+- **Purpose**: Configuration and settings management
+- **Key Features**:
+  - JSON configuration parsing
+  - Runtime parameter validation
+  - Default value management
+  - Environment variable support
+- **Dependencies**: utils module
+- **Tests**: Configuration loading, validation, defaults
+
+#### 5. Utils Module (`src/bindings/utils/`)
+- **Components**: `type-converters.cpp/hpp`, `error-handler.cpp/hpp`
+- **Purpose**: Shared utilities and helpers
+- **Key Features**:
+  - JavaScript ↔ C++ type conversion
+  - Unified error handling and logging
+  - String manipulation utilities
+  - Debug and profiling helpers
+- **Dependencies**: None (foundation module)
+- **Tests**: Type conversion accuracy, error handling
+
+#### 6. Adapters Module (`src/bindings/adapters/`)
+- **Components**: `adapter-manager.cpp/hpp`
+- **Purpose**: Model format adaptation and conversion
+- **Key Features**:
+  - RKLLM format support
+  - Model validation
+  - Metadata extraction
+  - Format conversion utilities
+- **Dependencies**: config module, utils module
+- **Tests**: Format validation, conversion accuracy
+
+#### 7. N-API Bindings (`src/bindings/napi-bindings/`)
+- **Components**: `rkllm-napi.cpp/hpp`
+- **Purpose**: Node.js N-API bridge layer
+- **Key Features**:
+  - JavaScript function exposure
+  - Async operation support
+  - Thread-safe callbacks
+  - Memory management integration
+- **Dependencies**: All other C++ modules
+- **Tests**: API exposure, async operations, memory safety
+
+---
+
+## 🔄 Build System Architecture
+
+### Two-Tier Build System
+
+#### Tier 1: Module-Level Builds
+Each C++ module has its own `Makefile` supporting:
+- **Standalone compilation**: Independent module building
+- **Unit testing**: Module-specific test execution
+- **Debug builds**: Debug symbol generation
+- **Clean operations**: Artifact removal
+
+```makefile
+# Example module Makefile structure
+all: build test
+build: $(MODULE_NAME).o
+test: $(MODULE_NAME).test
+clean: # Remove artifacts
+debug: # Debug build with symbols
 ```
 
-### Zero Tolerance Policy
-- **No Mocks**: All tests require real hardware/models
-- **No Duplications**: Validator prevents type/functionality duplication  
-- **No Deprecated Paths**: Import consistency enforced
-- **Production Ready**: Suitable for deployment across many RK3588 devices
+#### Tier 2: Global Orchestration
+- **build.sh**: Coordinates all module builds
+- **test.sh**: Runs all module tests
+- **NPM integration**: `npm run build:cpp`, `npm run test:cpp`
 
-## 📈 Quality Metrics
+### Build Modes
 
-| Metric | Status |
-|--------|---------|
-| TypeScript Compilation | ✅ Zero errors |
-| Validator Compliance | ✅ 100% passing |
-| Test Coverage | ✅ Every module tested |
-| Code Duplications | ✅ Zero duplicates |
-| Import Consistency | ✅ All standardized |
-| Architecture Boundaries | ✅ Clean separation |
+#### SANDBOX Mode
+- **Purpose**: Development and unit testing
+- **Features**: No N-API dependencies, standalone compilation
+- **Use Case**: Module development, CI/CD testing
 
-## 🎯 Achieved Standardization Goals
+#### FULL Mode  
+- **Purpose**: Production builds with Node.js integration
+- **Features**: Complete N-API integration, all dependencies
+- **Use Case**: Final builds, runtime execution
 
-- ✅ **Eliminated All Duplications**: 6+ duplicate enums, 8+ duplicate interfaces removed
-- ✅ **Single Sources of Truth**: Core types in rkllm-types, testing in testing module
-- ✅ **Unified Testing**: Consolidated 3 testing modules into 1
-- ✅ **Enhanced Validation**: Automatic duplication/consistency detection
-- ✅ **Production Stability**: Zero mocks, real hardware requirements
-- ✅ **Maintainable Architecture**: Clear boundaries, no overlaps
+---
 
-This standardized architecture ensures the codebase is suitable for production deployment across many RK3588 devices while maintaining code quality and preventing regression to duplicated implementations.
+## 🧪 Testing Architecture
+
+### Test Framework Strategy
+
+#### C++ Testing: RKLLMJS Test Framework
+- **Philosophy**: Zero external dependencies
+- **Features**:
+  - Familiar test syntax (describe/it style)
+  - Colored output with clear results
+  - Performance measurement
+  - Memory leak detection
+- **Coverage**: 1:1 test-to-source ratio enforced
+
+#### TypeScript Testing: Node.js Native
+- **Philosophy**: Use platform-native testing
+- **Features**:
+  - Node.js built-in test runner
+  - Multi-runtime support (Node.js, Bun, Deno)
+  - Integration with NPM scripts
+  - Mock-free testing preferred
+
+### Test Categories
+
+#### Unit Tests (Co-located)
+- **Location**: Same directory as source files
+- **Purpose**: Individual component testing
+- **Coverage**: 100% function/method coverage required
+
+#### Integration Tests (`tests/integration/`)
+- **Purpose**: Multi-component workflows
+- **Scope**: TypeScript ↔ C++ interaction
+- **Real Data**: No mocking, real model files
+
+#### System Tests (`tests/system/`)
+- **Purpose**: End-to-end hardware functionality
+- **Scope**: Full pipeline with real NPU
+- **Hardware**: RK3588-specific testing
+
+#### Performance Tests (`tests/performance/`)
+- **Purpose**: NPU performance benchmarking
+- **Metrics**: Tokens/second, memory usage, latency
+- **Comparison**: Baseline performance tracking
+
+---
+
+## 🔐 Security Architecture
+
+### Asset Protection
+- **Protected Files**: `libs/rkllm/` (Rockchip proprietary)
+- **Principle**: Never modify, only link/include
+- **Validation**: Automated hash verification
+
+### Error Handling
+- **Strategy**: Fail-fast with detailed logging
+- **Recovery**: Automatic resource cleanup
+- **Logging**: Structured logs in `logs/` directory
+- **Privacy**: No sensitive data in logs
+
+### Memory Safety
+- **RAII**: Resource Acquisition Is Initialization
+- **Smart Pointers**: Automatic memory management
+- **Leak Detection**: Built into test framework
+- **Bounds Checking**: Array and string validation
+
+---
+
+## 📈 Performance Architecture
+
+### NPU Optimization
+- **Parallel Processing**: 3 NPU cores utilization
+- **Memory Pooling**: Pre-allocated NPU memory
+- **Batch Processing**: Efficient token generation
+- **Caching**: Model and configuration caching
+
+### Multi-Runtime Support
+- **Primary**: Node.js (stable, recommended)
+- **Alternative**: Bun (fast, experimental)
+- **Experimental**: Deno (modern, limited)
+- **Optimization**: Runtime-specific code paths
+
+### Monitoring and Profiling
+- **Real-time Metrics**: Token generation rates
+- **Resource Tracking**: Memory and NPU utilization
+- **Performance Logs**: Detailed timing information
+- **Benchmarking**: Automated performance testing
+
+---
+
+## 🔧 Configuration Architecture
+
+### Configuration Hierarchy
+1. **Default Values**: Built-in sensible defaults
+2. **Configuration Files**: `configs/*.json`
+3. **Environment Variables**: Runtime overrides
+4. **API Parameters**: Request-specific settings
+
+### Model Configuration
+- **Model Metadata**: `configs/models.json`
+- **Runtime Settings**: `configs/runtime.json`
+- **Performance Tuning**: NPU-specific parameters
+- **Validation**: Schema-based validation
+
+---
+
+## 🚀 Deployment Architecture
+
+### Build Artifacts
+- **TypeScript**: Compiled to `dist/`
+- **C++ Modules**: Static libraries in `build/`
+- **NPM Package**: Complete with native bindings
+- **Documentation**: Generated API docs
+
+### Platform Targets
+- **Primary**: Orange Pi 5 Plus (RK3588)
+- **Secondary**: Other RK3588 boards
+- **Development**: x64 Linux (SANDBOX mode)
+- **CI/CD**: ARM64 Ubuntu runners
+
+### Distribution Strategy
+- **NPM Registry**: TypeScript package with bindings
+- **GitHub Releases**: Platform-specific binaries
+- **Docker Images**: Complete runtime environment
+- **Documentation**: Comprehensive guides and examples
+
+---
+
+This architecture ensures **modularity**, **testability**, **performance**, and **maintainability** while providing a clean interface for developers to leverage RK3588 NPU capabilities from TypeScript/Node.js applications.

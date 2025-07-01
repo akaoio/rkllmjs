@@ -100,6 +100,9 @@ build_module() {
     
     log_info "Building module: $module_name"
     
+    # Ensure log directory exists
+    mkdir -p "$LOG_DIR"
+    
     # Build the module
     local log_file="$LOG_DIR/build-$module_name.log"
     
@@ -218,7 +221,7 @@ install_all() {
 
 # Clean all modules
 clean_all() {
-    log_info "Cleaning all C++ modules..."
+    log_info "Cleaning all C++ modules and build cache..."
     
     for module in "${MODULES[@]}"; do
         clean_module "$module"
@@ -226,9 +229,24 @@ clean_all() {
     
     # Clean global build directory
     rm -rf "$BUILD_DIR"/{lib,include,bin}/*
+    
+    # Clean log files but keep directory structure
     rm -rf "$LOG_DIR"/*
     
-    log_success "All modules cleaned"
+    # Recreate necessary directories
+    mkdir -p "$BUILD_DIR"/{lib,include,bin}
+    mkdir -p "$LOG_DIR"
+    
+    # Clean Node.js build cache
+    rm -rf "$BINDINGS_DIR/../../build"
+    rm -rf "$BINDINGS_DIR/../../node_modules/.cache"
+    
+    # Clean any leftover object files
+    find "$BINDINGS_DIR" -name "*.o" -type f -delete 2>/dev/null || true
+    find "$BINDINGS_DIR" -name "*.a" -type f -delete 2>/dev/null || true
+    find "$BINDINGS_DIR" -name "binding.node" -type f -delete 2>/dev/null || true
+    
+    log_success "All modules and build cache cleaned"
 }
 
 # Create final binding
@@ -416,6 +434,9 @@ done
 main() {
     case "$COMMAND" in
         build)
+            # Clean all cache first to ensure fresh build
+            log_info "Cleaning all cache before build..."
+            clean_all
             check_prerequisites
             if [ -n "$MODULE" ]; then
                 build_module "$MODULE"

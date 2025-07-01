@@ -21,20 +21,38 @@ validate_naming_conventions() {
 }
 
 validate_directory_structure() {
-    print_section "🏛️ Checking directory structure..."
+    # Check for empty directories (only README.md) but respect .gitignore
+    print_section "🗂️ Checking for empty directories..."
+    
+    # Find directories and filter by .gitignore
+    empty_dirs=$(find src -type d | filter_ignored_paths | while IFS= read -r dir; do
+        # Skip if directory should be ignored
+        should_ignore_path "$dir" && continue
+        
+        # Count non-README, non-Makefile files
+        files=$(find "$dir" -maxdepth 1 -type f -not -name "README.md" -not -name "Makefile" | wc -l)
+        if [ $files -eq 0 ] && [ -f "$dir/README.md" ]; then
+            echo "$dir"
+        fi
+    done)
 
-    # Find directories with multiple TypeScript files (excluding tests and type definitions)
-    MULTI_FILE_DIRS=$(find src -type d -not -path "src/testing" -exec sh -c 'count=$(find "$1" -maxdepth 1 -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | wc -l); if [ $count -gt 1 ]; then echo "$1"; fi' _ {} \;)
-
-    if [ -n "$MULTI_FILE_DIRS" ]; then
-        for dir in $MULTI_FILE_DIRS; do
-            files=$(find "$dir" -maxdepth 1 -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts")
-            file_count=$(echo "$files" | wc -l)
-            if [ $file_count -gt 1 ]; then
-                report_warning "Directory $dir contains $file_count TypeScript files - ensure they are related features"
-                echo "   Files: $(echo $files | tr '\n' ' ')"
-            fi
+    if [ -n "$empty_dirs" ]; then
+        for dir in $empty_dirs; do
+            report_error "Empty directory found: $dir (contains only README.md) - violates RULES.md implementation requirements"
         done
+    else
+        report_success "No empty directories found"
+    fi
+
+    # Check for test files in root (prohibited)
+    print_section "🚫 Checking for prohibited test files in root..."
+    root_test_files=$(find . -maxdepth 1 -name "*.test.*" -o -name "test-*" 2>/dev/null | grep -v "scripts/" | filter_ignored_paths || true)
+    if [ -n "$root_test_files" ]; then
+        for file in $root_test_files; do
+            report_error "Test file in root directory: $file - violates RULES.md test placement rules"
+        done
+    else
+        report_success "No prohibited test files in root"
     fi
 }
 
@@ -42,10 +60,14 @@ validate_documentation() {
     print_section "📚 Checking documentation coverage..."
 
     # Check that each feature directory has README.md
-    FEATURE_DIRS=$(find src -mindepth 1 -type d -not -path "./tmp/*" -not -path "./node_modules/*")
+    # Exclude build artifacts and auto-generated directories using .gitignore
+    FEATURE_DIRS=$(find src -mindepth 1 -type d | filter_ignored_paths)
 
     if [ -n "$FEATURE_DIRS" ]; then
         for dir in $FEATURE_DIRS; do
+            # Skip if directory should be ignored
+            should_ignore_path "$dir" && continue
+            
             if [ ! -f "$dir/README.md" ]; then
                 report_error "Missing README.md in feature directory: $dir"
             else
@@ -55,7 +77,7 @@ validate_documentation() {
     fi
 
     # Check configs directory documentation
-    if [ -d "configs" ]; then
+    if [ -d "configs" ] && ! should_ignore_path "configs"; then
         if [ ! -f "configs/README.md" ]; then
             report_error "Missing README.md in configs directory"
         else

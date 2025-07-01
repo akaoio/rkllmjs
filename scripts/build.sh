@@ -129,7 +129,7 @@ if [ "$DENO_AVAILABLE" = true ]; then
     report_status "Preparing Deno-specific configurations..."
     
     # Create deno.json for configuration
-    cat > deno.json << EOF
+    cat > configs/deno.json << EOF
 {
   "tasks": {
     "cli": "deno run --allow-all src/cli-runner/cli-runner.ts",
@@ -146,7 +146,7 @@ if [ "$DENO_AVAILABLE" = true ]; then
   }
 }
 EOF
-    report_success "Deno configuration created: deno.json"
+    report_success "Deno configuration created: configs/deno.json"
 fi
 
 # Native module build

@@ -282,7 +282,8 @@ export class RKLLMClient extends EventEmitter {
       const errorMessage = error instanceof Error ? error.message : String(error);
       let errorCode = RKLLMStatusCode.ERROR_MODEL_LOAD_FAILED;
       
-      if (errorMessage.includes('Failed to load native binding')) {
+      if (errorMessage.includes('Failed to load native binding') || 
+          errorMessage.includes('Native bindings not yet implemented')) {
         errorCode = RKLLMStatusCode.ERROR_NATIVE_BINDING_NOT_AVAILABLE;
       }
       

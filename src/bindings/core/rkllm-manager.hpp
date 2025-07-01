@@ -1,12 +1,37 @@
 #pragma once
 
+#include "../config/build-config.hpp"
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <mutex>
 #include <vector>
-#include "../../../libs/rkllm/include/rkllm.h"
 
+// Conditional RKLLM include and type definitions
+#ifdef SANDBOX_BUILD
+    // Sandbox mode: no RKLLM headers, use void* for handle
+    namespace rkllmjs {
+    namespace core {
+        using LLMHandle = void*;
+    }
+    }
+#else
+    // Full mode: include RKLLM headers and use real handle type
+    #include "../../../libs/rkllm/include/rkllm.h"
+    namespace rkllmjs {
+    namespace core {
+    #ifdef __cplusplus
+        // If RKLLMHandle is not defined in rkllm.h, define it as void*
+        #ifndef RKLLMHandle
+        using RKLLMHandle = void*;
+        #endif
+    #endif
+        using LLMHandle = RKLLMHandle;
+    }
+    }
+#endif
+
+// Continue namespace for the rest of the definitions
 namespace rkllmjs {
 namespace core {
 
@@ -93,6 +118,7 @@ public:
     
     // Configuration validation
     static ManagerResult validateConfig(const RKLLMModelConfig& config);
+    static RKLLMModelConfig createDefaultConfig();  // Add this method
     static RKLLMModelConfig getDefaultConfig();
     static RKLLMModelConfig getOptimizedConfig(const std::string& model_path);
     

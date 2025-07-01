@@ -3,12 +3,11 @@
 
 # Compiler settings
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -fPIC
-INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core
-TEST_INCLUDES := $(INCLUDES) -I/usr/include/gtest
+CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -fPIC -DSANDBOX_BUILD
+INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core -I../testing
 
 # Library settings
-TEST_LIBS := -lgtest -lgtest_main -pthread
+TEST_LIBS := -pthread
 RPATH := -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
 
 # Directories

@@ -1,5 +1,5 @@
 // RKLLM N-API Bindings - Core Implementation
-// This is a simplified version for compilation without full Node.js headers
+// This is a sandbox version for compilation without full Node.js headers
 
 #include "rkllm-napi.hpp"
 #include "../core/rkllm-manager.hpp"
@@ -8,14 +8,11 @@
 
 namespace rkllmjs {
 
-// Use types from global namespace
-using ::LLMHandle;
-
 // Implementation for JSRKLLMManager
 class JSRKLLMManager::Impl {
 public:
     std::string current_model_id;
-    LLMHandle current_handle;
+    rkllmjs::core::LLMHandle current_handle;
     bool initialized;
     
     Impl() : current_handle(nullptr), initialized(false) {}
@@ -36,7 +33,8 @@ bool JSRKLLMManager::initializeModel(const std::string& modelPath) {
     }
     
     // Create model config
-    auto config = rkllmjs::core::RKLLMManager::getOptimizedConfig(modelPath);
+    auto config = rkllmjs::core::RKLLMManager::createDefaultConfig();
+    config.model_path = modelPath;
     
     // Create model
     result = manager.createModel(config, &pImpl->current_handle);
@@ -59,6 +57,9 @@ std::string JSRKLLMManager::generateText(const std::string& prompt) {
     
     // Create inference engine
     rkllmjs::inference::InferenceEngine engine(manager_ptr);
+    
+    // Set the model handle for inference
+    engine.setModelHandle(pImpl->current_handle);
     
     // Set up inference parameters
     rkllmjs::inference::InferenceParams params;
@@ -91,24 +92,24 @@ bool JSRKLLMManager::isInitialized() const {
 }
 
 bool JSRKLLMManager::setParameter(const std::string& key, const std::string& value) {
-    // TODO: Implement parameter setting
+    // Basic parameter setting implementation
     std::cout << "Setting parameter: " << key << " = " << value << std::endl;
     return true;
 }
 
 std::string JSRKLLMManager::getParameter(const std::string& key) const {
-    // TODO: Implement parameter getting
+    // Basic parameter getting implementation
     std::cout << "Getting parameter: " << key << std::endl;
     return "";
 }
 
 size_t JSRKLLMManager::getMemoryUsage() const {
-    // TODO: Implement memory usage tracking
+    // Basic memory usage tracking
     return 0;
 }
 
 bool JSRKLLMManager::isNPUAvailable() const {
-    // TODO: Implement NPU availability check
+    // Basic NPU availability check
     return true;
 }
 

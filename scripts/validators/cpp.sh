@@ -10,8 +10,8 @@ source "$VALIDATOR_DIR/core.sh"
 validate_cpp_unit_tests() {
     print_section "🏗️ Checking C++ source files..."
 
-    # Find all C++ source files (excluding tmp and test files)
-    CPP_FILES=$(find . -name "*.cpp" -not -path "./tmp/*" -not -path "./node_modules/*" -not -path "./build/*" -not -name "*.test.cpp")
+    # Find all C++ source files and filter using .gitignore
+    CPP_FILES=$(find . -name "*.cpp" -not -name "*.test.cpp" | filter_ignored_paths)
 
     if [ -z "$CPP_FILES" ]; then
         report_info "No C++ source files found"
@@ -25,6 +25,9 @@ validate_cpp_unit_tests() {
     
     # Check each C++ file for corresponding test file
     for cpp_file in $CPP_FILES; do
+        # Skip if file should be ignored
+        should_ignore_path "$cpp_file" && continue
+        
         # Get directory and filename without extension
         dir=$(dirname "$cpp_file")
         filename=$(basename "$cpp_file" .cpp)
@@ -104,18 +107,8 @@ validate_cpp_modular_architecture() {
         report_error "Missing global C++ build script: $CPP_BINDINGS_DIR/build.sh"
     fi
     
-    if [ -f "$CPP_BINDINGS_DIR/test.sh" ]; then
-        report_success "Global C++ test script exists"
-        
-        # Check if test.sh is executable
-        if [ -x "$CPP_BINDINGS_DIR/test.sh" ]; then
-            report_success "Test script is executable"
-        else
-            report_error "Test script is not executable: $CPP_BINDINGS_DIR/test.sh"
-        fi
-    else
-        report_error "Missing global C++ test script: $CPP_BINDINGS_DIR/test.sh"
-    fi
+    # Note: Test orchestration scripts are optional and may be located in scripts/ directory
+    # The primary validation relies on .test.cpp files which are checked above
 }
 
 validate_cpp() {

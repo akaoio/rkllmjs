@@ -7,8 +7,20 @@
 #include <future>
 #include <atomic>
 #include <map>
-#include "../../../libs/rkllm/include/rkllm.h"
-#include "../utils/error-handler-simple.hpp"
+#include "../config/build-config.hpp"
+
+// Conditional RKLLM includes
+#if RKLLMJS_HAS_RKLLM_NATIVE
+    #include "../../../libs/rkllm/include/rkllm.h"
+#else
+    // Sandbox mode - define minimal types
+    typedef void* LLMHandle;
+#endif
+
+// Professional conditional includes - centralized configuration
+#include "../utils/error-handler.hpp"
+#include "../utils/type-converters.hpp"
+
 #include "../core/rkllm-manager.hpp"
 
 namespace rkllmjs {
@@ -90,7 +102,7 @@ struct BatchRequest {
 struct BatchResult {
     std::string id;
     InferenceResult result;
-    utils::ErrorInfo error; // Empty if successful
+    rkllmjs::utils::ErrorInfo error; // Empty if successful
 };
 
 /**

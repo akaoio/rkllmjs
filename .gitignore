@@ -153,27 +153,26 @@ prebuilds/
 *.dylib
 *.dll
 
-# Test coverage
-coverage/
+# C++ Build artifacts and temporary files
+src/bindings/*/bin/
+src/bindings/*/obj/
+*.a
+*.o
+*.so
+*.dylib
+*.dll
 
-# Test cache and temporary directories
-tests/.test-cache/
-tests/.tmp/
-.test-*/
-**/test-cache/
-**/test-tmp/
-tmp/
+# Build artifacts in C++ modules
+**/obj/
+**/bin/
+**/*.test
+**/*.o
+**/*.a
+**/*.so
 
-# CI/CD artifacts
-secrets-report.json
-validation-output.txt
-CHANGELOG.md
-.github/workflows/*.log
-
-# IDE
-.idea/
-*.swp
-*.swo
-
-# Backup files
+# Debug and temporary files  
+debug-test
+debug-test.*
 *.backup
+*.tmp
+*.log

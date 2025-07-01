@@ -1,12 +1,15 @@
 #include "rkllm-manager.hpp"
-#include "../config/config-manager.hpp"
+#include "../config/build-config.hpp"
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <thread>
 #include <chrono>
 #include <cstring>
+
+#ifdef __linux__
 #include <sys/sysinfo.h>
+#endif
 
 namespace rkllmjs {
 namespace core {
@@ -56,12 +59,16 @@ ManagerResult RKLLMManager::initialize() {
     }
     
     // Initialize system info
+#ifdef __linux__
     struct sysinfo si;
     if (sysinfo(&si) == 0) {
         total_memory_mb_ = si.totalram / (1024 * 1024);
     } else {
         total_memory_mb_ = 4096; // Default fallback
     }
+#else
+    total_memory_mb_ = 4096; // Default fallback for non-Linux
+#endif
     
     // Initialize resource tracking
     used_npu_cores_ = 0;
@@ -87,7 +94,11 @@ ManagerResult RKLLMManager::cleanup() {
     for (auto& [handle, instance] : models_) {
         if (instance && instance->is_active) {
             std::cout << "[RKLLMManager] Cleaning up model: " << instance->model_id << std::endl;
+#if RKLLMJS_MODE_FULL
             rkllm_destroy(handle);
+#else
+            std::cout << "[RKLLMManager] Sandbox mode: simulated cleanup" << std::endl;
+#endif
             instance->is_active = false;
         }
     }
@@ -130,6 +141,7 @@ ManagerResult RKLLMManager::createModel(const RKLLMModelConfig& config, LLMHandl
         return ManagerResult::ERROR_RESOURCE_EXHAUSTED;
     }
     
+#if RKLLMJS_MODE_FULL
     // Create RKLLM parameters using default
     RKLLMParam param = rkllm_createDefaultParam();
     
@@ -148,6 +160,11 @@ ManagerResult RKLLMManager::createModel(const RKLLMModelConfig& config, LLMHandl
         std::cout << "[RKLLMManager] Model initialization failed: " << ret << std::endl;
         return ManagerResult::ERROR_MODEL_LOAD_FAILED;
     }
+#else
+    // Sandbox mode: simulate successful initialization
+    *handle = reinterpret_cast<LLMHandle>(0x12345678); // Mock handle
+    std::cout << "[RKLLMManager] Sandbox mode: simulated model init" << std::endl;
+#endif
     
     // Create model instance
     std::string model_id = generateModelId();
@@ -179,10 +196,15 @@ ManagerResult RKLLMManager::destroyModel(LLMHandle handle) {
     }
     
     // Destroy RKLLM handle
+#if RKLLMJS_MODE_FULL
     int ret = rkllm_destroy(handle);
     if (ret != 0) {
         std::cout << "[RKLLMManager] Warning: rkllmDestroy returned: " << ret << std::endl;
     }
+#else
+    // Sandbox mode: simulate successful destruction
+    std::cout << "[RKLLMManager] Sandbox mode: simulated model destroy" << std::endl;
+#endif
     
     // Update resource usage
     used_npu_cores_ -= instance->config.npu_core_num;
@@ -235,7 +257,10 @@ bool RKLLMManager::hasAvailableResources(const RKLLMModelConfig& config) const {
 
 // Static methods
 ManagerResult RKLLMManager::validateConfig(const RKLLMModelConfig& config) {
-    return config.isValid() ? ManagerResult::SUCCESS : ManagerResult::ERROR_INVALID_CONFIG;
+    if (!config.isValid()) {
+        return ManagerResult::ERROR_INVALID_CONFIG;
+    }
+    return ManagerResult::SUCCESS;
 }
 
 RKLLMModelConfig RKLLMManager::getDefaultConfig() {
@@ -252,26 +277,39 @@ RKLLMModelConfig RKLLMManager::getDefaultConfig() {
     return config;
 }
 
+RKLLMModelConfig RKLLMManager::createDefaultConfig() {
+    return getDefaultConfig();  // Delegate to existing method
+}
+
 RKLLMModelConfig RKLLMManager::getOptimizedConfig(const std::string& model_path) {
-    auto config = getDefaultConfig();
+    auto config = createDefaultConfig();
     config.model_path = model_path;
-    
-    // Optimize based on available resources
-    auto& manager = getInstance();
-    auto stats = manager.getResourceStats();
-    
-    // Adjust NPU cores based on availability
-    if (stats.npu_utilization > 70.0f) {
-        config.npu_core_num = std::max(1, 3 - static_cast<int>(stats.npu_utilization / 30.0f));
-    }
-    
-    // Adjust context length based on memory
-    if (stats.memory_usage_mb > stats.total_memory_mb * 0.6) {
-        config.max_context_len = 256;
-        config.max_new_tokens = 64;
-    }
-    
+    // Could add model-specific optimizations here
     return config;
+}
+
+ManagerResult RKLLMManager::allocateResources(const RKLLMModelConfig& config) {
+    // Check if resources are available
+    if (!hasAvailableResources(config)) {
+        return ManagerResult::ERROR_RESOURCE_EXHAUSTED;
+    }
+    
+    // Reserve resources
+    used_npu_cores_ += config.npu_core_num;
+    used_memory_mb_ += 1024; // Estimate
+    
+    return ManagerResult::SUCCESS;
+}
+
+void RKLLMManager::deallocateResources(const std::string& model_id) {
+    // Find model by ID and deallocate resources
+    for (const auto& [handle, instance] : models_) {
+        if (instance && instance->model_id == model_id) {
+            used_npu_cores_ -= instance->config.npu_core_num;
+            used_memory_mb_ -= 1024; // Should match allocation
+            break;
+        }
+    }
 }
 
 std::string RKLLMManager::getErrorMessage(ManagerResult result) {
