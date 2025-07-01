@@ -7,6 +7,9 @@
 VALIDATOR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$VALIDATOR_DIR/core.sh"
 
+# @rule validate_typescript
+# Validates TypeScript source files and ensures 1:1 unit test coverage
+# Every .ts file must have a corresponding .test.ts file in the same directory
 validate_typescript() {
     print_section "📁 Scanning TypeScript source files..."
     

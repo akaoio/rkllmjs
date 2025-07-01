@@ -14,29 +14,39 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to report errors
+# @rule report_error
+# Reports validation errors with consistent formatting
+# Increments global error counter for final reporting
 report_error() {
     echo -e "${RED}❌ ERROR: $1${NC}"
     ERRORS=$((ERRORS + 1))
 }
 
-# Function to report warnings
+# @rule report_warning
+# Reports validation warnings with consistent formatting
+# Increments global warning counter for final reporting
 report_warning() {
     echo -e "${YELLOW}⚠️  WARNING: $1${NC}"
     WARNINGS=$((WARNINGS + 1))
 }
 
-# Function to report success
+# @rule report_success
+# Reports successful validation checks with consistent formatting
+# Used to indicate when validation rules pass
 report_success() {
     echo -e "${GREEN}✅ $1${NC}"
 }
 
-# Function to report info
+# @rule report_info
+# Reports informational messages with consistent formatting
+# Used for status updates and non-critical information
 report_info() {
     echo -e "${BLUE}ℹ️  $1${NC}"
 }
 
-# Function to print section header
+# @rule print_section
+# Prints section headers with consistent formatting
+# Used to organize validation output into logical sections
 print_section() {
     echo ""
     echo -e "${BLUE}$1${NC}"
@@ -57,7 +67,9 @@ reset_counters() {
     WARNINGS=0
 }
 
-# Function to check if a path should be ignored based on .gitignore
+# @rule should_ignore_path
+# Determines if a file path should be ignored during validation
+# Respects .gitignore patterns and common build directories
 should_ignore_path() {
     local path="$1"
     local gitignore_file=".gitignore"
@@ -119,7 +131,9 @@ should_ignore_path() {
     return 1  # Don't ignore
 }
 
-# Function to filter paths based on .gitignore
+# @rule filter_ignored_paths
+# Filters file paths using .gitignore patterns and validation rules
+# Used to exclude build artifacts and ignored files from validation
 filter_ignored_paths() {
     while IFS= read -r path; do
         if ! should_ignore_path "$path"; then

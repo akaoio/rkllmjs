@@ -1,6 +1,6 @@
 # RKLLMJS Development Rules
 
-> **Strict development guidelines for RKLLMJS - A Node.js native module for Rockchip RK3588 NPU**
+> **Automatically generated from validator comments - DO NOT EDIT MANUALLY**
 
 ---
 
@@ -12,141 +12,195 @@
 
 ---
 
-## 📁 Source Code Organization & Testing
+## 📋 Validation Rules
 
-### 🔹 C++ Modular Architecture
+The following rules are automatically enforced by the validation system:
 
-**Implemented Modules**: core/rkllm-manager, inference/inference-engine, config/config-manager, utils/type-converters, utils/error-handler, memory/memory-pool, adapters/model-adapter, napi-bindings/rkllm-napi
 
-#### C++ Module Requirements
-**Each C++ module MUST:**
-- ✅ **Standalone** - Independent build and test capability
-- ✅ **Self-contained** - Own Makefile, tests, and documentation
-- ✅ **Single responsibility** - Focused functionality
-- ✅ **Interface-driven** - Clear .hpp interface with .cpp implementation
-- ✅ **1:1 Test Coverage** - **MANDATORY**: Each .cpp file MUST have exactly one .test.cpp file
+### 🔹 validate_cpp_unit_tests
 
-#### C++ Module Structure
-```
-└── module-name/
-    ├── module-name.cpp      # Implementation
-    ├── module-name.hpp      # Public interface  
-    ├── module-name.test.cpp # Unit tests (MANDATORY 1:1 ratio)
-    ├── Makefile            # Module-specific build rules
-    └── README.md           # Module documentation
-```
+**Function**: `validate_cpp_unit_tests`  
+**Module**: `cpp.sh`  
+**Description**: Validates that every C++ source file has a corresponding unit test file
 
-#### Current C++ Implementation
-```
-src/bindings/
-├── core/
-│   ├── rkllm-manager.cpp/hpp/test.cpp
-│   ├── Makefile & README.md
-├── inference/
-│   ├── inference-engine.cpp/hpp/test.cpp  
-│   ├── Makefile & README.md
-├── config/
-│   ├── config-manager.cpp/hpp/test.cpp
-│   ├── json-parser.cpp/test.cpp
-│   ├── Makefile & README.md
-├── utils/
-│   ├── type-converters.cpp/hpp/test.cpp
-│   ├── error-handler.cpp/hpp/test.cpp
-│   ├── Makefile & README.md
-├── napi-bindings/
-│   ├── rkllm-napi.cpp/hpp/test.cpp
-│   ├── Makefile & README.md
-└── binding.cpp/test.cpp
-```
+Ensures 1:1 test coverage requirement for all .cpp files
 
-#### C++ Build System
-**Individual module builds** with global orchestration via build.sh/test.sh. Integration with NPM: `npm run build:cpp`, `npm run test:cpp`.
 
-### 🔹 TypeScript Layer
+### 🔹 validate_cpp_modular_architecture
 
-**PHILOSOPHY**: TypeScript serves as a thin wrapper around C++ core logic.
+**Function**: `validate_cpp_modular_architecture`  
+**Module**: `cpp.sh`  
+**Description**: Validates C++ modular architecture requirements
 
-#### File Structure
-```
-└── feature-name/
-    ├── feature-name.ts      # Implementation
-    ├── feature-name.test.ts # Unit tests (MANDATORY 1:1 ratio)
-    ├── README.md            # Feature documentation
-    └── types.ts             # Type definitions (if needed)
-```
+Checks that required modules exist with proper structure, Makefiles, and documentation
 
-### 🔹 Test Architecture
 
-**CRITICAL RULE**: Every source file (.cpp, .ts) MUST have exactly one corresponding test file (.test.cpp, .test.ts). No exceptions.
+### 🔹 validate_cpp
 
-#### Two-Tier Testing Structure
+**Function**: `validate_cpp`  
+**Module**: `cpp.sh`  
+**Description**: Main C++ validation orchestrator
 
-**Tier 1: Unit Tests (Co-located)**
-- **Location**: Same directory as source file
-- **Purpose**: Test individual functions/classes in isolation
-- **Naming**: `filename.test.{cpp|ts}` for `filename.{cpp|ts}`
+Runs all C++ validation checks including unit tests and modular architecture
 
-**Tier 2: Integration & System Tests (Centralized)**
-- **Integration**: `/tests/integration/` - Multi-component workflows
-- **System**: `/tests/system/` - End-to-end hardware functionality  
-- **Performance**: `/tests/performance/` - NPU benchmarks
 
-#### Special Directories
-- `/src/testing/` - Test framework and utilities
-- `/tmp/` - Temporary development files (ignored by validator)
+### 🔹 validate_naming_conventions
 
-### 🔹 Test Logging & Documentation
+**Function**: `validate_naming_conventions`  
+**Module**: `documentation.sh`  
+**Description**: Validates naming conventions across the codebase
 
-#### Test Logging Requirements
-**All tests MUST generate logs**: `logs/YYYY-MM-DD_HH-MM-SS/[test-name].test.log`
+Prohibits generic names like utils.ts, helpers.cpp that violate RULES.md
 
-**Log Content**: Test start/end timestamps, input data, expected vs actual results, error details, performance metrics, environment info.
 
-#### Documentation Requirements  
-**Each feature directory MUST contain README.md** with: Purpose, Architecture, Core Components, Usage Examples, Dependencies, Testing, Design Principles.
+### 🔹 validate_directory_structure
 
-### 🚫 Prohibited Practices
-- ❌ Mocking data or logic files
-- ❌ Missing test files (every .cpp/.ts needs .test.cpp/.test.ts)
-- ❌ Multiple unrelated features in same file/directory
-- ❌ Generic naming (`utils.ts`, `helpers.cpp`)
-- ❌ Missing README.md for feature directories
-- ❌ Non-Node.js dependencies for core functionality
-- ❌ Absolute paths in code
+**Function**: `validate_directory_structure`  
+**Module**: `documentation.sh`  
+**Description**: Validates directory structure compliance
 
-### 📁 Path Management Rules
+Ensures no empty directories exist (directories with only README.md)
 
-**MANDATORY**: All code MUST use relative paths only.
 
-- ✅ **No absolute paths** - Portable builds across systems
-- ✅ **Relative from project root** - All paths relative to project root
-- ✅ **Dynamic configuration** - Store paths in `configs/` directory
-- ✅ **Runtime resolution** - Resolve paths at runtime, not compile time
+### 🔹 validate_documentation
 
-### 📂 Folder Organization Principles
+**Function**: `validate_documentation`  
+**Module**: `documentation.sh`  
+**Description**: Validates documentation coverage requirements
 
-**PRINCIPLE**: Organize files logically for maintainability and clear separation of concerns.
+Ensures each feature directory has proper README.md documentation
 
-#### Implementation Requirements  
-- ✅ **Every directory with README.md MUST have**: At least 1 source file (.cpp/.ts) AND 1 test file
-- ✅ **No placeholder directories**: Directories exist only when implementation begins
-- ✅ **Clean removal**: Remove directories when all implementation files are deleted
 
-#### Test File Placement Rules
-- ❌ **Prohibited in root**: No .test.* files or test-*.* files in project root
-- ✅ **Script directory only**: Test orchestration scripts belong in `scripts/`
-- ✅ **Co-located unit tests**: Test files alongside source in same directory
-- ✅ **Centralized integration**: System/integration tests in `tests/` hierarchy
+### 🔹 validate_protected_assets
+
+**Function**: `validate_protected_assets`  
+**Module**: `documentation.sh`  
+**Description**: Validates presence of protected Rockchip assets
+
+Ensures critical library files and headers exist and are not modified
+
+
+### 🔹 validate_documentation_and_naming
+
+**Function**: `validate_documentation_and_naming`  
+**Module**: `documentation.sh`  
+**Description**: Main documentation and naming validation orchestrator
+
+Runs all documentation coverage and naming convention checks
+
+
+### 🔹 validate_tier2_tests
+
+**Function**: `validate_tier2_tests`  
+**Module**: `test-structure.sh`  
+**Description**: Validates Tier 2 test structure for integration, system, and performance tests
+
+Ensures proper test hierarchy with documentation and structure compliance
+
+
+### 🔹 validate_test_framework
+
+**Function**: `validate_test_framework`  
+**Module**: `test-structure.sh`  
+**Description**: Validates test framework structure and utilities
+
+Ensures test framework components exist and have corresponding tests
+
+
+### 🔹 validate_test_structure
+
+**Function**: `validate_test_structure`  
+**Module**: `test-structure.sh`  
+**Description**: Main test structure validation orchestrator
+
+Runs all test structure validation checks for Tier 2 tests and framework
+
+
+### 🔹 validate_typescript
+
+**Function**: `validate_typescript`  
+**Module**: `typescript.sh`  
+**Description**: Validates TypeScript source files and ensures 1:1 unit test coverage
+
+Every .ts file must have a corresponding .test.ts file in the same directory
+
+## 📚 Core Validation Utilities
+
+
+### 🔹 report_error
+
+**Function**: `report_error`  
+**Module**: `core.sh`  
+**Description**: Reports validation errors with consistent formatting
+
+Increments global error counter for final reporting
+
+
+### 🔹 report_warning
+
+**Function**: `report_warning`  
+**Module**: `core.sh`  
+**Description**: Reports validation warnings with consistent formatting
+
+Increments global warning counter for final reporting
+
+
+### 🔹 report_success
+
+**Function**: `report_success`  
+**Module**: `core.sh`  
+**Description**: Reports successful validation checks with consistent formatting
+
+Used to indicate when validation rules pass
+
+
+### 🔹 report_info
+
+**Function**: `report_info`  
+**Module**: `core.sh`  
+**Description**: Reports informational messages with consistent formatting
+
+Used for status updates and non-critical information
+
+
+### 🔹 print_section
+
+**Function**: `print_section`  
+**Module**: `core.sh`  
+**Description**: Prints section headers with consistent formatting
+
+Used to organize validation output into logical sections
+
+
+### 🔹 should_ignore_path
+
+**Function**: `should_ignore_path`  
+**Module**: `core.sh`  
+**Description**: Determines if a file path should be ignored during validation
+
+Respects .gitignore patterns and common build directories
+
+
+### 🔹 filter_ignored_paths
+
+**Function**: `filter_ignored_paths`  
+**Module**: `core.sh`  
+**Description**: Filters file paths using .gitignore patterns and validation rules
+
+Used to exclude build artifacts and ignored files from validation
+
 
 ---
 
 ## 🔍 Validator Script
 
-The `scripts/validate.sh` enforces compliance by:
-1. **1:1 Test Coverage**: Each .cpp/.ts file must have corresponding .test.cpp/.test.ts
-2. **Documentation**: Each feature directory must have README.md  
-3. **Structure Validation**: Proper file placement and naming
-4. **Exit Codes**: 0=pass, 1=missing tests, 2=structure issues, 3=naming violations, 4=missing docs
+The `scripts/validate.sh` enforces compliance by running all validation modules:
+1. **TypeScript validation**: 1:1 test coverage for .ts files
+2. **C++ validation**: Modular architecture and test coverage
+3. **Test structure validation**: Proper test hierarchy
+4. **Documentation validation**: README.md coverage and naming conventions
+
+**Exit Codes**: 0=pass, 1=validation errors found
 
 ---
 
@@ -164,56 +218,4 @@ The `scripts/validate.sh` enforces compliance by:
 
 ---
 
-## 📚 Rockchip Library Management
-
-### Protected Assets
-**STRICTLY PROHIBITED** to modify:
-- `libs/rkllm/aarch64/librkllmrt.so` - NPU runtime library
-- `libs/rkllm/include/rkllm.h` - C API header
-
-### Integration Rules
-- ✅ **Link only** against provided .so library
-- ✅ **Include only** provided header file  
-- ✅ **Create wrappers** around C API
-- ❌ **Never modify** core Rockchip assets
-
----
-
-## 📝 File Organization & Naming
-
-### Naming Rules
-- **Descriptive names**: `llm-runner.ts`, `model-loader.cpp`
-- **Consistent casing**: `kebab-case` for files, `PascalCase` for classes
-- **1:1 test mapping**: `file.{cpp|ts}` → `file.test.{cpp|ts}`
-
-### Project Structure
-```
-rkllmjs/
-├── src/
-│   ├── bindings/           # C++ modules (with co-located tests)
-│   ├── [feature]/          # TypeScript features (with co-located tests)
-│   └── testing/            # Test framework
-├── tests/                  # Integration/system/performance tests
-├── configs/               # Configuration files
-├── libs/rkllm/            # Rockchip library (protected)
-└── scripts/               # Build and validation scripts
-```
-
----
-
-## 🔧 Build Systems
-
-### C++ Build System
-- **Modular**: Each module builds independently via Makefile
-- **Orchestrated**: Global build.sh/test.sh coordination
-- **NPM Integrated**: `npm run build:cpp`, `npm run test:cpp`
-
-### Required Build Targets
-```makefile
-all: $(MODULE).cpp $(MODULE).test.cpp
-clean: # Remove build artifacts
-test: # Build and run tests
-debug: # Debug build
-```
-
-### TypeScript Build System
+*Generated automatically by RKLLMJS Doc Generator*

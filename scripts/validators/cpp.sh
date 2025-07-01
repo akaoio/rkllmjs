@@ -7,6 +7,9 @@
 VALIDATOR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$VALIDATOR_DIR/core.sh"
 
+# @rule validate_cpp_unit_tests
+# Validates that every C++ source file has a corresponding unit test file
+# Ensures 1:1 test coverage requirement for all .cpp files
 validate_cpp_unit_tests() {
     print_section "🏗️ Checking C++ source files..."
 
@@ -43,6 +46,9 @@ validate_cpp_unit_tests() {
     done
 }
 
+# @rule validate_cpp_modular_architecture
+# Validates C++ modular architecture requirements
+# Checks that required modules exist with proper structure, Makefiles, and documentation
 validate_cpp_modular_architecture() {
     print_section "🏗️ Checking C++ Modular Architecture..."
 
@@ -111,6 +117,9 @@ validate_cpp_modular_architecture() {
     # The primary validation relies on .test.cpp files which are checked above
 }
 
+# @rule validate_cpp
+# Main C++ validation orchestrator
+# Runs all C++ validation checks including unit tests and modular architecture
 validate_cpp() {
     validate_cpp_unit_tests
     validate_cpp_modular_architecture

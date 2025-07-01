@@ -36,6 +36,24 @@ validate_test_structure
 # Documentation and naming validation
 validate_documentation_and_naming
 
+# Validate that all validator functions have proper @rule comments
+print_section "📝 Checking validator function documentation..."
+if bash "$SCRIPT_DIR/doc-generator.sh" validate >/dev/null 2>&1; then
+    report_success "All validator functions have proper @rule documentation"
+    
+    # Auto-update RULES.md if enabled in config
+    if [ -f "configs/rules.json" ] && grep -q '"auto_update_rules": true' configs/rules.json; then
+        print_section "🔄 Auto-updating RULES.md from validator comments..."
+        if bash "$SCRIPT_DIR/doc-generator.sh" generate >/dev/null 2>&1; then
+            report_success "RULES.md updated automatically"
+        else
+            report_warning "Failed to auto-update RULES.md"
+        fi
+    fi
+else
+    report_error "Some validator functions missing @rule documentation"
+fi
+
 # Final summary
 echo ""
 echo "📊 Validation Summary"

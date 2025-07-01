@@ -1,0 +1,45 @@
+{
+  "rules": {
+    "validate_typescript": {
+      "enabled": true,
+      "description": "Enforces 1:1 test coverage for TypeScript files"
+    },
+    "validate_cpp_unit_tests": {
+      "enabled": true,
+      "description": "Enforces 1:1 test coverage for C++ files"
+    },
+    "validate_cpp_modular_architecture": {
+      "enabled": true,
+      "description": "Validates C++ modular architecture requirements"
+    },
+    "validate_naming_conventions": {
+      "enabled": true,
+      "description": "Prohibits generic file names"
+    },
+    "validate_directory_structure": {
+      "enabled": true,
+      "description": "Prevents empty directories"
+    },
+    "validate_documentation": {
+      "enabled": true,
+      "description": "Ensures README.md coverage"
+    },
+    "validate_protected_assets": {
+      "enabled": true,
+      "description": "Protects Rockchip library files"
+    },
+    "validate_tier2_tests": {
+      "enabled": true,
+      "description": "Validates test hierarchy structure"
+    },
+    "validate_test_framework": {
+      "enabled": true,
+      "description": "Ensures test framework components exist"
+    }
+  },
+  "doc_generation": {
+    "auto_update_rules": true,
+    "include_utility_functions": true,
+    "output_format": "markdown"
+  }
+}

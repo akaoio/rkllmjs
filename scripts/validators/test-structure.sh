@@ -7,6 +7,9 @@
 VALIDATOR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$VALIDATOR_DIR/core.sh"
 
+# @rule validate_tier2_tests
+# Validates Tier 2 test structure for integration, system, and performance tests
+# Ensures proper test hierarchy with documentation and structure compliance
 validate_tier2_tests() {
     print_section "🧪 Checking Tier 2 test structure (Integration/System/Performance)..."
 
@@ -42,6 +45,9 @@ validate_tier2_tests() {
     fi
 }
 
+# @rule validate_test_framework
+# Validates test framework structure and utilities
+# Ensures test framework components exist and have corresponding tests
 validate_test_framework() {
     print_section "🔧 Checking test framework structure..."
 
@@ -73,6 +79,9 @@ validate_test_framework() {
     done
 }
 
+# @rule validate_test_structure
+# Main test structure validation orchestrator
+# Runs all test structure validation checks for Tier 2 tests and framework
 validate_test_structure() {
     validate_tier2_tests
     validate_test_framework
