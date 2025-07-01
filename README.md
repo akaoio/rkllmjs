@@ -211,12 +211,29 @@ npm run test:deno
 # Build for Node.js (primary)
 npm run build
 
+# Build the C++ bindings with the real headers
+npm run build:real
+
+# Build the C++ bindings with sandbox headers
+npm run build:sandbox
+
+# Test C++ modules with the real headers
+npm run test:real
+
+# Test C++ modules with sandbox headers
+npm run test:sandbox
+
 # Build TypeScript only
 npm run build:ts
 
 # Development mode (watch)
 npm run dev
 ```
+
+The `SANDBOX_BUILD` environment variable controls whether real N-API headers
+or lightweight sandbox stubs are used. `build:real` and `test:real` run with
+`SANDBOX_BUILD=0`, while the `build:sandbox` and `test:sandbox` scripts set
+`SANDBOX_BUILD=1`.
 
 ## 🧪 Test-Driven Development (TDD)
 

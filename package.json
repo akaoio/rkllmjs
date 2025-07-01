@@ -32,9 +32,13 @@
     "format": "prettier --config .prettierrc --write src/**/*.ts",
     "docs": "typedoc src --out docs",
     "prepublishOnly": "npm run build && npm test",
+    "build:real": "SANDBOX_BUILD=0 npm run build:cpp",
+    "build:sandbox": "SANDBOX_BUILD=1 npm run build:cpp",
     "build:cpp": "bash src/bindings/build.sh build",
     "build:cpp:module": "bash src/bindings/build.sh build",
     "build:cpp:binding": "bash src/bindings/build.sh binding",
+    "test:real": "SANDBOX_BUILD=0 npm run test:cpp",
+    "test:sandbox": "SANDBOX_BUILD=1 npm run test:cpp",
     "test:cpp": "bash scripts/test-cpp.sh",
     "clean:cpp": "bash src/bindings/build.sh clean"
   },
