@@ -315,10 +315,7 @@ export class RKLLMClient extends EventEmitter {
         errorCode = RKLLMStatusCode.ERROR_NATIVE_BINDING_NOT_AVAILABLE;
       }
 
-      const rkllmError =
-        error instanceof RKLLMError
-          ? error
-          : new RKLLMError('Initialization failed', errorCode, errorMessage);
+      const rkllmError = createRKLLMError('Initialization failed', errorCode, error);
 
       this.emit('error', rkllmError);
       throw rkllmError;
