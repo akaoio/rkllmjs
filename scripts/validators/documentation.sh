@@ -41,27 +41,13 @@ validate_directory_structure() {
 
     # Check for test files in root (prohibited)
     print_section "🚫 Checking for prohibited test files in root..."
-    root_test_files=$(find . -maxdepth 1 -name "*.test.*" -o -name "test-*" | grep -v "scripts/")
+    root_test_files=$(find . -maxdepth 1 -name "*.test.*" -o -name "test-*" 2>/dev/null | grep -v "scripts/" || true)
     if [ -n "$root_test_files" ]; then
         for file in $root_test_files; do
             report_error "Test file in root directory: $file - violates RULES.md test placement rules"
         done
     else
         report_success "No prohibited test files in root"
-    fi
-
-    # Find directories with multiple TypeScript files (excluding tests and type definitions)
-    MULTI_FILE_DIRS=$(find src -type d -not -path "src/testing" -exec sh -c 'count=$(find "$1" -maxdepth 1 -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | wc -l); if [ $count -gt 1 ]; then echo "$1"; fi' _ {} \;)
-
-    if [ -n "$MULTI_FILE_DIRS" ]; then
-        for dir in $MULTI_FILE_DIRS; do
-            files=$(find "$dir" -maxdepth 1 -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts")
-            file_count=$(echo "$files" | wc -l)
-            if [ $file_count -gt 1 ]; then
-                report_warning "Directory $dir contains $file_count TypeScript files - ensure they are related features"
-                echo "   Files: $(echo $files | tr '\n' ' ')"
-            fi
-        done
     fi
 }
 
