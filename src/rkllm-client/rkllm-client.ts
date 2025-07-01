@@ -251,7 +251,7 @@ export class RKLLMClient extends EventEmitter {
         baseDomainId: 0,
         embedFlash: false,
         enabledCpusNum: 4,
-        enabledCpusMask: 0x0f,
+        enabledCpusMask: 0x0F,
         nBatch: 1,
         useCrossAttn: false,
       },
