@@ -69,74 +69,49 @@ reset_counters() {
 
 # @rule should_ignore_path
 # Determines if a file path should be ignored during validation
-# Respects .gitignore patterns and common build directories
+# Uses git check-ignore to respect .gitignore patterns exactly as git does
 should_ignore_path() {
     local path="$1"
-    local gitignore_file=".gitignore"
     
-    # If .gitignore doesn't exist, don't ignore anything
-    [ ! -f "$gitignore_file" ] && return 1
-    
-    # Common build directories to ignore
-    case "$path" in
-        */bin|*/bin/|*/bin/*)
-            return 0  # Should ignore
-            ;;
-        */obj|*/obj/|*/obj/*)
-            return 0  # Should ignore
-            ;;
-        */build|*/build/|*/build/*)
-            return 0  # Should ignore
-            ;;
-        */dist|*/dist/|*/dist/*)
-            return 0  # Should ignore
-            ;;
-        */node_modules|*/node_modules/|*/node_modules/*)
-            return 0  # Should ignore
-            ;;
-        */tmp|*/tmp/|*/tmp/*)
-            return 0  # Should ignore
-            ;;
-        */logs|*/logs/|*/logs/*)
-            return 0  # Should ignore
-            ;;
-        */.git|*/.git/|*/.git/*)
-            return 0  # Should ignore
-            ;;
-        */.vscode|*/.vscode/|*/.vscode/*)
-            return 0  # Should ignore
-            ;;
-        *.o|*.a|*.so|*.test|*.log)
-            return 0  # Should ignore
-            ;;
-    esac
-    
-    # Check against .gitignore file content
-    while IFS= read -r line; do
-        # Skip comments and empty lines
-        [[ "$line" =~ ^[[:space:]]*# ]] && continue
-        [[ "$line" =~ ^[[:space:]]*$ ]] && continue
-        
-        # Remove leading/trailing whitespace
-        line=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-        
-        # Check if path matches pattern
-        case "$path" in
-            $line|*/$line|*$line*)
-                return 0  # Should ignore
-                ;;
-        esac
-    done < "$gitignore_file"
-    
-    return 1  # Don't ignore
+    # Use git check-ignore to determine if path should be ignored
+    # This respects all .gitignore patterns including complex glob patterns,
+    # negation patterns (!), directory-only patterns (/), and relative paths
+    if echo "$path" | git check-ignore --stdin >/dev/null 2>&1; then
+        return 0  # Should ignore
+    else
+        return 1  # Don't ignore
+    fi
 }
 
 # @rule filter_ignored_paths
-# Filters file paths using .gitignore patterns and validation rules
-# Used to exclude build artifacts and ignored files from validation
+# Filters file paths using git check-ignore to respect .gitignore patterns
+# Processes paths efficiently in batch mode for better performance
 filter_ignored_paths() {
+    # Read all paths into a temporary array
+    local paths=()
     while IFS= read -r path; do
-        if ! should_ignore_path "$path"; then
+        paths+=("$path")
+    done
+    
+    # If no paths, return empty
+    if [ ${#paths[@]} -eq 0 ]; then
+        return 0
+    fi
+    
+    # Use git check-ignore to filter out ignored paths in batch
+    # This is much more efficient than calling git check-ignore for each path
+    local ignored_paths
+    ignored_paths=$(printf '%s\n' "${paths[@]}" | git check-ignore --stdin 2>/dev/null || true)
+    
+    # Create associative array of ignored paths for fast lookup
+    declare -A ignored_map
+    while IFS= read -r ignored_path; do
+        [ -n "$ignored_path" ] && ignored_map["$ignored_path"]=1
+    done <<< "$ignored_paths"
+    
+    # Output only non-ignored paths
+    for path in "${paths[@]}"; do
+        if [ -z "${ignored_map["$path"]}" ]; then
             echo "$path"
         fi
     done

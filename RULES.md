@@ -178,16 +178,16 @@ Used to organize validation output into logical sections
 **Module**: `core.sh`  
 **Description**: Determines if a file path should be ignored during validation
 
-Respects .gitignore patterns and common build directories
+Uses git check-ignore to respect .gitignore patterns exactly as git does
 
 
 ### 🔹 filter_ignored_paths
 
 **Function**: `filter_ignored_paths`  
 **Module**: `core.sh`  
-**Description**: Filters file paths using .gitignore patterns and validation rules
+**Description**: Filters file paths using git check-ignore to respect .gitignore patterns
 
-Used to exclude build artifacts and ignored files from validation
+Processes paths efficiently in batch mode for better performance
 
 
 ---
