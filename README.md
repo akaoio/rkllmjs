@@ -263,7 +263,7 @@ For C++ modules, we use our **in-house RKLLMJS Test Framework**:
 - **Professional Output**: Clean, colored test results with familiar syntax
 - **Tailored Design**: Specifically built for RKLLMJS C++ modules
 - **Cross-Platform**: Works on Linux, macOS, and other UNIX-like systems
-- **Build Mode Support**: Supports both SANDBOX and FULL build configurations
+- **Build Mode Support**: Supports both SANDBOX and REAL build configurations
 
 ```bash
 # Run all C++ module tests

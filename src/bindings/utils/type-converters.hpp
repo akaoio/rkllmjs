@@ -2,7 +2,7 @@
 
 #include "../config/build-config.hpp"
 
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
     #include <napi.h>
 #endif
 
@@ -39,7 +39,7 @@ private:
  * JavaScript types (via N-API) and C++ standard library types.
  */
 
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
 // Full mode: Include N-API type conversions
 
 // String conversions
@@ -125,8 +125,8 @@ std::string bytesToString(const std::vector<uint8_t>& bytes);
 std::string bytesToHex(const std::vector<uint8_t>& bytes);
 std::vector<uint8_t> hexToBytes(const std::string& hex);
 
-#if RKLLMJS_MODE_FULL
-// Template implementations for FULL mode
+#if RKLLMJS_MODE_REAL
+// Template implementations for REAL mode
 
 template<typename T>
 std::vector<T> jsArrayToCppVector(Napi::Env env, const Napi::Array& jsArray) {

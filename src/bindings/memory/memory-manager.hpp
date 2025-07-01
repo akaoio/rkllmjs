@@ -3,6 +3,7 @@
 #include "../config/build-config.hpp"
 #include <memory>
 #include <vector>
+#include <string>
 #include <mutex>
 #include <unordered_map>
 #include <cstddef>

@@ -9,7 +9,7 @@
 #include <mutex>
 #include <ostream>
 
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
     #include "../core/rkllm-manager.hpp"
     #include "../inference/inference-engine.hpp"
 #endif
@@ -147,7 +147,7 @@ public:
 class RKLLMAdapter : public IAdapter {
 private:
     bool initialized_;
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
     std::shared_ptr<rkllmjs::core::RKLLMManager> manager_;
     std::shared_ptr<rkllmjs::inference::InferenceEngine> engine_;
 #else

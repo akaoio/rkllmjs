@@ -7,7 +7,7 @@
 #include <functional>
 #include <vector>
 
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
     #include <napi.h>
 #endif
 
@@ -37,7 +37,7 @@ class TypeConversionException : public RKLLMException {
 public:
     explicit TypeConversionException(const std::string& message) : RKLLMException(message) {}
     TypeConversionException(const std::string& expected, const std::string& actual);
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
     TypeConversionException(const std::string& expected, napi_valuetype actual);
 #endif
 };
@@ -88,7 +88,7 @@ struct ErrorInfo {
     std::string location; // File:line info
 };
 
-#if RKLLMJS_MODE_FULL
+#if RKLLMJS_MODE_REAL
 // Utility function declarations
 std::string getTypeString(napi_valuetype type);
 
