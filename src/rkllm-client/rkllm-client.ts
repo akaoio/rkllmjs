@@ -251,7 +251,7 @@ export class RKLLMClient extends EventEmitter {
         baseDomainId: 0,
         embedFlash: false,
         enabledCpusNum: 4,
-        enabledCpusMask: 0x0F,
+        enabledCpusMask: 0x0f,
         nBatch: 1,
         useCrossAttn: false,
       },
@@ -315,7 +315,10 @@ export class RKLLMClient extends EventEmitter {
         errorCode = RKLLMStatusCode.ERROR_NATIVE_BINDING_NOT_AVAILABLE;
       }
 
-      const rkllmError = createRKLLMError('Initialization failed', errorCode, error);
+      const rkllmError =
+        error instanceof RKLLMError
+          ? error
+          : new RKLLMError('Initialization failed', errorCode, errorMessage);
 
       this.emit('error', rkllmError);
       throw rkllmError;

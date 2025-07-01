@@ -240,7 +240,7 @@ export async function forceMemoryCleanup(): Promise<void> {
   }
 
   // Allow NPU memory to be released
-  await new Promise((resolve) => setTimeout(resolve, NPU_MEMORY_RELEASE_DELAY_MS));
+  await new Promise((resolve) => setTimeout(resolve, 300));
 }
 
 /**
