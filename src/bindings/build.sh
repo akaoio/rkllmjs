@@ -54,6 +54,7 @@ declare -a MODULES=(
     "memory"
     "inference"
     "adapters"
+    "readme-generator"
     "napi-bindings"
 )
 
@@ -326,6 +327,11 @@ generate_report() {
                 ;;
             "adapters")
                 if [ -f "$module_dir/bin/librkllm-adapters.a" ] || [ -f "$module_dir/librkllm-adapters.a" ]; then
+                    success=true
+                fi
+                ;;
+            "readme-generator")
+                if [ -f "$module_dir/bin/libreadme-generator.a" ] || [ -f "$module_dir/libreadme-generator.a" ]; then
                     success=true
                 fi
                 ;;

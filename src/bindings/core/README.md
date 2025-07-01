@@ -1,85 +1,108 @@
-# Core Module - RKLLM Manager
+# core
 
 ## Purpose
 The core module manages RKLLM model lifecycle, configuration, and resource allocation. It serves as the central point for all model-related operations and provides a clean interface for other modules.
 
 ## Architecture
-```
-┌─────────────────────┐
-│   rkllm-manager     │ ← Public API
-├─────────────────────┤
-│   Resource Pool     │ ← Memory & NPU management
-├─────────────────────┤
-│   Configuration     │ ← Model config & validation
-├─────────────────────┤
-│   librkllmrt.so     │ ← Rockchip NPU library
-└─────────────────────┘
-```
+{{ARCHITECTURE}}
+
+## Source Files
+- `rkllm-manager.cpp` (cpp)
+- `rkllm-manager.hpp` (hpp)
+
 
 ## Core Components
 
-### RKLLMManager Class
-- **Model Lifecycle**: Initialize, configure, destroy models
-- **Resource Management**: NPU memory allocation, CPU core assignment
-- **Configuration**: Parameter validation and optimization
-- **Error Handling**: Comprehensive error reporting and recovery
+{{#CLASSES}}
+### Classes
+### rkllm-manager.hpp
+- `RKLLMManager`
 
-### Key Features
-- **Thread-safe**: Multiple model instances support
-- **Resource pooling**: Efficient memory and NPU utilization
-- **Configuration validation**: Parameter range checking
-- **Performance monitoring**: Resource usage tracking
 
-## Usage Examples
+{{/CLASSES}}
 
-### Basic Model Management
-```cpp
-#include "rkllm-manager.hpp"
+{{#FUNCTIONS}}
+### Functions
+### rkllm-manager.cpp
+- `cleanup`
+- `updateResourceStats`
+- `rkllm_destroy`
+- `updateResourceStats`
+- `updateResourceStats`
+- `getDefaultConfig`
 
-// Initialize manager
-RKLLMManager manager;
-auto result = manager.initialize();
+### rkllm-manager.hpp
+- `isValid`
+- `getValidationError`
+- `initialize`
+- `cleanup`
+- `isInitialized`
+- `createModel`
+- `destroyModel`
+- `getModelConfig`
+- `getResourceStats`
+- `hasAvailableResources`
+- `validateConfig`
+- `createDefaultConfig`
+- `getDefaultConfig`
+- `getOptimizedConfig`
+- `getActiveModelCount`
+- `getErrorMessage`
+- `generateModelId`
+- `allocateResources`
+- `deallocateResources`
+- `updateResourceStats`
 
-// Create model instance
-RKLLMModelConfig config = {
-    .model_path = "../../../models/Qwen2.5-VL-7B-Instruct.rkllm",
-    .max_context_len = 512,
-    .max_new_tokens = 128,
-    .top_k = 1,
-    .top_p = 0.9,
-    .temperature = 0.8,
-    .npu_core_num = 3
-};
 
-RKLLMHandle handle;
-auto create_result = manager.createModel(config, &handle);
+{{/FUNCTIONS}}
 
-// Use model...
-// Clean up
-manager.destroyModel(handle);
-manager.cleanup();
-```
-
-### Resource Monitoring
-```cpp
-// Get resource usage
-auto stats = manager.getResourceStats();
-std::cout << "NPU Utilization: " << stats.npu_utilization << "%" << std::endl;
-std::cout << "Memory Usage: " << stats.memory_usage_mb << " MB" << std::endl;
-```
+{{#EXPORTS}}
+### Exports
+{{EXPORTS}}
+{{/EXPORTS}}
 
 ## Dependencies
-- **librkllmrt.so**: Rockchip NPU runtime library
-- **error-handler**: Unified error handling (from utils module)
-- **Standard C++17**: STL containers, smart pointers, threads
+{{DEPENDENCIES}}
 
 ## Testing
-- **Unit Tests**: All public methods tested with various configurations
-- **Resource Tests**: Memory leak detection, NPU utilization validation
-- **Error Tests**: Invalid configuration handling, resource exhaustion
+{{TESTING_INFO}}
+
+### Running Tests
+```bash
+# Build and run tests
+make test
+
+# Run with verbose output
+make test-verbose
+
+# Build debug version for testing
+make debug
+```
 
 ## Design Principles
-- **RAII**: Automatic resource cleanup
-- **Single Responsibility**: Model lifecycle management only
-- **Interface Segregation**: Clean public API, hidden implementation
-- **Error Safety**: No exceptions, explicit error returns
+- **Modular Architecture**: Self-contained with clear interfaces
+- **Minimal Dependencies**: Uses standard libraries only
+- **Error Handling**: Graceful handling of edge cases
+- **Performance**: Optimized for fast build times
+
+## Build Configuration
+
+### Standalone Build
+```bash
+# Build the module
+make
+
+# Clean artifacts
+make clean
+
+# Install library for other modules
+make install
+```
+
+## Current Status
+{{STATUS}}
+
+---
+
+*Generated automatically by RKLLMJS README Generator*
+*Last updated: {{GENERATED_DATE}}*

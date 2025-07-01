@@ -1,0 +1,50 @@
+{
+  "name": "RKLLMJS README Generator Configuration",
+  "version": "1.0.0",
+  "description": "Configuration templates and settings for automatic README generation",
+  
+  "defaultTemplate": "readme-template.md",
+  "customTemplates": [
+    "module-template.md",
+    "library-template.md",
+    "component-template.md"
+  ],
+  
+  "generator": {
+    "templatePath": "configs/readme-template.md",
+    "overwriteExisting": false,
+    "verbose": false,
+    "includeGeneratedDate": true,
+    "includeSourceStats": true
+  },
+  
+  "parsing": {
+    "supportedLanguages": ["cpp", "hpp", "ts", "js"],
+    "extractComments": true,
+    "extractDependencies": true,
+    "extractFunctions": true,
+    "extractClasses": true,
+    "extractExports": true
+  },
+  
+  "validation": {
+    "requirePurpose": true,
+    "requireMinimumFunctions": 1,
+    "validateTemplateVariables": true,
+    "checkFileExists": true
+  },
+  
+  "output": {
+    "encoding": "utf-8",
+    "lineEnding": "lf",
+    "includeTableOfContents": false,
+    "markdownCompliance": "github-flavored"
+  },
+  
+  "integration": {
+    "validateScript": "scripts/validate.sh",
+    "buildScript": "src/bindings/build.sh",
+    "runOnBuild": false,
+    "runOnValidation": true
+  }
+}
