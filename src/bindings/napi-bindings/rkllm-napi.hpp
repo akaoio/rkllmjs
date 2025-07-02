@@ -17,9 +17,9 @@
 namespace rkllmjs {
 namespace napi {
 
-// Conditional N-API integration
-#ifndef SANDBOX_BUILD
-    // Future N-API integration (when Node.js headers are available)
+// N-API integration - always available in unified build
+#ifdef RKLLM_NAPI_BINDINGS
+    // N-API headers are available when building actual bindings
     /*
     #include <node_api.h>
 

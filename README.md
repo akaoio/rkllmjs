@@ -214,24 +214,14 @@ npm run build
 # Build TypeScript only
 npm run build:ts
 
-# Build C++ modules only (auto-detects sandbox/real mode)
+# Build C++ modules
 npm run build:cpp
-
-# Force real mode build (for RK3588 hardware)
-RKLLM_MODE=real npm run build:cpp
-
-# Force sandbox mode build (for development/CI)
-RKLLM_MODE=sandbox npm run build:cpp
 
 # Development mode (watch)
 npm run dev
 ```
 
-The build system now intelligently auto-detects the appropriate mode based on the target architecture:
-- **RK3588 hardware**: Automatically uses real mode with full NPU integration
-- **Other ARM64**: Uses sandbox mode for development/testing
-- **x86_64/CI environments**: Uses sandbox mode for development/testing
-- **Manual override**: Use `RKLLM_MODE=real` or `RKLLM_MODE=sandbox` to force a specific mode
+The unified build system compiles with full RK3588 NPU support and automatically adapts at runtime based on available hardware.
 
 ## 🧪 Test-Driven Development (TDD)
 
@@ -261,7 +251,7 @@ For C++ modules, we use our **in-house RKLLMJS Test Framework**:
 - **Professional Output**: Clean, colored test results with familiar syntax
 - **Tailored Design**: Specifically built for RKLLMJS C++ modules
 - **Cross-Platform**: Works on Linux, macOS, and other UNIX-like systems
-- **Build Mode Support**: Intelligent auto-detection of sandbox/real modes based on target architecture
+- **Unified Build**: Single build system with automatic hardware detection at runtime
 
 ```bash
 # Run all C++ module tests

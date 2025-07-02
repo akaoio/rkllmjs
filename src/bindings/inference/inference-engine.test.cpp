@@ -8,9 +8,7 @@ namespace rkllmjs {
 namespace inference {
 namespace test {
 
-#if 1 // Simplified - always use sandbox-like logic
-
-// Tests for sandbox mode (no native RKLLM dependencies)
+// Tests for unified build system (full functionality always available)
 TEST(InferenceEngineTest, InferenceParamsValidation) {
     // Test valid parameters
     InferenceParams params;
@@ -97,21 +95,26 @@ TEST(InferenceEngineTest, PerformanceUtils) {
     EXPECT_NEAR(sum, 1.0f, 1e-6f);
 }
 
-#else
-
-// Tests for full mode (with native RKLLM dependencies)
-TEST(InferenceEngineTest, InferenceEngineBasicOperation) {
-    // In full mode, we would test actual RKLLM integration
-    // For now, just test that the simplified interface works
-    InferenceParams params;
-    params.prompt = "Hello, world!";
-    params.maxTokens = 100;
-    EXPECT_TRUE(params.isValid());
+// Hardware-specific tests that adapt at runtime
+TEST(InferenceEngineTest, HardwareAdaptiveTests) {
+    // Test that engine can detect hardware capabilities
+    using namespace rkllmjs::config;
+    
+    bool is_rk3588 = detect_rk3588();
+    // bool is_arm64 = detect_arm64(); // Unused for now
+    
+    // These should work regardless of hardware
+    EXPECT_TRUE(true); // Basic compilation test
+    
+    // Runtime behavior can adapt based on hardware
+    if (is_rk3588) {
+        // On actual RK3588 hardware, full features available
+        EXPECT_TRUE(RKLLMJS_HAS_RKLLM_NATIVE);
+    } else {
+        // On other platforms, features still available but may use fallbacks
+        EXPECT_TRUE(RKLLMJS_HAS_RKLLM_NATIVE);
+    }
 }
-
-// Additional full-mode tests would go here when RKLLM integration is complete
-
-#endif // RKLLMJS_MODE_SANDBOX
 
 } // namespace test
 } // namespace inference

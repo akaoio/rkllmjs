@@ -15,13 +15,13 @@ namespace test {
 // Test environment helper for SANDBOX mode
 class TestEnvironment {
 public:
-    static bool isSandboxMode() {
+    static bool isMode() {
         return true;
     }
 };
 
 // Test basic vector operations in SANDBOX mode
-TEST(TypeConvertersTest, VectorOperationsSandbox) {
+TEST(TypeConvertersTest, VectorOperations) {
     std::vector<float> input = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
     
     // Test vector size validation
@@ -43,8 +43,8 @@ TEST(TypeConvertersTest, VectorOperationsSandbox) {
     EXPECT_FLOAT_EQ(doubled[4], 10.0f);
 }
 
-// Test string operations in sandbox mode
-TEST(TypeConvertersTest, StringOperationsSandbox) {
+// Test string operations in unified build
+TEST(TypeConvertersTest, StringOperations) {
     std::string test_string = "test_input";
     
     // Test string validation
@@ -60,8 +60,8 @@ TEST(TypeConvertersTest, StringOperationsSandbox) {
     EXPECT_EQ(uppercase, "TEST_INPUT");
 }
 
-// Test tensor shape validation in sandbox mode
-TEST(TypeConvertersTest, TensorShapeValidationSandbox) {
+// Test tensor shape validation in unified build
+TEST(TypeConvertersTest, TensorShapeValidation) {
     std::vector<int64_t> shape = {1, 3, 224, 224};
     
     // Test shape validation
@@ -80,8 +80,8 @@ TEST(TypeConvertersTest, TensorShapeValidationSandbox) {
     EXPECT_EQ(total_elements, 150528); // 1 * 3 * 224 * 224
 }
 
-// Test data type conversion in sandbox mode
-TEST(TypeConvertersTest, DataTypeConversionSandbox) {
+// Test data type conversion in unified build
+TEST(TypeConvertersTest, DataTypeConversion) {
     // Test float to double conversion
     std::vector<float> float_data = {1.5f, 2.5f, 3.5f};
     std::vector<double> double_data;
@@ -96,8 +96,8 @@ TEST(TypeConvertersTest, DataTypeConversionSandbox) {
     EXPECT_DOUBLE_EQ(double_data[2], 3.5);
 }
 
-// Test array range validation in sandbox mode
-TEST(TypeConvertersTest, ArrayRangeValidationSandbox) {
+// Test array range validation in unified build
+TEST(TypeConvertersTest, ArrayRangeValidation) {
     std::vector<int> data(1000);
     std::iota(data.begin(), data.end(), 1); // Fill with 1, 2, 3, ..., 1000
     
@@ -116,8 +116,8 @@ TEST(TypeConvertersTest, ArrayRangeValidationSandbox) {
     EXPECT_EQ(sum, 500500); // Sum of 1 to 1000
 }
 
-// Test performance characteristics in sandbox mode
-TEST(TypeConvertersTest, PerformanceCharacteristicsSandbox) {
+// Test performance characteristics in unified build
+TEST(TypeConvertersTest, PerformanceCharacteristics) {
     const size_t large_size = 10000;
     std::vector<float> large_vector(large_size);
     
@@ -141,8 +141,8 @@ TEST(TypeConvertersTest, PerformanceCharacteristicsSandbox) {
     EXPECT_LT(duration.count(), 10000);
 }
 
-// Test error handling in sandbox mode
-TEST(TypeConvertersTest, ErrorHandlingSandbox) {
+// Test error handling in unified build
+TEST(TypeConvertersTest, ErrorHandling) {
     std::vector<float> empty_vector;
     
     // Test empty vector handling

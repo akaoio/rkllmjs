@@ -1,18 +1,14 @@
 /**
  * @file include-manager.hpp
- * @brief Professional header inclusion management
+ * @brief Unified header inclusion management
  * 
- * Provides clean, reusable macros for conditional compilation
- * without code duplication across modules.
+ * Provides clean, unified macros for code inclusion.
+ * All builds now include full RKLLM functionality.
  */
 
 #pragma once
 
 #include "build-config.hpp"
 
-// Conditional compilation macros - safer approach
-#if 0 // Removed RKLLM_COMPILE_MODE_REAL
-    #define RKLLMJS_INCLUDE_REAL_RKLLM_ONLY(code) code /* Include RKLLM code in real mode */
-#else
-    #define RKLLMJS_INCLUDE_REAL_RKLLM_ONLY(code) /* Skip RKLLM code in sandbox mode */
-#endif
+// All functionality is always included - no conditional compilation needed
+#define RKLLMJS_INCLUDE_RKLLM_CODE(code) code
