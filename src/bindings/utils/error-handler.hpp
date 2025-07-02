@@ -8,7 +8,7 @@
 #include <vector>
 
 // Only include N-API headers when building N-API bindings, not standalone tests
-#if defined(RKLLM_COMPILE_MODE_REAL) && defined(RKLLM_NAPI_BINDINGS)
+#if defined(RKLLM_NAPI_BINDINGS)
     #include <napi.h>
 #endif
 

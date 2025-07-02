@@ -418,7 +418,7 @@ void InferenceEngine::processBatchRequests(const std::vector<BatchRequest>& requ
                 updateStats(batchResult.result);
             } catch (const std::exception& e) {
                 batchResult.error.category = rkllmjs::utils::ErrorCategory::MODEL_OPERATION;
-#ifdef SANDBOX_BUILD
+#if 1 // Simplified - always use sandbox-like logic
                 batchResult.error.severity = rkllmjs::utils::ErrorSeverity::ERROR;
 #else
                 batchResult.error.severity = rkllmjs::utils::ErrorSeverity::ERROR;

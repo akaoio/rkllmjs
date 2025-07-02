@@ -57,38 +57,32 @@ declare -a MODULES=(
     "napi-bindings"
 )
 
-# Source core module for architecture and mode detection
+# Source core module for architecture detection only
 if [ -f "$BINDINGS_DIR/../../scripts/modules/core.sh" ]; then
     source "$BINDINGS_DIR/../../scripts/modules/core.sh"
     init_core
-    detect_rkllm_mode
 else
-    log_warning "Core module not found, using basic mode detection"
-    # Basic fallback mode detection
-    if [[ -n "$RKLLM_MODE" ]]; then
-        mode=$(echo "$RKLLM_MODE" | tr '[:upper:]' '[:lower:]')
-        if [[ "$mode" == "real" ]]; then
-            export RKLLM_MODE_DETECTED="real"
-        else
-            export RKLLM_MODE_DETECTED="sandbox"
-        fi
-    else
-        export RKLLM_MODE_DETECTED="sandbox"
-    fi
+    log_warning "Core module not found, using basic architecture detection"
+    # Basic fallback architecture detection
+    local arch=$(uname -m)
+    case "$arch" in
+        x86_64|amd64)
+            export SYSTEM_ARCH="x86_64"
+            export SYSTEM_ARCH_FAMILY="x86_64"
+            ;;
+        aarch64|arm64)
+            export SYSTEM_ARCH="aarch64"
+            export SYSTEM_ARCH_FAMILY="arm64"
+            ;;
+        *)
+            export SYSTEM_ARCH="$arch"
+            export SYSTEM_ARCH_FAMILY="unknown"
+            ;;
+    esac
 fi
 
-# Set compilation flags based on detected mode
-if [[ "$RKLLM_MODE_DETECTED" == "real" ]]; then
-    export RKLLM_COMPILE_MODE_REAL=1
-    export REAL_BUILD=1
-    unset SANDBOX_BUILD
-    log_info "Building in REAL mode (RK3588 hardware support enabled)"
-else
-    export RKLLM_COMPILE_MODE_SANDBOX=1
-    export SANDBOX_BUILD=1
-    unset REAL_BUILD
-    log_info "Building in SANDBOX mode (simulation/testing mode)"
-fi
+# Always build with full functionality - no build mode separation
+log_info "Building with full RK3588 support (unified build system)"
 
 # Check prerequisites
 check_prerequisites() {

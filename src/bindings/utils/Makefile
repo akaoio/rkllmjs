@@ -17,7 +17,6 @@ ifneq ($(NODE_GYP_HEADERS),)
     INCLUDES += -I$(NODE_GYP_HEADERS)
 endif
 TEST_INCLUDES := $(INCLUDES)
-SANDBOX_BUILD := 1
 
 # Library settings - no external test dependencies
 TEST_LIBS := -pthread
@@ -28,23 +27,10 @@ OBJ_DIR := ./obj
 TEST_DIR := .
 BIN_DIR := ./bin
 
-# Source files (sandbox versions)
+# Source files
 SOURCES := type-converters.cpp error-handler.cpp
 TEST_SOURCES := type-converters.test.cpp error-handler.test.cpp
-
-# Use sandbox headers when building standalone
-ifdef RKLLM_COMPILE_MODE_REAL
-    HEADERS := type-converters.hpp error-handler.hpp
-    CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL
-else ifdef REAL_BUILD
-    # Legacy support for REAL_BUILD
-    HEADERS := type-converters.hpp error-handler.hpp
-    CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL
-else
-    # Default to sandbox mode
-    HEADERS := type-converters.hpp error-handler.hpp
-    CXXFLAGS += -DSANDBOX_BUILD -DRKLLM_COMPILE_MODE_SANDBOX
-endif
+HEADERS := type-converters.hpp error-handler.hpp
 
 # Object files
 OBJECTS := $(SOURCES:%.cpp=$(OBJ_DIR)/%.o)
@@ -130,17 +116,13 @@ clean:
 # Help
 .PHONY: help
 help:
-	@echo "RKLLMJS Utils Module Build System (Simplified)"
-	@echo "=============================================="
+	@echo "RKLLMJS Utils Module Build System"
+	@echo "================================="
 	@echo ""
 	@echo "Available targets:"
 	@echo "  all         - Build static library (default)"
-	@echo "  test        - Build and run all tests (RKLLMJS Test Framework)"
+	@echo "  test        - Build and run all tests"
 	@echo "  test-basic  - Basic compilation test"
 	@echo "  install     - Install to build directory"
 	@echo "  clean       - Clean build artifacts"
 	@echo "  help        - Show this help message"
-	@echo ""
-	@echo "Build modes:"
-	@echo "  RKLLM_MODE=sandbox  - Use sandbox headers (default)"
-	@echo "  RKLLM_MODE=real     - Use full N-API headers"

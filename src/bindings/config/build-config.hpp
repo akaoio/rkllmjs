@@ -81,7 +81,7 @@ namespace rkllmjs { namespace config {
 
 // For compile-time decisions, use the build system flags
 // For runtime decisions, use the detection functions
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     #define RKLLMJS_MODE_REAL 1
     #define RKLLMJS_MODE_SANDBOX 0
 #else
@@ -94,7 +94,7 @@ namespace rkllmjs { namespace config {
 #define RKLLMJS_RUNTIME_MODE_SANDBOX() (!rkllmjs::config::detect_real_mode())
 
 // Header inclusion macros
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     #define RKLLMJS_ERROR_HANDLER_HEADER "../utils/error-handler.hpp"
     #define RKLLMJS_TYPE_CONVERTERS_HEADER "../utils/type-converters.hpp"
 #else
@@ -103,7 +103,7 @@ namespace rkllmjs { namespace config {
 #endif
 
 // Namespace aliases for clean code
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     #define RKLLMJS_UTILS_NS rkllmjs::utils
 #else
     #define RKLLMJS_UTILS_NS rkllmjs::utils
@@ -111,7 +111,7 @@ namespace rkllmjs { namespace config {
 
 // Feature availability macros - use static detection for compile-time decisions
 // but provide runtime functions for dynamic checks
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     #define RKLLMJS_HAS_NAPI 1
     #define RKLLMJS_HAS_NODE_INTEGRATION 1
     #define RKLLMJS_HAS_RKLLM_NATIVE 1
@@ -122,7 +122,7 @@ namespace rkllmjs { namespace config {
 #endif
 
 // API visibility macros
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     #define RKLLMJS_API_EXPORT __attribute__((visibility("default")))
     #define RKLLMJS_API_IMPORT
 #else

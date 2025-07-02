@@ -3,7 +3,7 @@
 
 # Compiler settings
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -fPIC -DRKLLM_COMPILE_MODE_SANDBOX
+CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -fPIC
 
 # Auto-detect node-addon-api and Node.js headers
 NODE_ADDON_API_PATH := $(shell find ../../../node_modules -name "napi.h" -type f -exec dirname {} \; 2>/dev/null | head -1)

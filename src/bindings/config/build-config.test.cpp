@@ -46,7 +46,7 @@ TEST(BuildConfigTest, BuildModeDetection) {
     (void)auto_result; // Result depends on hardware detection
     
     // Test compile-time features based on current build mode
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     EXPECT_EQ(RKLLMJS_HAS_NAPI, 1);
     EXPECT_EQ(RKLLMJS_HAS_NODE_INTEGRATION, 1);
     EXPECT_EQ(RKLLMJS_HAS_RKLLM_NATIVE, 1);
@@ -72,7 +72,7 @@ TEST(BuildConfigTest, HeaderPathConfiguration) {
 
 TEST(BuildConfigTest, FeatureAvailability) {
     // Test feature flags consistency based on compile-time mode
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     EXPECT_TRUE(RKLLMJS_HAS_NAPI);
     EXPECT_TRUE(RKLLMJS_HAS_NODE_INTEGRATION);
     EXPECT_TRUE(RKLLMJS_HAS_RKLLM_NATIVE);

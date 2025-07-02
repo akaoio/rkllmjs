@@ -23,7 +23,7 @@ public:
     }
 };
 
-#ifdef RKLLM_COMPILE_MODE_SANDBOX
+#if 1 // Simplified - always use sandbox-like logic
 
 // Tests for SANDBOX mode (no NAPI dependencies)
 TEST(ErrorHandlerTest, ErrorCategoryEnum) {

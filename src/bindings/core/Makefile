@@ -3,35 +3,14 @@
 
 MODULE_NAME = rkllm-manager
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -fPIC -I../../../libs/rkllm/include -I../config -I../testing
+CXXFLAGS = -std=c++17 -Wall -Wextra -fPIC -I../../../libs/rkllm/include -I../config -I../testing -O2
 
-# Build mode configuration - now supports RKLLM_MODE environment variable
-ifdef RKLLM_COMPILE_MODE_REAL
-    CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL -O2
-    # Architecture-aware library linking
-    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-        LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
-        RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
-    else
-        # CI/CD mode: REAL compilation flags without runtime library linking
-        LIBS = -pthread
-        RPATH = 
-    endif
-else ifdef REAL_BUILD
-    # Legacy support for REAL_BUILD
-    CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL -O2
-    # Architecture-aware library linking
-    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-        LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
-        RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
-    else
-        # CI/CD mode: REAL compilation flags without runtime library linking
-        LIBS = -pthread
-        RPATH = 
-    endif
+# Architecture-aware library linking
+ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
+    LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
+    RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
 else
-    # Default to sandbox mode
-    CXXFLAGS += -DSANDBOX_BUILD -DRKLLM_COMPILE_MODE_SANDBOX -O2
+    # CI/CD mode: compilation without runtime library linking
     LIBS = -pthread
     RPATH = 
 endif
@@ -40,11 +19,7 @@ endif
 ifdef DEBUG
     CXXFLAGS += -g -O0 -DDEBUG
 else
-    ifdef RKLLM_COMPILE_MODE_REAL
-        CXXFLAGS += -O2 -DNDEBUG
-    else ifndef SANDBOX_BUILD
-        CXXFLAGS += -O2 -DNDEBUG
-    endif
+    CXXFLAGS += -O2 -DNDEBUG
 endif
 
 # Source files
@@ -57,23 +32,12 @@ TEST_OBJECTS = $(TEST_SOURCES:.cpp=.o)
 TARGET = lib$(MODULE_NAME).a
 TEST_TARGET = $(MODULE_NAME).test
 
-# Architecture-aware target selection
-ifdef RKLLM_COMPILE_MODE_REAL
-    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-        ALL_TARGETS = $(TARGET) $(TEST_TARGET)
-    else
-        # CI/CD mode: only build static library, skip hardware-dependent tests
-        ALL_TARGETS = $(TARGET)
-    endif
-else ifdef REAL_BUILD
-    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-        ALL_TARGETS = $(TARGET) $(TEST_TARGET)
-    else
-        # CI/CD mode: only build static library, skip hardware-dependent tests
-        ALL_TARGETS = $(TARGET)
-    endif
-else
+# Architecture-aware target selection - only skip tests on non-ARM64 due to hardware linking
+ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
     ALL_TARGETS = $(TARGET) $(TEST_TARGET)
+else
+    # CI/CD mode: only build static library, skip hardware-dependent tests
+    ALL_TARGETS = $(TARGET)
 endif
 
 # Default target

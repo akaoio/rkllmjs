@@ -94,7 +94,7 @@ ManagerResult RKLLMManager::cleanup() {
     for (auto& [handle, instance] : models_) {
         if (instance && instance->is_active) {
             std::cout << "[RKLLMManager] Cleaning up model: " << instance->model_id << std::endl;
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
             rkllm_destroy(handle);
 #else
             std::cout << "[RKLLMManager] Sandbox mode: simulated cleanup" << std::endl;
@@ -141,7 +141,7 @@ ManagerResult RKLLMManager::createModel(const RKLLMModelConfig& config, LLMHandl
         return ManagerResult::ERROR_RESOURCE_EXHAUSTED;
     }
     
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     // Create RKLLM parameters using default
     RKLLMParam param = rkllm_createDefaultParam();
     
@@ -196,7 +196,7 @@ ManagerResult RKLLMManager::destroyModel(LLMHandle handle) {
     }
     
     // Destroy RKLLM handle
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     int ret = rkllm_destroy(handle);
     if (ret != 0) {
         std::cout << "[RKLLMManager] Warning: rkllmDestroy returned: " << ret << std::endl;

@@ -12,7 +12,7 @@ CXXFLAGS := -std=c++17 -Wall -Wextra -fPIC
 NODE_ADDON_API_PATH := $(shell find ../../../node_modules -name "napi.h" -type f -exec dirname {} \; 2>/dev/null | head -1)
 NODE_GYP_HEADERS := $(shell find ~/.cache/node-gyp -name "node_api.h" -type f -exec dirname {} \; 2>/dev/null | head -1)
 
-INCLUDES := -I../core -I../config -I../utils -I../inference -I../testing
+INCLUDES := -I../core -I../config -I../utils -I../inference -I../testing -I../../../libs/rkllm/include
 ifneq ($(NODE_ADDON_API_PATH),)
     INCLUDES += -I$(NODE_ADDON_API_PATH)
 endif
@@ -20,33 +20,15 @@ ifneq ($(NODE_GYP_HEADERS),)
     INCLUDES += -I$(NODE_GYP_HEADERS)
 endif
 
-# Build mode configuration - now supports RKLLM_MODE environment variable
-ifdef RKLLM_COMPILE_MODE_REAL
-    CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL -DRKLLM_NAPI_BINDINGS -O2
-    INCLUDES += -I../../../libs/rkllm/include
-    # Architecture-aware library linking
-    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-        LDFLAGS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
-        LDFLAGS += -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
-    else
-        # CI/CD mode: REAL compilation flags without runtime library linking
-        LDFLAGS := -pthread
-    endif
-else ifdef REAL_BUILD
-    # Legacy support for REAL_BUILD
-    CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL -DRKLLM_NAPI_BINDINGS -O2
-    INCLUDES += -I../../../libs/rkllm/include
-    # Architecture-aware library linking
-    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-        LDFLAGS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
-        LDFLAGS += -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
-    else
-        # CI/CD mode: REAL compilation flags without runtime library linking
-        LDFLAGS := -pthread
-    endif
+# Build configuration with N-API bindings
+CXXFLAGS += -DRKLLM_NAPI_BINDINGS -O2
+
+# Architecture-aware library linking
+ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
+    LDFLAGS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
+    LDFLAGS += -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
 else
-    # Default to sandbox mode
-    CXXFLAGS += -DSANDBOX_BUILD -DRKLLM_COMPILE_MODE_SANDBOX -O2
+    # CI/CD mode: compilation without runtime library linking
     LDFLAGS := -pthread
 endif
 
@@ -78,23 +60,12 @@ INFERENCE_LIB := ../inference/bin/librkllm-inference.a
 # Create directories
 $(shell mkdir -p $(BIN_DIR) $(OBJ_DIR))
 
-# Architecture-aware target selection
-ifdef RKLLM_COMPILE_MODE_REAL
-    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-        ALL_TARGETS = $(TARGET_LIB) $(TARGET_TEST)
-    else
-        # CI/CD mode: only build static library, skip hardware-dependent tests
-        ALL_TARGETS = $(TARGET_LIB)
-    endif
-else ifdef REAL_BUILD
-    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-        ALL_TARGETS = $(TARGET_LIB) $(TARGET_TEST)
-    else
-        # CI/CD mode: only build static library, skip hardware-dependent tests
-        ALL_TARGETS = $(TARGET_LIB)
-    endif
-else
+# Architecture-aware target selection - only skip tests on non-ARM64 due to hardware linking
+ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
     ALL_TARGETS = $(TARGET_LIB) $(TARGET_TEST)
+else
+    # CI/CD mode: only build static library, skip hardware-dependent tests
+    ALL_TARGETS = $(TARGET_LIB)
 endif
 
 # Default target

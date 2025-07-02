@@ -199,9 +199,7 @@ ConversionResult safeStringToDouble(const std::string& str, double& result) {
     }
 }
 
-#ifdef RKLLM_COMPILE_MODE_SANDBOX
-// SANDBOX mode: Implement the utility functions for testing
-
+// Always implement utility functions
 bool validateString(const std::string& str) {
     return isValidString(str);
 }
@@ -219,9 +217,8 @@ bool validateDouble(double value) {
     return std::isfinite(value); // Check for NaN and infinity
 }
 
-#else
-// REAL mode with N-API bindings: Implement N-API conversion functions
-#if defined(RKLLM_COMPILE_MODE_REAL) && defined(RKLLM_NAPI_BINDINGS)
+// N-API conversion functions (only available when RKLLM_NAPI_BINDINGS is defined)
+#if defined(RKLLM_NAPI_BINDINGS)
 
 std::string jsStringToCppString(Napi::Env env, const Napi::Value& jsValue) {
     if (!jsValue.IsString()) {
@@ -331,12 +328,7 @@ void validateNotNull(Napi::Env env, const Napi::Value& value, const std::string&
     }
 }
 
-#else
-// REAL mode without N-API bindings: Provide stub implementations
-// These functions should not be called in this mode
-
 #endif // RKLLM_NAPI_BINDINGS
-#endif // RKLLM_COMPILE_MODE_SANDBOX
 
 } // namespace utils
 } // namespace rkllmjs

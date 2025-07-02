@@ -32,11 +32,9 @@
     "format": "prettier --config .prettierrc --write src/**/*.ts",
     "docs": "typedoc src --out docs",
     "prepublishOnly": "npm run build && npm test",
-
     "build:cpp": "bash src/bindings/build.sh build",
     "build:cpp:module": "bash src/bindings/build.sh build",
     "build:cpp:binding": "bash src/bindings/build.sh binding",
-
     "test:cpp": "bash scripts/test-cpp.sh",
     "clean:cpp": "bash src/bindings/build.sh clean",
     "doc": "bash scripts/doc-generator.sh all",
@@ -69,7 +67,7 @@
     "RULES.md"
   ],
   "devDependencies": {
-    "@types/node": "^20.19.2",
+    "@types/node": "^20.19.4",
     "@types/node-fetch": "^2.6.11",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",

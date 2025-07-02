@@ -8,7 +8,7 @@ namespace rkllmjs {
 namespace inference {
 namespace test {
 
-#ifdef RKLLM_COMPILE_MODE_SANDBOX
+#if 1 // Simplified - always use sandbox-like logic
 
 // Tests for sandbox mode (no native RKLLM dependencies)
 TEST(InferenceEngineTest, InferenceParamsValidation) {

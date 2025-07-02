@@ -19,7 +19,7 @@
 #include <vector>
 
 // Conditional RKLLM include and type definitions
-#ifdef SANDBOX_BUILD
+#if 1 // Simplified - always use sandbox-like logic
     // Sandbox mode: no RKLLM headers, use void* for handle
     namespace rkllmjs {
     namespace core {
