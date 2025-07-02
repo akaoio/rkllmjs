@@ -49,9 +49,9 @@ detect_yarn() {
     fi
 }
 
-# Install Yarn via npm (Classic Yarn 1.x)
+# Install Yarn via npm (local installation via corepack)
 install_yarn_npm() {
-    log_install "Installing Yarn via npm"
+    log_install "Installing Yarn via npm (local)"
     
     # Check if npm is available
     if ! command -v npm &> /dev/null; then
@@ -59,12 +59,21 @@ install_yarn_npm() {
         return 1
     fi
     
-    # Install Yarn globally via npm
-    if npm install -g yarn; then
-        log_success "Yarn installed via npm"
+    # Use corepack to enable yarn (recommended approach)
+    if command -v corepack &> /dev/null || npm list -g corepack &> /dev/null; then
+        if corepack enable; then
+            log_success "Yarn enabled via corepack"
+            return 0
+        fi
+    fi
+    
+    # Fallback: add yarn as dev dependency instead of global install
+    log_warning "Installing yarn as project dependency (not global)"
+    if npm install --save-dev yarn; then
+        log_success "Yarn installed as dev dependency"
         return 0
     else
-        log_error "Failed to install Yarn via npm"
+        log_error "Failed to install Yarn"
         return 1
     fi
 }
@@ -95,15 +104,16 @@ install_yarn_corepack() {
         return 1
     fi
     
-    # Install latest Yarn using dynamic version detection
+    # Install latest Yarn using dynamic version detection (no global install)
     local latest_yarn_version
     latest_yarn_version=$(fetch_latest_yarn_version "berry")
     
-    if corepack install -g yarn@$latest_yarn_version; then
-        log_success "Yarn v$latest_yarn_version (latest) installed via Corepack"
+    # Use corepack prepare instead of global install
+    if corepack prepare yarn@$latest_yarn_version --activate; then
+        log_success "Yarn v$latest_yarn_version (latest) prepared via Corepack"
         return 0
     else
-        log_error "Failed to install Yarn via Corepack"
+        log_error "Failed to prepare Yarn via Corepack"
         return 1
     fi
 }
@@ -286,9 +296,9 @@ update_yarn() {
     current_version=$(get_yarn_version)
     log_info "Current Yarn version: v$current_version"
     
-    # Check if Yarn was installed via Corepack
+    # Check if Yarn was managed via Corepack
     if command -v corepack &> /dev/null; then
-        if corepack install -g yarn@stable; then
+        if corepack prepare yarn@stable --activate; then
             log_success "Yarn updated via Corepack"
             return 0
         fi
@@ -300,11 +310,13 @@ update_yarn() {
         return 0
     fi
     
-    # Try npm update
+    # Try npm update (local yarn if installed as dev dependency)
     if command -v npm &> /dev/null; then
-        if npm update -g yarn; then
-            log_success "Yarn updated via npm"
-            return 0
+        if npm list --depth=0 yarn &> /dev/null; then
+            if npm update yarn; then
+                log_success "Yarn updated via npm (local)"
+                return 0
+            fi
         fi
     fi
     
@@ -397,10 +409,10 @@ uninstall_yarn() {
     # Try different uninstallation methods
     local uninstalled=false
     
-    # If installed via npm
-    if npm list -g yarn &>/dev/null; then
-        if npm uninstall -g yarn; then
-            log_success "Yarn uninstalled via npm"
+    # If installed via npm as dev dependency
+    if npm list --depth=0 yarn &>/dev/null; then
+        if npm uninstall yarn; then
+            log_success "Yarn uninstalled from project dependencies"
             uninstalled=true
         fi
     fi

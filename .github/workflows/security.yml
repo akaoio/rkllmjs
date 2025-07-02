@@ -90,19 +90,16 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
-    - name: Install license checker
-      run: npm install -g license-checker
-      
     - name: Check licenses
       run: |
         echo "## 📋 License Compliance Report (RK3588 Target)" >> $GITHUB_STEP_SUMMARY
-        license-checker --summary >> $GITHUB_STEP_SUMMARY
+        npx license-checker --summary >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Check for problematic licenses
-        license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;Unlicense' || {
+        npx license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;Unlicense' || {
           echo "⚠️ Non-approved licenses detected" >> $GITHUB_STEP_SUMMARY
-          license-checker --excludePackages 'rkllmjs' 2>&1 | head -20 >> $GITHUB_STEP_SUMMARY
+          npx license-checker --excludePackages 'rkllmjs' 2>&1 | head -20 >> $GITHUB_STEP_SUMMARY
         }
         
         echo "" >> $GITHUB_STEP_SUMMARY

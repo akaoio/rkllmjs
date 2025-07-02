@@ -252,11 +252,41 @@ setup_project_dependencies() {
     # Navigate to project directory
     cd "$SCRIPT_DIR"
     
-    # Install npm dependencies
-    log_info "Installing npm dependencies..."
+    # Install npm dependencies (including dev dependencies for full development environment)
+    log_info "Installing npm dependencies (including dev dependencies)..."
     if ! npm install; then
         log_error "Failed to install npm dependencies"
         return 1
+    fi
+    
+    # Verify critical dependencies are available
+    log_info "Verifying critical development dependencies..."
+    
+    # Check TypeScript compiler
+    if ! npx tsc --version &> /dev/null; then
+        log_error "TypeScript compiler not available"
+        return 1
+    fi
+    
+    # Check node-gyp for native module compilation
+    if ! npx node-gyp --version &> /dev/null; then
+        log_error "node-gyp not available for native module compilation"
+        return 1
+    fi
+    
+    # Check linting tools
+    if ! npx eslint --version &> /dev/null; then
+        log_warning "ESLint not available - code linting may not work"
+    fi
+    
+    # Check if binding.gyp exists and configure node-gyp if needed
+    if [[ -f "binding.gyp" ]]; then
+        log_info "Configuring native module build system..."
+        if ! npx node-gyp configure; then
+            log_warning "node-gyp configuration failed - native modules may not build"
+        else
+            log_success "Native module build system configured"
+        fi
     fi
     
     log_success "Project dependencies setup completed"
@@ -311,6 +341,14 @@ show_installation_summary() {
     echo "  • npm run test:cpp      - Run C++ tests only"
     echo "  • npm run validate      - Run validation checks"
     echo "  • npm run cli           - Use the RKLLM CLI"
+    echo "  • npx tsc               - TypeScript compiler"
+    echo "  • npx node-gyp          - Native module builder"
+    echo "  • npx eslint            - Code linter"
+    echo
+    
+    log_info "🔒 Security note:"
+    echo "  All tools are installed locally (no global dependencies)"
+    echo "  Use 'npx <tool>' to run CLI tools when needed"
     echo
 }
 
