@@ -57,32 +57,8 @@ declare -a MODULES=(
     "napi-bindings"
 )
 
-# Source core module for architecture detection only
-if [ -f "$BINDINGS_DIR/../../scripts/modules/core.sh" ]; then
-    source "$BINDINGS_DIR/../../scripts/modules/core.sh"
-    init_core
-else
-    log_warning "Core module not found, using basic architecture detection"
-    # Basic fallback architecture detection
-    local arch=$(uname -m)
-    case "$arch" in
-        x86_64|amd64)
-            export SYSTEM_ARCH="x86_64"
-            export SYSTEM_ARCH_FAMILY="x86_64"
-            ;;
-        aarch64|arm64)
-            export SYSTEM_ARCH="aarch64"
-            export SYSTEM_ARCH_FAMILY="arm64"
-            ;;
-        *)
-            export SYSTEM_ARCH="$arch"
-            export SYSTEM_ARCH_FAMILY="unknown"
-            ;;
-    esac
-fi
-
 # Always build with full functionality - no build mode separation
-log_info "Building with full RK3588 support (unified build system)"
+log_info "Building with unified build system (always links RKLLM library)"
 
 # Check prerequisites
 check_prerequisites() {
@@ -140,13 +116,10 @@ build_module() {
     # Build the module
     local log_file="$LOG_DIR/build-$module_name.log"
     
-    # Export architecture variables for Makefiles
-    export SYSTEM_ARCH SYSTEM_ARCH_FAMILY
-    
     if [ "$VERBOSE" -eq 1 ]; then
-        ( cd "$module_dir" && make -j"$PARALLEL_JOBS" all SYSTEM_ARCH="$SYSTEM_ARCH" SYSTEM_ARCH_FAMILY="$SYSTEM_ARCH_FAMILY" ) 2>&1 | tee "$log_file"
+        ( cd "$module_dir" && make -j"$PARALLEL_JOBS" all ) 2>&1 | tee "$log_file"
     else
-        ( cd "$module_dir" && make -j"$PARALLEL_JOBS" all SYSTEM_ARCH="$SYSTEM_ARCH" SYSTEM_ARCH_FAMILY="$SYSTEM_ARCH_FAMILY" ) > "$log_file" 2>&1
+        ( cd "$module_dir" && make -j"$PARALLEL_JOBS" all ) > "$log_file" 2>&1
     fi
     
     if [ $? -eq 0 ]; then

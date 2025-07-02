@@ -18,7 +18,7 @@ ifneq ($(NODE_GYP_HEADERS),)
 endif
 
 # Library settings
-TEST_LIBS := -pthread
+TEST_LIBS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
 RPATH := -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
 
 # Directories

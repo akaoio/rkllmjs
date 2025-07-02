@@ -23,14 +23,9 @@ endif
 # Build configuration with N-API bindings
 CXXFLAGS += -DRKLLM_NAPI_BINDINGS -O2
 
-# Architecture-aware library linking
-ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-    LDFLAGS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
-    LDFLAGS += -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
-else
-    # CI/CD mode: compilation without runtime library linking
-    LDFLAGS := -pthread
-endif
+# Library linking - always link RKLLM library
+LDFLAGS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
+LDFLAGS += -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
 
 # Debug configuration
 ifdef DEBUG
@@ -60,17 +55,9 @@ INFERENCE_LIB := ../inference/bin/librkllm-inference.a
 # Create directories
 $(shell mkdir -p $(BIN_DIR) $(OBJ_DIR))
 
-# Architecture-aware target selection - only skip tests on non-ARM64 due to hardware linking
-ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-    ALL_TARGETS = $(TARGET_LIB) $(TARGET_TEST)
-else
-    # CI/CD mode: only build static library, skip hardware-dependent tests
-    ALL_TARGETS = $(TARGET_LIB)
-endif
-
 # Default target
 .PHONY: all
-all: $(ALL_TARGETS)
+all: $(TARGET_LIB) $(TARGET_TEST)
 
 # Build static library
 $(TARGET_LIB): $(OBJ_FILES) $(CORE_LIB)

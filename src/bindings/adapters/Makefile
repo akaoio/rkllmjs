@@ -23,7 +23,7 @@ TEST_INCLUDES := $(INCLUDES)
 
 # Build configuration
 CXXFLAGS += -O2
-TEST_LIBS := ../core/librkllm-manager.a ../inference/bin/librkllm-inference.a -pthread
+TEST_LIBS := ../core/librkllm-manager.a ../inference/bin/librkllm-inference.a -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
 
 ifdef DEBUG
     CXXFLAGS += -g -O0 -DDEBUG
@@ -41,17 +41,9 @@ TEST_OBJECTS = $(TEST_SOURCES:.cpp=.o)
 TARGET = librkllm-adapters.a
 TEST_TARGET = bin/$(MODULE_NAME).test
 
-# Architecture-aware target selection - only skip tests on non-ARM64 due to hardware linking
-ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-    ALL_TARGETS = $(TARGET) $(TEST_TARGET)
-else
-    # CI/CD mode: only build static library, skip hardware-dependent tests
-    ALL_TARGETS = $(TARGET)
-endif
-
 # Default target
 .PHONY: all
-all: $(ALL_TARGETS)
+all: $(TARGET) $(TEST_TARGET)
 
 # Build static library
 $(TARGET): $(OBJECTS)

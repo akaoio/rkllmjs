@@ -5,15 +5,9 @@ MODULE_NAME = rkllm-manager
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -fPIC -I../../../libs/rkllm/include -I../config -I../testing -O2
 
-# Architecture-aware library linking
-ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-    LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
-    RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
-else
-    # CI/CD mode: compilation without runtime library linking
-    LIBS = -pthread
-    RPATH = 
-endif
+# Library linking - always link RKLLM library
+LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
+RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
 
 # Debug/Release configuration
 ifdef DEBUG
@@ -32,17 +26,9 @@ TEST_OBJECTS = $(TEST_SOURCES:.cpp=.o)
 TARGET = lib$(MODULE_NAME).a
 TEST_TARGET = $(MODULE_NAME).test
 
-# Architecture-aware target selection - only skip tests on non-ARM64 due to hardware linking
-ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
-    ALL_TARGETS = $(TARGET) $(TEST_TARGET)
-else
-    # CI/CD mode: only build static library, skip hardware-dependent tests
-    ALL_TARGETS = $(TARGET)
-endif
-
 # Default target
 .PHONY: all
-all: $(ALL_TARGETS)
+all: $(TARGET) $(TEST_TARGET)
 
 # Build static library
 $(TARGET): $(OBJECTS)
