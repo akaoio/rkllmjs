@@ -25,14 +25,19 @@ TEST_INCLUDES := $(INCLUDES)  # Uses RKLLMJS Test Framework
 ifdef RKLLM_COMPILE_MODE_REAL
     CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL -O2
     INCLUDES += -I../inference
+    # Required libraries for real mode linking
+    TEST_LIBS := ../core/librkllm-manager.a ../inference/bin/librkllm-inference.a -pthread
 else ifdef REAL_BUILD
     # Legacy support for REAL_BUILD
     CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL -O2
     INCLUDES += -I../inference
+    # Required libraries for real mode linking
+    TEST_LIBS := ../core/librkllm-manager.a ../inference/bin/librkllm-inference.a -pthread
 else
     # Default to sandbox mode
     CXXFLAGS += -DSANDBOX_BUILD -DRKLLM_COMPILE_MODE_SANDBOX -O2
     # Use base includes for sandbox mode (excluding inference)
+    TEST_LIBS := -pthread  # Uses RKLLMJS Test Framework
 endif
 
 ifdef DEBUG
@@ -45,9 +50,6 @@ else
     endif
 endif
 
-# Library settings  
-TEST_LIBS := -pthread  # Uses RKLLMJS Test Framework
-
 # Source files
 SOURCES = $(MODULE_NAME).cpp
 TEST_SOURCES = $(MODULE_NAME).test.cpp
@@ -58,8 +60,28 @@ TEST_OBJECTS = $(TEST_SOURCES:.cpp=.o)
 TARGET = librkllm-adapters.a
 TEST_TARGET = bin/$(MODULE_NAME).test
 
+# Architecture-aware target selection
+ifdef RKLLM_COMPILE_MODE_REAL
+    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
+        ALL_TARGETS = $(TARGET) $(TEST_TARGET)
+    else
+        # CI/CD mode: only build static library, skip hardware-dependent tests
+        ALL_TARGETS = $(TARGET)
+    endif
+else ifdef REAL_BUILD
+    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)  
+        ALL_TARGETS = $(TARGET) $(TEST_TARGET)
+    else
+        # CI/CD mode: only build static library, skip hardware-dependent tests
+        ALL_TARGETS = $(TARGET)
+    endif
+else
+    ALL_TARGETS = $(TARGET) $(TEST_TARGET)
+endif
+
 # Default target
-all: $(TARGET) $(TEST_TARGET)
+.PHONY: all
+all: $(ALL_TARGETS)
 
 # Build static library
 $(TARGET): $(OBJECTS)

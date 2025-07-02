@@ -8,13 +8,27 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -fPIC -I../../../libs/rkllm/include -I../con
 # Build mode configuration - now supports RKLLM_MODE environment variable
 ifdef RKLLM_COMPILE_MODE_REAL
     CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL -O2
-    LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
-    RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
+    # Architecture-aware library linking
+    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
+        LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
+        RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
+    else
+        # CI/CD mode: REAL compilation flags without runtime library linking
+        LIBS = -pthread
+        RPATH = 
+    endif
 else ifdef REAL_BUILD
     # Legacy support for REAL_BUILD
     CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL -O2
-    LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
-    RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
+    # Architecture-aware library linking
+    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
+        LIBS = -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
+        RPATH = -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
+    else
+        # CI/CD mode: REAL compilation flags without runtime library linking
+        LIBS = -pthread
+        RPATH = 
+    endif
 else
     # Default to sandbox mode
     CXXFLAGS += -DSANDBOX_BUILD -DRKLLM_COMPILE_MODE_SANDBOX -O2
@@ -43,8 +57,28 @@ TEST_OBJECTS = $(TEST_SOURCES:.cpp=.o)
 TARGET = lib$(MODULE_NAME).a
 TEST_TARGET = $(MODULE_NAME).test
 
+# Architecture-aware target selection
+ifdef RKLLM_COMPILE_MODE_REAL
+    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
+        ALL_TARGETS = $(TARGET) $(TEST_TARGET)
+    else
+        # CI/CD mode: only build static library, skip hardware-dependent tests
+        ALL_TARGETS = $(TARGET)
+    endif
+else ifdef REAL_BUILD
+    ifeq ($(SYSTEM_ARCH_FAMILY),arm64)
+        ALL_TARGETS = $(TARGET) $(TEST_TARGET)
+    else
+        # CI/CD mode: only build static library, skip hardware-dependent tests
+        ALL_TARGETS = $(TARGET)
+    endif
+else
+    ALL_TARGETS = $(TARGET) $(TEST_TARGET)
+endif
+
 # Default target
-all: $(TARGET) $(TEST_TARGET)
+.PHONY: all
+all: $(ALL_TARGETS)
 
 # Build static library
 $(TARGET): $(OBJECTS)

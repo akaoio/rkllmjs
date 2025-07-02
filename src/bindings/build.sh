@@ -146,10 +146,13 @@ build_module() {
     # Build the module
     local log_file="$LOG_DIR/build-$module_name.log"
     
+    # Export architecture variables for Makefiles
+    export SYSTEM_ARCH SYSTEM_ARCH_FAMILY
+    
     if [ "$VERBOSE" -eq 1 ]; then
-        ( cd "$module_dir" && make -j"$PARALLEL_JOBS" all ) 2>&1 | tee "$log_file"
+        ( cd "$module_dir" && make -j"$PARALLEL_JOBS" all SYSTEM_ARCH="$SYSTEM_ARCH" SYSTEM_ARCH_FAMILY="$SYSTEM_ARCH_FAMILY" ) 2>&1 | tee "$log_file"
     else
-        ( cd "$module_dir" && make -j"$PARALLEL_JOBS" all ) > "$log_file" 2>&1
+        ( cd "$module_dir" && make -j"$PARALLEL_JOBS" all SYSTEM_ARCH="$SYSTEM_ARCH" SYSTEM_ARCH_FAMILY="$SYSTEM_ARCH_FAMILY" ) > "$log_file" 2>&1
     fi
     
     if [ $? -eq 0 ]; then
