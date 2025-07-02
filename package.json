@@ -9,7 +9,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "tsc && npm run build:native",
+    "build": "tsc && npm run build:native && npm run build:cpp",
     "build:native": "./scripts/build.sh",
     "build:ts": "tsc",
     "test": "npm run setup-test && npm run test:unit && npm run test:integration && npm run test:cpp && npm run validate",
@@ -32,13 +32,11 @@
     "format": "prettier --config .prettierrc --write src/**/*.ts",
     "docs": "typedoc src --out docs",
     "prepublishOnly": "npm run build && npm test",
-    "build:real": "RKLLM_MODE=real npm run build:cpp",
-    "build:sandbox": "RKLLM_MODE=sandbox npm run build:cpp",
+
     "build:cpp": "bash src/bindings/build.sh build",
     "build:cpp:module": "bash src/bindings/build.sh build",
     "build:cpp:binding": "bash src/bindings/build.sh binding",
-    "test:real": "RKLLM_MODE=real npm run test:cpp",
-    "test:sandbox": "RKLLM_MODE=sandbox npm run test:cpp",
+
     "test:cpp": "bash scripts/test-cpp.sh",
     "clean:cpp": "bash src/bindings/build.sh clean",
     "doc": "bash scripts/doc-generator.sh all",

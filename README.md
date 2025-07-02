@@ -208,32 +208,30 @@ npm run test:bun
 # Run tests (Deno)
 npm run test:deno
 
-# Build for Node.js (primary)
+# Build the project (TypeScript + Native bindings + C++ modules)
 npm run build
-
-# Build the C++ bindings with the real headers
-npm run build:real
-
-# Build the C++ bindings with sandbox headers
-npm run build:sandbox
-
-# Test C++ modules with the real headers
-npm run test:real
-
-# Test C++ modules with sandbox headers
-npm run test:sandbox
 
 # Build TypeScript only
 npm run build:ts
+
+# Build C++ modules only (auto-detects sandbox/real mode)
+npm run build:cpp
+
+# Force real mode build (for RK3588 hardware)
+RKLLM_MODE=real npm run build:cpp
+
+# Force sandbox mode build (for development/CI)
+RKLLM_MODE=sandbox npm run build:cpp
 
 # Development mode (watch)
 npm run dev
 ```
 
-The `SANDBOX_BUILD` environment variable controls whether real N-API headers
-or lightweight sandbox stubs are used. `build:real` and `test:real` run with
-`SANDBOX_BUILD=0`, while the `build:sandbox` and `test:sandbox` scripts set
-`SANDBOX_BUILD=1`.
+The build system now intelligently auto-detects the appropriate mode based on the target architecture:
+- **RK3588 hardware**: Automatically uses real mode with full NPU integration
+- **Other ARM64**: Uses sandbox mode for development/testing
+- **x86_64/CI environments**: Uses sandbox mode for development/testing
+- **Manual override**: Use `RKLLM_MODE=real` or `RKLLM_MODE=sandbox` to force a specific mode
 
 ## 🧪 Test-Driven Development (TDD)
 
@@ -263,7 +261,7 @@ For C++ modules, we use our **in-house RKLLMJS Test Framework**:
 - **Professional Output**: Clean, colored test results with familiar syntax
 - **Tailored Design**: Specifically built for RKLLMJS C++ modules
 - **Cross-Platform**: Works on Linux, macOS, and other UNIX-like systems
-- **Build Mode Support**: Supports both SANDBOX and REAL build configurations
+- **Build Mode Support**: Intelligent auto-detection of sandbox/real modes based on target architecture
 
 ```bash
 # Run all C++ module tests
