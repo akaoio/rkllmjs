@@ -114,11 +114,11 @@ test_system_requirements() {
     fi
 }
 
-# Test package installation (mock mode)
+# Test package installation (stub mode)
 test_package_installation() {
-    # Mock the install_packages function to avoid actual installation
+    # Stub the install_packages function to avoid actual installation
     install_packages() {
-        mock_install_packages "$@"
+        stub_install_packages "$@"
     }
     
     # Test that the function can be called

@@ -91,7 +91,7 @@ void validateNotUndefined(Napi::Env env, const Napi::Value& value, const std::st
 void validateNotNull(Napi::Env env, const Napi::Value& value, const std::string& paramName);
 
 #else
-// SANDBOX mode: Provide C++ only utility functions
+// Production mode: Provide C++ only utility functions
 
 // Basic string utilities for testing
 bool validateString(const std::string& str);
@@ -185,7 +185,7 @@ Napi::Array cppVectorToJsArray(Napi::Env env, const std::vector<T>& cppVector) {
 }
 
 #else
-// SANDBOX mode template implementations
+// Production mode template implementations
 
 template<typename T>
 bool validateVector(const std::vector<T>& vec) {

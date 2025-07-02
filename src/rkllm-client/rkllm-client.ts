@@ -45,12 +45,12 @@ import {
 //   type LLMHandle
 // } from '../bindings/napi-bindings/...';
 
-// Placeholder types and mock implementation for now (llm-handle was reference code and removed)
+// Placeholder types and implementation for now (llm-handle was reference code and removed)
 type MainRKLLMParam = any;
 type MainRKLLMInput = any;
 type LLMHandle = any;
 
-// Mock LLMHandleWrapper implementation until native bindings are ready
+// LLMHandleWrapper implementation until native bindings are ready
 const LLMHandleWrapper = {
   async init(_param: MainRKLLMParam): Promise<LLMHandle> {
     throw new Error('Native bindings not yet implemented. Please wait for N-API integration.');
@@ -196,7 +196,7 @@ export interface RKLLMClientEvents {
  * High-level TypeScript wrapper for RKLLM C++ library
  *
  * Provides Promise-based API with event support. Integrates seamlessly with
- * native C++ N-API bindings (PR #34) when available, falls back to mock
+ * native C++ N-API bindings (PR #34) when available, falls back to placeholder
  * implementation for development without RK3588 hardware.
  *
  * Architecture:

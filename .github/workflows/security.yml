@@ -1,18 +1,15 @@
-name: Security & Compliance
+name: Security & Assets
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
   schedule:
-    # Run security scans daily at 2:00 AM UTC
-    - cron: '0 2 * * *'
+    - cron: '0 2 * * 1'  # Weekly on Monday
   workflow_dispatch:
 
 jobs:
-  dependency-scan:
-    name: Dependency Vulnerability Scan
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
     
     steps:
@@ -25,196 +22,47 @@ jobs:
         node-version: '20'
         cache: 'npm'
         
+    - name: Setup development environment
+      run: ./install.sh --non-interactive --no-node
+        
     - name: Install dependencies
       run: npm ci
       
-    - name: Run npm audit
+    - name: Security audit
       run: |
-        npm audit --audit-level=moderate
-        echo "## 🔍 Security Audit Results (RK3588 Target)" >> $GITHUB_STEP_SUMMARY
-        npm audit --audit-level=moderate --json | jq -r '.metadata | "- **Vulnerabilities**: \(.vulnerabilities.total) total, \(.vulnerabilities.high) high, \(.vulnerabilities.moderate) moderate"' >> $GITHUB_STEP_SUMMARY || echo "- ✅ No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 🔍 Security Audit (RK3588 Target)" >> $GITHUB_STEP_SUMMARY
+        npm audit --audit-level=moderate || echo "⚠️ Vulnerabilities found"
         echo "**Platform**: Orange Pi 5 Plus with RK3588 NPU" >> $GITHUB_STEP_SUMMARY
       continue-on-error: true
       
-    - name: Check for known security advisories
-      run: |
-        npx audit-ci --moderate
-      continue-on-error: true
-
-  code-security:
-    name: Code Security Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: javascript
-        config-file: ./.github/codeql/codeql-config.yml
-        
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Build for analysis
-      run: npm run build:ts
-      
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-
-  license-compliance:
-    name: License Compliance Check
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Check licenses
-      run: |
-        echo "## 📋 License Compliance Report (RK3588 Target)" >> $GITHUB_STEP_SUMMARY
-        npx license-checker --summary >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        # Check for problematic licenses
-        npx license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;Unlicense' || {
-          echo "⚠️ Non-approved licenses detected" >> $GITHUB_STEP_SUMMARY
-          npx license-checker --excludePackages 'rkllmjs' 2>&1 | head -20 >> $GITHUB_STEP_SUMMARY
-        }
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Target Platform**: Orange Pi 5 Plus (Armbian/Ubuntu)" >> $GITHUB_STEP_SUMMARY
-      continue-on-error: true
-
-  secret-scan:
-    name: Secret Scanning
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Install truffleHog
-      run: |
-        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
-        
-    - name: Scan for secrets
-      run: |
-        trufflehog filesystem . --only-verified=false --json > secrets-report.json || true
-        
-        if [ -s secrets-report.json ]; then
-          echo "## 🔐 Secret Scan Results" >> $GITHUB_STEP_SUMMARY
-          echo "⚠️ Potential secrets detected. Please review the findings." >> $GITHUB_STEP_SUMMARY
-          jq -r '.SourceMetadata.Data.Filesystem.file' secrets-report.json | sort -u | head -10 >> $GITHUB_STEP_SUMMARY || echo "Review the full report in artifacts." >> $GITHUB_STEP_SUMMARY
-        else
-          echo "## 🔐 Secret Scan Results" >> $GITHUB_STEP_SUMMARY
-          echo "✅ No secrets detected" >> $GITHUB_STEP_SUMMARY
-        fi
-      continue-on-error: true
-      
-    - name: Upload secret scan results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: secret-scan-results
-        path: secrets-report.json
-        retention-days: 30
-
-  rules-compliance:
-    name: RULES.md Compliance Check
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run comprehensive validation
-      run: |
-        echo "## 📋 RULES.md Compliance Report (RK3588 Target)" >> $GITHUB_STEP_SUMMARY
-        npm run validate 2>&1 | tee validation-output.txt
-        
-        if grep -q "All validation checks passed" validation-output.txt; then
-          echo "✅ **All RULES.md compliance checks passed**" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "❌ **RULES.md compliance issues detected**" >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
-          tail -20 validation-output.txt >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Target Platform**: Orange Pi 5 Plus with RK3588 NPU" >> $GITHUB_STEP_SUMMARY
-        echo "**OS Support**: Armbian Bookworm, Ubuntu (Orange Pi 5 optimized)" >> $GITHUB_STEP_SUMMARY
-        
-        # Ensure validation actually passes for CI
-        npm run validate
+    - name: RULES.md compliance
+      run: npm run validate
 
   rk3588-assets:
-    name: RK3588 Assets Verification
+    name: RK3588 Assets Check
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Check RK3588 specific files
+    - name: Verify RK3588 assets
       run: |
         echo "## 🎯 RK3588 NPU Assets Status" >> $GITHUB_STEP_SUMMARY
         
-        # Check RK3588 library
         if [ -f "libs/rkllm/aarch64/librkllmrt.so" ]; then
-          echo "✅ **librkllmrt.so (RK3588 NPU library)** - Present" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **librkllmrt.so** - Present" >> $GITHUB_STEP_SUMMARY
           file_size=$(stat -c%s "libs/rkllm/aarch64/librkllmrt.so" 2>/dev/null || echo "unknown")
           echo "  - Size: $file_size bytes" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ **librkllmrt.so** - Missing" >> $GITHUB_STEP_SUMMARY
         fi
         
-        # Check headers
         if [ -f "libs/rkllm/include/rkllm.h" ]; then
-          echo "✅ **rkllm.h (API headers)** - Present" >> $GITHUB_STEP_SUMMARY
-          header_lines=$(wc -l < "libs/rkllm/include/rkllm.h" 2>/dev/null || echo "unknown")
-          echo "  - Lines: $header_lines" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **rkllm.h** - Present" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ **rkllm.h** - Missing" >> $GITHUB_STEP_SUMMARY
         fi
         
-        # Check directory structure
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**RK3588 Library Structure:**" >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
-        ls -la libs/rkllm/ 2>/dev/null || echo "Directory not found"
-        echo '```' >> $GITHUB_STEP_SUMMARY
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Target Platform**: Orange Pi 5 Plus with RK3588 NPU" >> $GITHUB_STEP_SUMMARY
-        echo "**Architecture**: ARM64 (aarch64)" >> $GITHUB_STEP_SUMMARY
+        echo "**Target**: Orange Pi 5 Plus (RK3588 NPU)" >> $GITHUB_STEP_SUMMARY

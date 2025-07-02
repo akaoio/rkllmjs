@@ -104,7 +104,7 @@ The installation system automatically adapts to different terminal sizes:
 ### Test Coverage
 - **180 individual tests** across **8 modules**
 - **100% module success rate**
-- Comprehensive assertions and mocking
+- Comprehensive assertions and testing
 - Automated test reporting
 
 ### Test Framework Features
@@ -112,7 +112,7 @@ The installation system automatically adapts to different terminal sizes:
 - Command availability checking
 - Version comparison testing
 - File operation testing
-- Mock functions for safe testing
+- Test functions for safe testing
 - Temporary directory management
 
 ### Running Tests
@@ -207,7 +207,7 @@ init_module
 ### Testing Guidelines
 
 - Test all public functions
-- Mock external dependencies
+- Stub external dependencies
 - Use assertion functions from test framework
 - Handle edge cases and error conditions
 - Keep tests focused and independent

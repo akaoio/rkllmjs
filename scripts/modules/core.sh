@@ -437,52 +437,28 @@ is_arm64_optimized() {
 
 # Detect RKLLM mode based on environment and hardware
 detect_rkllm_mode() {
-    local mode=""
-    
-    # Check RKLLM_MODE environment variable first (case insensitive)
-    if [[ -n "$RKLLM_MODE" ]]; then
-        mode=$(echo "$RKLLM_MODE" | tr '[:upper:]' '[:lower:]')
-        log_debug "RKLLM_MODE environment variable set to: $RKLLM_MODE"
-    fi
-    
-    # Validate mode if provided
-    if [[ -n "$mode" ]]; then
-        case "$mode" in
-            real|sandbox)
-                export RKLLM_MODE_DETECTED="$mode"
-                log_info "RKLLM mode set via environment: $mode"
-                return 0
-                ;;
-            *)
-                log_warning "Invalid RKLLM_MODE value: $RKLLM_MODE. Using auto-detection."
-                ;;
-        esac
-    fi
-    
-    # Auto-detect based on hardware if not set or invalid
-    log_debug "Auto-detecting RKLLM mode based on hardware..."
+# Detect RKLLM capabilities based on hardware
+detect_rkllm_mode() {
+    log_debug "Detecting RKLLM hardware capabilities..."
     
     # Ensure architecture is detected first
     if [[ -z "$SYSTEM_ARCH" ]]; then
         detect_architecture
     fi
     
-    # Auto-detection logic
+    # Check hardware capabilities for RKLLM
     if [[ "$SYSTEM_ARCH" == "rk3588" ]]; then
-        export RKLLM_MODE_DETECTED="real"
-        log_info "Auto-detected RKLLM mode: real (RK3588 hardware detected)"
-    elif [[ "$SYSTEM_ARCH_FAMILY" == "arm64" ]]; then
-        # ARM64 but not RK3588 - default to sandbox
-        export RKLLM_MODE_DETECTED="sandbox"
-        log_info "Auto-detected RKLLM mode: sandbox (ARM64 but not RK3588)"
+        export RKLLM_HARDWARE_SUPPORTED="true"
+        export RKLLM_MODE_DETECTED="production"
+        log_info "RKLLM hardware detected: RK3588 NPU available"
     else
-        # Non-ARM64 architectures default to sandbox
-        export RKLLM_MODE_DETECTED="sandbox"
-        log_info "Auto-detected RKLLM mode: sandbox (non-ARM64 architecture)"
+        export RKLLM_HARDWARE_SUPPORTED="false"
+        export RKLLM_MODE_DETECTED="production"
+        log_info "RKLLM hardware not detected: Running in CPU-only mode"
     fi
 }
 
-# Get RKLLM mode (with detection if not already done)
+# Get RKLLM mode (always production)
 get_rkllm_mode() {
     if [[ -z "$RKLLM_MODE_DETECTED" ]]; then
         detect_rkllm_mode

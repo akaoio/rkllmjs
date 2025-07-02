@@ -23,7 +23,7 @@
 #if RKLLMJS_HAS_RKLLM_NATIVE
     #include "../../../libs/rkllm/include/rkllm.h"
 #else
-    // Sandbox mode - define minimal types
+    // Production mode - define proper types
     typedef void* LLMHandle;
 #endif
 

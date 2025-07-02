@@ -4,8 +4,8 @@
  * @file build-config.hpp
  * @brief Centralized build configuration
  * 
- * This header provides unified build configuration without mode separation.
- * All builds have full RK3588 support with automatic runtime adaptation.
+ * This header provides unified build configuration for production-ready RKLLM inference.
+ * All builds target the real RKLLM backend without conditional modes.
  */
 
 #ifndef RKLLMJS_BUILD_CONFIG_HPP
@@ -16,26 +16,32 @@
 #include <string>
 
 namespace rkllmjs { namespace config {
-    
-    // Function to detect RK3588 hardware at runtime
-    inline bool detect_rk3588() {
-        // Check /proc/device-tree/compatible for rockchip,rk3588
-        std::FILE* file = std::fopen("/proc/device-tree/compatible", "r");
-        if (file) {
-            char buffer[256];
-            size_t size = std::fread(buffer, 1, sizeof(buffer) - 1, file);
-            std::fclose(file);
-            if (size > 0) {
-                buffer[size] = '\0';
-                return std::string(buffer).find("rockchip,rk3588") != std::string::npos;
-            }
-        }
-        return false;
+    // Architecture detection for build compatibility
+    inline bool is_arm64() {
+        #ifdef __aarch64__
+            return true;
+        #else
+            return false;
+        #endif
     }
     
-    // Function to detect if architecture is ARM64
-    inline bool detect_arm64() {
+    // RK3588 hardware detection
+    inline bool detect_rk3588() {
         #ifdef __aarch64__
+            // Check for RK3588 in /proc/device-tree/compatible
+            FILE* file = fopen("/proc/device-tree/compatible", "r");
+            if (file != nullptr) {
+                char buffer[256];
+                size_t bytes_read = fread(buffer, 1, sizeof(buffer) - 1, file);
+                fclose(file);
+                buffer[bytes_read] = '\0';
+                
+                // Look for rockchip,rk3588 string
+                std::string content(buffer);
+                return content.find("rockchip,rk3588") != std::string::npos;
+            }
+            
+            // Fallback: assume RK3588 on ARM64 if can't detect
             return true;
         #else
             return false;
@@ -50,7 +56,7 @@ namespace rkllmjs { namespace config {
 // Namespace aliases for clean code
 #define RKLLMJS_UTILS_NS rkllmjs::utils
 
-// Unified feature availability - always enabled
+// Unified feature availability - single mode only
 #define RKLLMJS_HAS_NAPI 1
 #define RKLLMJS_HAS_NODE_INTEGRATION 1
 #define RKLLMJS_HAS_RKLLM_NATIVE 1

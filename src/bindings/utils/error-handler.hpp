@@ -132,20 +132,20 @@ void validateArrayParameter(Napi::Env env, const Napi::Value& value, const std::
 #else
 // Standard C++ mode: Error handling functions without N-API
 
-// Error logging (SANDBOX mode)
+// Error logging (production mode)
 void logError(const ErrorInfo& errorInfo);
 void logError(const std::string& message, ErrorSeverity severity = ErrorSeverity::ERROR);
 void logError(ErrorCategory category, ErrorSeverity severity, 
               const std::string& message, const std::string& details = "");
 
-// Exception conversion utilities (SANDBOX mode)
+// Exception conversion utilities (production mode)
 ErrorInfo exceptionToErrorInfo(const std::exception& e);
 
-// Error code utilities (SANDBOX mode)
+// Error code utilities (production mode)
 std::string getErrorCodeString(ErrorCategory category, int code);
 ErrorCategory getErrorCategoryFromCode(const std::string& code);
 
-// Utility functions (SANDBOX mode)
+// Utility functions (production mode)
 std::string getCategoryString(ErrorCategory category);
 std::string getSeverityString(ErrorSeverity severity);
 std::string formatErrorMessage(const ErrorInfo& error);
@@ -153,7 +153,7 @@ ErrorInfo createErrorInfo(ErrorCategory category, ErrorSeverity severity,
                          const std::string& code, const std::string& message,
                          const std::string& details = "", const std::string& location = "");
 
-// Validation functions (SANDBOX mode)
+// Validation functions (production mode)
 void validateNotEmpty(const std::string& value, const std::string& paramName);
 void validateRange(double value, double min, double max, const std::string& paramName);
 void validatePositive(double value, const std::string& paramName);

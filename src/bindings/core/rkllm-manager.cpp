@@ -1,5 +1,6 @@
 #include "rkllm-manager.hpp"
 #include "../config/build-config.hpp"
+#include "../../../libs/rkllm/include/rkllm.h"
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -13,6 +14,28 @@
 
 namespace rkllmjs {
 namespace core {
+
+// Global callback function for RKLLM inference
+static int global_rkllm_callback(RKLLMResult* result, void* userdata, LLMCallState state) {
+    if (result && result->text) {
+        // Print streaming text in real-time
+        std::cout << result->text << std::flush;
+    }
+    
+    switch (state) {
+        case RKLLM_RUN_NORMAL:
+        case RKLLM_RUN_WAITING:
+            return 0; // Continue
+        case RKLLM_RUN_FINISH:
+            std::cout << std::endl; // New line after completion
+            return 0;
+        case RKLLM_RUN_ERROR:
+            std::cout << "\n[ERROR] Inference failed\n" << std::flush;
+            return 1; // Stop
+        default:
+            return 0;
+    }
+}
 
 // Static member definitions
 RKLLMManager& RKLLMManager::getInstance() {
@@ -94,11 +117,7 @@ ManagerResult RKLLMManager::cleanup() {
     for (auto& [handle, instance] : models_) {
         if (instance && instance->is_active) {
             std::cout << "[RKLLMManager] Cleaning up model: " << instance->model_id << std::endl;
-#if 0 // Removed RKLLM_COMPILE_MODE_REAL
             rkllm_destroy(handle);
-#else
-            std::cout << "[RKLLMManager] Sandbox mode: simulated cleanup" << std::endl;
-#endif
             instance->is_active = false;
         }
     }
@@ -141,7 +160,6 @@ ManagerResult RKLLMManager::createModel(const RKLLMModelConfig& config, LLMHandl
         return ManagerResult::ERROR_RESOURCE_EXHAUSTED;
     }
     
-#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     // Create RKLLM parameters using default
     RKLLMParam param = rkllm_createDefaultParam();
     
@@ -154,17 +172,12 @@ ManagerResult RKLLMManager::createModel(const RKLLMModelConfig& config, LLMHandl
     param.temperature = config.temperature;
     param.repeat_penalty = config.repeat_penalty;
     
-    // Initialize model
-    int ret = rkllm_init(handle, &param, nullptr);
+    // Initialize model with global callback
+    int ret = rkllm_init(handle, &param, global_rkllm_callback);
     if (ret != 0) {
         std::cout << "[RKLLMManager] Model initialization failed: " << ret << std::endl;
         return ManagerResult::ERROR_MODEL_LOAD_FAILED;
     }
-#else
-    // Sandbox mode: simulate successful initialization
-    *handle = reinterpret_cast<LLMHandle>(0x12345678); // Mock handle
-    std::cout << "[RKLLMManager] Sandbox mode: simulated model init" << std::endl;
-#endif
     
     // Create model instance
     std::string model_id = generateModelId();
@@ -196,15 +209,10 @@ ManagerResult RKLLMManager::destroyModel(LLMHandle handle) {
     }
     
     // Destroy RKLLM handle
-#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     int ret = rkllm_destroy(handle);
     if (ret != 0) {
         std::cout << "[RKLLMManager] Warning: rkllmDestroy returned: " << ret << std::endl;
     }
-#else
-    // Sandbox mode: simulate successful destruction
-    std::cout << "[RKLLMManager] Sandbox mode: simulated model destroy" << std::endl;
-#endif
     
     // Update resource usage
     used_npu_cores_ -= instance->config.npu_core_num;

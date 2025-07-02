@@ -42,8 +42,11 @@ TARGET = librkllm-adapters.a
 TEST_TARGET = bin/$(MODULE_NAME).test
 
 # Default target
-.PHONY: all
+.PHONY: all lib test
 all: $(TARGET) $(TEST_TARGET)
+
+# Build just the library (without tests)
+lib: $(TARGET)
 
 # Build static library
 $(TARGET): $(OBJECTS)
@@ -65,7 +68,7 @@ $(TEST_TARGET): $(TEST_OBJECTS) $(TARGET)
 .PHONY: test
 test: $(TEST_TARGET)
 	@echo "🧪 Running adapters module tests..."
-	$(TEST_TARGET)
+	LD_LIBRARY_PATH=../../../libs/rkllm/aarch64:$$LD_LIBRARY_PATH $(TEST_TARGET)
 
 # Clean build artifacts
 .PHONY: clean

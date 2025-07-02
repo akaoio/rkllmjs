@@ -12,7 +12,7 @@ namespace rkllmjs {
 namespace utils {
 namespace test {
 
-// Test environment helper for SANDBOX mode
+// Test environment helper for production mode
 class TestEnvironment {
 public:
     static bool isMode() {
@@ -20,7 +20,7 @@ public:
     }
 };
 
-// Test basic vector operations in SANDBOX mode
+// Test basic vector operations in production mode
 TEST(TypeConvertersTest, VectorOperations) {
     std::vector<float> input = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
     

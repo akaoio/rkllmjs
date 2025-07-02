@@ -109,14 +109,14 @@ test_installation_methods() {
 
 # Test configuration functions
 test_configuration_functions() {
-    # Mock npm commands to avoid actual configuration changes
+    # Stub npm commands to avoid actual configuration changes
     npm() {
-        echo "MOCK: npm $*"
+        echo "STUB: npm $*"
         return 0
     }
     export -f npm
     
-    # Test configuration (this should not make actual changes in mock mode)
+    # Test configuration (this should not make actual changes in test mode)
     if configure_nodejs > /dev/null 2>&1; then
         assert_true "true" "configure_nodejs executes successfully"
     else

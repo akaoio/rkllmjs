@@ -27,8 +27,11 @@ TARGET = lib$(MODULE_NAME).a
 TEST_TARGET = $(MODULE_NAME).test
 
 # Default target
-.PHONY: all
+.PHONY: all lib test
 all: $(TARGET) $(TEST_TARGET)
+
+# Build just the library (without tests)
+lib: $(TARGET)
 
 # Build static library
 $(TARGET): $(OBJECTS)

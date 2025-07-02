@@ -21,7 +21,7 @@ describe('CLIRunner', () => {
     runner = new CLIRunner();
     logOutput = [];
 
-    // Mock console.log to capture output
+    // Capture console.log output for testing
     originalConsoleLog = console.log;
     console.log = (...args: any[]) => {
       const message = args
@@ -123,7 +123,7 @@ describe('CLIRunner', () => {
   });
 
   // Note: Command validation tests that involve process.exit are difficult to test
-  // in Node.js without complex mocking. These would be better handled in integration tests.
+  // in Node.js without complex test setups. These would be better handled in integration tests.
 
   // Generate summary at the end - moved to test end instead of process exit
   // to avoid conflicts with Node.js test runner process management

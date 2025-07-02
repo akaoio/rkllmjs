@@ -179,9 +179,9 @@ cleanup_test_temp_dir() {
     [[ -n "$temp_dir" ]] && [[ -d "$temp_dir" ]] && rm -rf "$temp_dir"
 }
 
-# Mock function to disable actual installations in tests
-mock_install_packages() {
-    echo "MOCK: install_packages called with: $*"
+# Stub function to disable actual installations in tests
+stub_install_packages() {
+    echo "STUB: install_packages called with: $*"
     return 0
 }
 
@@ -190,4 +190,4 @@ export -f assert_true assert_false assert_equals assert_not_empty
 export -f assert_command_exists assert_function_exists
 export -f run_test run_test_suite show_test_results
 export -f create_test_temp_dir cleanup_test_temp_dir
-export -f mock_install_packages
+export -f stub_install_packages

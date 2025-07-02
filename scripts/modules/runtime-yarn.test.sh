@@ -49,13 +49,13 @@ test_yarn_detection_result() {
 
 # Test configuration functions
 test_configuration() {
-    # Mock yarn config commands
+    # Stub yarn config commands
     yarn() {
         if [[ "$1" == "config" ]]; then
-            echo "MOCK: yarn config $*"
+            echo "STUB: yarn config $*"
             return 0
         else
-            echo "MOCK: yarn $*"
+            echo "STUB: yarn $*"
             return 0
         fi
     }

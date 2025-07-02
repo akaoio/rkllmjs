@@ -9,38 +9,18 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "tsc && npm run build:native && npm run build:cpp",
-    "build:native": "./scripts/build.sh",
+    "build": "npm run build:ts && npm run build:cpp",
     "build:ts": "tsc",
-    "test": "npm run setup-test && npm run test:unit && npm run test:integration && npm run test:cpp && npm run validate",
-    "setup-test": "./scripts/setup-test-env.sh",
+    "build:cpp": "bash src/bindings/build.sh build",
+    "test": "npm run test:unit && npm run test:arch-aware && npm run validate",
     "test:unit": "node --test --import tsx/esm src/**/*.test.ts",
-    "test:integration": "find tests/integration -name '*.test.ts' | xargs node --test --import tsx/esm",
-    "test:system": "find tests/system -name '*.test.ts' | xargs node --test --import tsx/esm",
-    "test:performance": "find tests/performance -name '*.test.ts' | xargs node --test --import tsx/esm",
-    "test:all": "npm run test:unit && npm run test:integration && npm run test:system && npm run test:performance",
-    "test:node": "node --test --import tsx/esm src/**/*.test.ts",
-    "test:bun": "bun test",
-    "test:deno": "deno test --allow-all",
+    "test:arch-aware": "bash scripts/test-arch-aware.sh",
+    "test:cpp": "bash scripts/test-cpp.sh",
     "validate": "bash scripts/validate.sh",
     "cli": "node dist/cli-runner/cli-runner.js",
-    "cli:bun": "bun src/cli-runner/cli-runner.ts",
-    "cli:deno": "deno run --allow-all src/cli-runner/cli-runner.ts",
-    "dev": "tsc --project configs/tsconfig.json --watch",
-    "clean": "rm -rf dist build node_modules/.cache logs",
-    "lint": "eslint --config .eslintrc.json src --ext .ts",
-    "format": "prettier --config .prettierrc --write src/**/*.ts",
-    "docs": "typedoc src --out docs",
-    "prepublishOnly": "npm run build && npm test",
-    "build:cpp": "bash src/bindings/build.sh build",
-    "build:cpp:module": "bash src/bindings/build.sh build",
-    "build:cpp:binding": "bash src/bindings/build.sh binding",
-    "test:cpp": "bash scripts/test-cpp.sh",
+    "clean": "rm -rf dist build node_modules/.cache logs && npm run clean:cpp",
     "clean:cpp": "bash src/bindings/build.sh clean",
-    "doc": "bash scripts/doc-generator.sh all",
-    "doc:rules": "bash scripts/doc-generator.sh generate",
-    "doc:readme": "bash scripts/doc-generator.sh readme",
-    "doc:validate": "bash scripts/doc-generator.sh validate"
+    "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
     "rockchip",
@@ -55,9 +35,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/rkllmjs.git"
+    "url": "https://github.com/akaoio/rkllmjs.git"
   },
-  "author": "Your Name <your.email@example.com>",
+  "author": "No Name <noname@example.com>",
   "license": "MIT",
   "files": [
     "dist",

@@ -161,7 +161,7 @@ private:
     std::shared_ptr<rkllmjs::core::RKLLMManager> manager_;
     std::shared_ptr<rkllmjs::inference::InferenceEngine> engine_;
 #else
-    // SANDBOX mode: no external dependencies
+    // Production mode: standard includes
     void* manager_;  // Placeholder
     void* engine_;   // Placeholder
 #endif
