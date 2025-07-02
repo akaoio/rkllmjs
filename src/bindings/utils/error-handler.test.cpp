@@ -23,9 +23,7 @@ public:
     }
 };
 
-#ifdef RKLLM_COMPILE_MODE_SANDBOX
-
-// Tests for SANDBOX mode (no NAPI dependencies)
+// Unified build tests (no build mode separation)
 TEST(ErrorHandlerTest, ErrorCategoryEnum) {
     // Test that error categories are properly defined
     ErrorCategory cat1 = ErrorCategory::TYPE_CONVERSION;
@@ -84,15 +82,11 @@ TEST(ErrorHandlerTest, ErrorInfoStructure) {
     EXPECT_STREQ(info.message.c_str(), "Test message");
 }
 
-#else
-
-// Tests for full mode (with NAPI dependencies)
-TEST(ErrorHandlerTest, FullModeAvailable) {
-    // Test that full mode functionality is available
-    EXPECT_TRUE(true); // In full mode, we have access to N-API functions
+// Test unified build functionality
+TEST(ErrorHandlerTest, UnifiedBuildAvailable) {
+    // Test that unified build functionality is available
+    EXPECT_TRUE(true); // Unified build has access to all functions
 }
-
-#endif
 
 } // namespace test
 } // namespace utils

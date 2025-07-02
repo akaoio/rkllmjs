@@ -4,7 +4,7 @@
 Memory module tests are hanging during initialization, likely due to:
 - Static singleton initialization issues
 - Potential mutex deadlock
-- Complex alignment logic in sandbox mode
+- Complex alignment logic in production mode
 
 ## RULES.md Compliance Status
 - ✅ Conditional compilation implemented

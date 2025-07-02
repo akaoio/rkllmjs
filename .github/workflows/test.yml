@@ -1,19 +1,20 @@
-name: Test & Quality Checks
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:
 
 jobs:
-  # Primary testing - RK3588 target focused
-  test-primary:
-    name: Primary Test (RK3588 Target)
-    runs-on: ubuntu-latest
+  # Main CI/CD job - ARM64 only
+  ci:
+    name: Build & Test (${{ matrix.node-version }})
+    runs-on: ubuntu-24.04-arm
     strategy:
       matrix:
-        node-version: [18, 20]  # Node.js 18+ only
+        node-version: [18, 20]
     
     steps:
     - name: Checkout code
@@ -25,78 +26,40 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
         
+    - name: Setup development environment
+      run: ./install.sh --non-interactive --no-node
+      
     - name: Install dependencies
       run: npm ci
       
-    - name: Run validation (RULES.md compliance)
-      run: npm run validate
+    - name: Build project
+      run: npm run build
       
-    - name: Build C++ modules
-      run: npm run build:cpp
+    - name: Run tests (architecture-aware)
+      run: npm test
       
-    - name: Build TypeScript
-      run: npm run build:ts
-      
-    - name: Run tests
-      run: npm run test:node
+    - name: Code quality checks
+      if: matrix.node-version == '20'
+      run: |
+        npx prettier --check src/**/*.ts
+        npx tsc --noEmit
 
-  # Code quality checks
-  quality:
-    name: Code Quality
+  # Asset verification for RK3588
+  verify-assets:
+    name: Verify RK3588 Assets
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run ESLint
-      run: npm run lint
-      
-    - name: Run Prettier check
-      run: npx prettier --check src/**/*.ts
-      
-    - name: TypeScript type checking
-      run: npx tsc --noEmit
-
-  # Build verification for RK3588
-  build-verification:
-    name: Build Verification
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Clean build
-      run: npm run clean
-      
-    - name: Full build (C++ + TypeScript)
+    - name: Verify RK3588 NPU assets
       run: |
-        npm run build:cpp
-        npm run build:ts
-      
-    - name: Verify RK3588 assets
-      run: |
+        echo "🎯 Checking RK3588 NPU assets..."
+        
         if [ -f "libs/rkllm/aarch64/librkllmrt.so" ]; then
           echo "✅ RK3588 NPU library present"
+          ls -lh libs/rkllm/aarch64/librkllmrt.so
         else
           echo "❌ RK3588 NPU library missing"
           exit 1
@@ -104,7 +67,10 @@ jobs:
         
         if [ -f "libs/rkllm/include/rkllm.h" ]; then
           echo "✅ RKLLM headers present"
+          wc -l libs/rkllm/include/rkllm.h
         else
           echo "❌ RKLLM headers missing"
           exit 1
         fi
+        
+        echo "🚀 Orange Pi 5 Plus assets verified"

@@ -7,9 +7,37 @@
 namespace rkllmjs {
 namespace utils {
 
+// Forward declarations
+std::string getSeverityString(ErrorSeverity severity);
+std::string getCategoryString(ErrorCategory category);
+
 // TypeConversionException with string types
 TypeConversionException::TypeConversionException(const std::string& expected, const std::string& actual) 
     : RKLLMException("Type conversion error: expected " + expected + ", got " + actual) {}
+
+// Utility functions
+std::string getCategoryString(ErrorCategory category) {
+    switch (category) {
+        case ErrorCategory::TYPE_CONVERSION: return "TYPE_CONVERSION";
+        case ErrorCategory::CONFIGURATION: return "CONFIGURATION";
+        case ErrorCategory::RESOURCE_MANAGEMENT: return "RESOURCE_MANAGEMENT";
+        case ErrorCategory::MODEL_OPERATION: return "MODEL_OPERATION";
+        case ErrorCategory::MEMORY_ALLOCATION: return "MEMORY_ALLOCATION";
+        case ErrorCategory::NATIVE_LIBRARY: return "NATIVE_LIBRARY";
+        case ErrorCategory::VALIDATION: return "VALIDATION";
+        default: return "UNKNOWN";
+    }
+}
+
+std::string getSeverityString(ErrorSeverity severity) {
+    switch (severity) {
+        case ErrorSeverity::INFO: return "INFO";
+        case ErrorSeverity::WARNING: return "WARNING";
+        case ErrorSeverity::ERROR: return "ERROR";
+        case ErrorSeverity::CRITICAL: return "CRITICAL";
+        default: return "UNKNOWN";
+    }
+}
 
 // ErrorScope implementation
 ErrorScope::ErrorScope(const std::string& operation) 
@@ -73,29 +101,6 @@ ErrorInfo createErrorInfo(ErrorCategory category, ErrorSeverity severity,
         details,
         location
     };
-}
-
-std::string getCategoryString(ErrorCategory category) {
-    switch (category) {
-        case ErrorCategory::TYPE_CONVERSION: return "TYPE_CONVERSION";
-        case ErrorCategory::CONFIGURATION: return "CONFIGURATION";
-        case ErrorCategory::RESOURCE_MANAGEMENT: return "RESOURCE_MANAGEMENT";
-        case ErrorCategory::MODEL_OPERATION: return "MODEL_OPERATION";
-        case ErrorCategory::MEMORY_ALLOCATION: return "MEMORY_ALLOCATION";
-        case ErrorCategory::NATIVE_LIBRARY: return "NATIVE_LIBRARY";
-        case ErrorCategory::VALIDATION: return "VALIDATION";
-        default: return "UNKNOWN";
-    }
-}
-
-std::string getSeverityString(ErrorSeverity severity) {
-    switch (severity) {
-        case ErrorSeverity::INFO: return "INFO";
-        case ErrorSeverity::WARNING: return "WARNING";
-        case ErrorSeverity::ERROR: return "ERROR";
-        case ErrorSeverity::CRITICAL: return "CRITICAL";
-        default: return "UNKNOWN";
-    }
 }
 
 std::string formatErrorMessage(const ErrorInfo& error) {

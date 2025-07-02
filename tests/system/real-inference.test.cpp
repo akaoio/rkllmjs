@@ -2,9 +2,9 @@
 #include <string>
 #include <memory>
 #include <chrono>
-#include "core/rkllm-manager.hpp"
-#include "inference/inference-engine.hpp"
-#include "config/config-manager.hpp"
+#include "rkllm-manager.hpp"
+#include "inference-engine.hpp"
+#include "build-config.hpp"
 
 using namespace rkllmjs;
 

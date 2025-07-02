@@ -12,7 +12,8 @@
 
 #include "../config/build-config.hpp"
 
-#ifdef RKLLM_COMPILE_MODE_REAL
+// Only include N-API headers when building N-API bindings, not standalone tests
+#if defined(RKLLM_NAPI_BINDINGS)
     #include <napi.h>
 #endif
 
@@ -49,7 +50,7 @@ private:
  * JavaScript types (via N-API) and C++ standard library types.
  */
 
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if defined(RKLLM_NAPI_BINDINGS)
 // Full mode: Include N-API type conversions
 
 // String conversions
@@ -90,7 +91,7 @@ void validateNotUndefined(Napi::Env env, const Napi::Value& value, const std::st
 void validateNotNull(Napi::Env env, const Napi::Value& value, const std::string& paramName);
 
 #else
-// SANDBOX mode: Provide C++ only utility functions
+// Production mode: Provide C++ only utility functions
 
 // Basic string utilities for testing
 bool validateString(const std::string& str);
@@ -135,8 +136,8 @@ std::string bytesToString(const std::vector<uint8_t>& bytes);
 std::string bytesToHex(const std::vector<uint8_t>& bytes);
 std::vector<uint8_t> hexToBytes(const std::string& hex);
 
-#ifdef RKLLM_COMPILE_MODE_REAL
-// Template implementations for REAL mode
+#if defined(RKLLM_NAPI_BINDINGS)
+// Template implementations for N-API mode
 
 template<typename T>
 std::vector<T> jsArrayToCppVector(Napi::Env env, const Napi::Array& jsArray) {
@@ -155,7 +156,7 @@ std::vector<T> jsArrayToCppVector(Napi::Env env, const Napi::Array& jsArray) {
         } else if constexpr (std::is_same_v<T, bool>) {
             result.push_back(jsBooleanToCppBool(env, element));
         } else {
-            static_assert(false, "Unsupported type for array conversion");
+            static_assert(!std::is_same_v<T, T>, "Unsupported type for array conversion");
         }
     }
     
@@ -176,7 +177,7 @@ Napi::Array cppVectorToJsArray(Napi::Env env, const std::vector<T>& cppVector) {
         } else if constexpr (std::is_same_v<T, bool>) {
             jsArray[i] = cppBoolToJsBoolean(env, cppVector[i]);
         } else {
-            static_assert(false, "Unsupported type for array conversion");
+            static_assert(!std::is_same_v<T, T>, "Unsupported type for array conversion");
         }
     }
     
@@ -184,7 +185,7 @@ Napi::Array cppVectorToJsArray(Napi::Env env, const std::vector<T>& cppVector) {
 }
 
 #else
-// SANDBOX mode template implementations
+// Production mode template implementations
 
 template<typename T>
 bool validateVector(const std::vector<T>& vec) {

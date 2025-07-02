@@ -13,15 +13,12 @@ TEST(IncludeManagerTest, HeaderInclusionMacros) {
     EXPECT_TRUE(true);
 }
 
-TEST(IncludeManagerTest, ConditionalInclusion) {
-    // Test conditional compilation works
-#if RKLLMJS_HAS_NAPI
-    // In full build mode
-    EXPECT_TRUE(RKLLMJS_MODE_REAL);
-#else
-    // In sandbox build mode
-    EXPECT_TRUE(RKLLMJS_MODE_SANDBOX);
-#endif
+TEST(IncludeManagerTest, UnifiedBuildSystem) {
+    // Test that unified build system works
+    // All builds now have full functionality
+    EXPECT_TRUE(RKLLMJS_HAS_NAPI);
+    EXPECT_TRUE(RKLLMJS_HAS_NODE_INTEGRATION);
+    EXPECT_TRUE(RKLLMJS_HAS_RKLLM_NATIVE);
 }
 
 TEST(IncludeManagerTest, SystemDependencies) {

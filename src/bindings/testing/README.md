@@ -1,10 +1,10 @@
 # testing
 
 ## Purpose
-Testing utilities and mock implementations
+Testing utilities and test implementations
 
 ## Overview
-Provides Test utilities, mock objects, and testing framework integration for validation.
+Provides Test utilities, test objects, and testing framework integration for validation.
 
 ## Architecture
 Module architecture information will be added here.

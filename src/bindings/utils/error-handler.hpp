@@ -7,7 +7,8 @@
 #include <functional>
 #include <vector>
 
-#ifdef RKLLM_COMPILE_MODE_REAL
+// Only include N-API headers when building N-API bindings, not standalone tests
+#if defined(RKLLM_NAPI_BINDINGS)
     #include <napi.h>
 #endif
 
@@ -37,7 +38,7 @@ class TypeConversionException : public RKLLMException {
 public:
     explicit TypeConversionException(const std::string& message) : RKLLMException(message) {}
     TypeConversionException(const std::string& expected, const std::string& actual);
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if defined(RKLLM_COMPILE_MODE_REAL) && defined(RKLLM_NAPI_BINDINGS)
     TypeConversionException(const std::string& expected, napi_valuetype actual);
 #endif
 };
@@ -88,7 +89,7 @@ struct ErrorInfo {
     std::string location; // File:line info
 };
 
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if defined(RKLLM_COMPILE_MODE_REAL) && defined(RKLLM_NAPI_BINDINGS)
 // Utility function declarations
 std::string getTypeString(napi_valuetype type);
 
@@ -110,6 +111,8 @@ std::string getNativeErrorMessage(int errorCode);
 // Error logging
 void logError(const ErrorInfo& errorInfo);
 void logError(const std::string& message, ErrorSeverity severity = ErrorSeverity::ERROR);
+void logError(ErrorCategory category, ErrorSeverity severity, 
+              const std::string& message, const std::string& details = "");
 
 // Exception conversion utilities
 ErrorInfo exceptionToErrorInfo(const std::exception& e);
@@ -127,22 +130,22 @@ void validateObjectParameter(Napi::Env env, const Napi::Value& value, const std:
 void validateArrayParameter(Napi::Env env, const Napi::Value& value, const std::string& paramName);
 
 #else
-// SANDBOX mode: Error handling functions without N-API
+// Standard C++ mode: Error handling functions without N-API
 
-// Error logging (SANDBOX mode)
+// Error logging (production mode)
 void logError(const ErrorInfo& errorInfo);
 void logError(const std::string& message, ErrorSeverity severity = ErrorSeverity::ERROR);
 void logError(ErrorCategory category, ErrorSeverity severity, 
               const std::string& message, const std::string& details = "");
 
-// Exception conversion utilities (SANDBOX mode)
+// Exception conversion utilities (production mode)
 ErrorInfo exceptionToErrorInfo(const std::exception& e);
 
-// Error code utilities (SANDBOX mode)
+// Error code utilities (production mode)
 std::string getErrorCodeString(ErrorCategory category, int code);
 ErrorCategory getErrorCategoryFromCode(const std::string& code);
 
-// Utility functions (SANDBOX mode)
+// Utility functions (production mode)
 std::string getCategoryString(ErrorCategory category);
 std::string getSeverityString(ErrorSeverity severity);
 std::string formatErrorMessage(const ErrorInfo& error);
@@ -150,7 +153,7 @@ ErrorInfo createErrorInfo(ErrorCategory category, ErrorSeverity severity,
                          const std::string& code, const std::string& message,
                          const std::string& details = "", const std::string& location = "");
 
-// Validation functions (SANDBOX mode)
+// Validation functions (production mode)
 void validateNotEmpty(const std::string& value, const std::string& paramName);
 void validateRange(double value, double min, double max, const std::string& paramName);
 void validatePositive(double value, const std::string& paramName);

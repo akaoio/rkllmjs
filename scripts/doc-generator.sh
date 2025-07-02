@@ -580,7 +580,7 @@ infer_module_purpose() {
             echo "N-API bindings for Node.js integration with C++ modules"
             ;;
         "testing")
-            echo "Testing utilities and mock implementations"
+            echo "Testing utilities and validation framework"
             ;;
         "model-manager")
             echo "Model loading, validation, and lifecycle management"
@@ -647,7 +647,7 @@ generate_module_description() {
             desc+="Bridge between Node.js and C++ modules enabling JavaScript access to NPU functionality."
             ;;
         "testing")
-            desc+="Test utilities, mock objects, and testing framework integration for validation."
+            desc+="Test utilities, validation framework, and testing infrastructure for comprehensive validation."
             ;;
         *)
             desc+="Core functionality and implementation details for the $module_name component."

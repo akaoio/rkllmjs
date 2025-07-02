@@ -3,12 +3,23 @@
 
 # Compiler settings
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -fPIC -DRKLLM_COMPILE_MODE_SANDBOX
+CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -fPIC
+
+# Auto-detect node-addon-api and Node.js headers
+NODE_ADDON_API_PATH := $(shell find ../../../node_modules -name "napi.h" -type f -exec dirname {} \; 2>/dev/null | head -1)
+NODE_GYP_HEADERS := $(shell find ~/.cache/node-gyp -name "node_api.h" -type f -exec dirname {} \; 2>/dev/null | head -1)
+
 INCLUDES := -I../../../libs/rkllm/include -I../utils -I../core -I../testing
+ifneq ($(NODE_ADDON_API_PATH),)
+    INCLUDES += -I$(NODE_ADDON_API_PATH)
+endif
+ifneq ($(NODE_GYP_HEADERS),)
+    INCLUDES += -I$(NODE_GYP_HEADERS)
+endif
 
 # Library settings
-TEST_LIBS := -pthread
-RPATH := -Wl,-rpath,'$$ORIGIN/../../../libs/rkllm/aarch64'
+TEST_LIBS := -L../../../libs/rkllm/aarch64 -lrkllmrt -pthread
+RPATH := -Wl,-rpath,$(shell pwd)/../../../libs/rkllm/aarch64
 
 # Directories
 SRC_DIR := .
@@ -22,14 +33,19 @@ TEST_SOURCES := inference-engine.test.cpp
 # Object files
 OBJECTS := $(SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 TEST_OBJECTS := $(TEST_SOURCES:%.test.cpp=$(OBJ_DIR)/%.test.o)
+# Test-specific library object files
+TEST_LIB_OBJECTS := $(SOURCES:%.cpp=$(OBJ_DIR)/%.test-lib.o)
 
 # Output files
 STATIC_LIB := $(BIN_DIR)/librkllm-inference.a
 TEST_EXECUTABLES := $(TEST_SOURCES:%.test.cpp=$(BIN_DIR)/%-test)
 
 # Default target
-.PHONY: all
+.PHONY: all lib test
 all: $(STATIC_LIB)
+
+# Build just the library (without tests)
+lib: $(STATIC_LIB)
 
 # Create directories
 $(OBJ_DIR):
@@ -54,19 +70,24 @@ $(OBJ_DIR)/%.test.o: $(SRC_DIR)/%.test.cpp | $(OBJ_DIR)
 	@echo "Compiling test: $<"
 	$(CXX) $(CXXFLAGS) $(TEST_INCLUDES) -c $< -o $@
 
+# Build library object files for tests
+$(OBJ_DIR)/%.test-lib.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	@echo "Compiling library for test: $<"
+	$(CXX) $(CXXFLAGS) $(TEST_INCLUDES) -c $< -o $@
+
 # Build test executables
-$(BIN_DIR)/%-test: $(OBJ_DIR)/%.test.o $(OBJECTS) | $(BIN_DIR)
+$(BIN_DIR)/%-test: $(OBJ_DIR)/%.test.o $(TEST_LIB_OBJECTS) | $(BIN_DIR)
 	@echo "Linking test: $@"
-	$(CXX) $^ $(TEST_LIBS) -o $@
+	$(CXX) $^ $(TEST_LIBS) $(RPATH) -o $@
 
 # Test targets
 .PHONY: test
-test: $(TEST_EXECUTABLES)
+test: $(TEST_LIB_OBJECTS) $(TEST_EXECUTABLES)
 	@echo "🧪 Running inference module tests..."
 	@for test in $(TEST_EXECUTABLES); do \
 		echo "Running $$test..."; \
 		if [ -f "$$test" ]; then \
-			$$test; \
+			LD_LIBRARY_PATH=../../../libs/rkllm/aarch64 $$test; \
 		else \
 			echo "⚠️  Test executable $$test not found"; \
 		fi; \

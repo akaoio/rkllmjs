@@ -3,34 +3,17 @@
 
 MODULE_NAME = memory-manager
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -fPIC -I../config -I../testing
+CXXFLAGS = -std=c++17 -Wall -Wextra -fPIC -I../config -I../testing -O2
 
-# Build mode configuration - now supports RKLLM_MODE environment variable
-ifdef RKLLM_COMPILE_MODE_REAL
-    CXXFLAGS += -DRKLLM_COMPILE_MODE_REAL -O2
-    LIBS = -pthread -lrt
-    RPATH = 
-else ifdef REAL_BUILD
-    # Legacy support for REAL_BUILD
-    CXXFLAGS += -DREAL_BUILD -DRKLLM_COMPILE_MODE_REAL -O2
-    LIBS = -pthread -lrt
-    RPATH = 
-else
-    # Default to sandbox mode
-    CXXFLAGS += -DSANDBOX_BUILD -DRKLLM_COMPILE_MODE_SANDBOX -O2
-    LIBS = -pthread
-    RPATH = 
-endif
+# Library configuration
+LIBS = -pthread -lrt
+RPATH = 
 
 # Debug/Release configuration
 ifdef DEBUG
     CXXFLAGS += -g -O0 -DDEBUG
 else
-    ifdef RKLLM_COMPILE_MODE_REAL
-        CXXFLAGS += -O2 -DNDEBUG
-    else ifndef SANDBOX_BUILD
-        CXXFLAGS += -O2 -DNDEBUG
-    endif
+    CXXFLAGS += -O2 -DNDEBUG
 endif
 
 # Source files

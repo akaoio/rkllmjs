@@ -18,29 +18,14 @@
 #include <mutex>
 #include <vector>
 
-// Conditional RKLLM include and type definitions
-#ifdef SANDBOX_BUILD
-    // Sandbox mode: no RKLLM headers, use void* for handle
-    namespace rkllmjs {
-    namespace core {
-        using LLMHandle = void*;
-    }
-    }
-#else
-    // Full mode: include RKLLM headers and use real handle type
-    #include "../../../libs/rkllm/include/rkllm.h"
-    namespace rkllmjs {
-    namespace core {
-    #ifdef __cplusplus
-        // If RKLLMHandle is not defined in rkllm.h, define it as void*
-        #ifndef RKLLMHandle
-        using RKLLMHandle = void*;
-        #endif
-    #endif
-        using LLMHandle = RKLLMHandle;
-    }
-    }
-#endif
+// RKLLM library integration
+#include "../../../libs/rkllm/include/rkllm.h"
+
+namespace rkllmjs {
+namespace core {
+    using LLMHandle = ::LLMHandle;
+}
+}
 
 // Continue namespace for the rest of the definitions
 namespace rkllmjs {

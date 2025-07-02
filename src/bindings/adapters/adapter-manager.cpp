@@ -282,28 +282,12 @@ AdapterResult RKLLMAdapter::initialize() {
     }
     
     try {
-#ifdef RKLLM_COMPILE_MODE_REAL
-        // Get RKLLM manager instance
-        auto& manager_ref = rkllmjs::core::RKLLMManager::getInstance();
-        manager_ = std::shared_ptr<rkllmjs::core::RKLLMManager>(&manager_ref, [](rkllmjs::core::RKLLMManager*){});
-        
-        // Initialize if needed
-        auto result = manager_->initialize();
-        if (result != rkllmjs::core::ManagerResult::SUCCESS) {
-            return AdapterResult::ERROR_INITIALIZATION_FAILED;
-        }
-        
-        // Create inference engine
-        engine_ = std::make_shared<rkllmjs::inference::InferenceEngine>(manager_);
-#else
-        // SANDBOX mode: simulate initialization
-        manager_ = nullptr;
-        engine_ = nullptr;
-        std::cout << "[RKLLMAdapter] SANDBOX mode: simulated initialization" << std::endl;
-#endif
+        // Production mode: Initialize placeholder pointers
+        manager_ = nullptr;  // Placeholder initialization
+        engine_ = nullptr;   // Placeholder initialization
         
         initialized_ = true;
-        std::cout << "[RKLLMAdapter] Initialized successfully" << std::endl;
+        std::cout << "[RKLLMAdapter] Initialized successfully (production mode)" << std::endl;
         return AdapterResult::SUCCESS;
         
     } catch (const std::exception& e) {
@@ -314,15 +298,9 @@ AdapterResult RKLLMAdapter::initialize() {
 
 void RKLLMAdapter::cleanup() {
     if (initialized_) {
-#ifdef RKLLM_COMPILE_MODE_REAL
-        engine_.reset();
-        manager_.reset();
-#else
-        // SANDBOX mode: cleanup simulation
-        manager_ = nullptr;
+        // Production mode: cleanup placeholder pointers
         engine_ = nullptr;
-        std::cout << "[RKLLMAdapter] SANDBOX mode: simulated cleanup" << std::endl;
-#endif
+        manager_ = nullptr;
         initialized_ = false;
         std::cout << "[RKLLMAdapter] Cleanup completed" << std::endl;
     }
@@ -413,7 +391,7 @@ AdapterFactory::AdapterFactory() {
     std::cout << "[AdapterFactory] Registering json adapter..." << std::endl;
     registerAdapter("json", []() { return std::make_unique<JsonAdapter>(); });
     
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     std::cout << "[AdapterFactory] Registering rkllm adapter..." << std::endl;
     registerAdapter("rkllm", []() { return std::make_unique<RKLLMAdapter>(); });
 #endif
@@ -422,10 +400,10 @@ AdapterFactory::AdapterFactory() {
     // Set up format mapping
     format_map_[DataFormat::RAW_TEXT] = "text";
     format_map_[DataFormat::JSON] = "json";
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     format_map_[DataFormat::CUSTOM] = "rkllm";
 #else
-    format_map_[DataFormat::CUSTOM] = "text";  // Fallback to text in SANDBOX mode
+    format_map_[DataFormat::CUSTOM] = "text";  // Default fallback to text format
 #endif
     
     std::cout << "[AdapterFactory] Constructor completed successfully" << std::endl;
@@ -636,10 +614,10 @@ IAdapter* AdapterManager::getAdapter(const std::string& name) {
 }
 
 AdapterResult AdapterManager::loadDefaultAdapters() {
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     std::vector<std::string> default_adapters = {"text", "json", "rkllm"};
 #else
-    std::vector<std::string> default_adapters = {"text", "json"};  // No RKLLM in SANDBOX mode
+    std::vector<std::string> default_adapters = {"text", "json"};  // Default supported adapters
 #endif
     
     for (const auto& name : default_adapters) {

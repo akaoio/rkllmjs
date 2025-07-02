@@ -1,5 +1,5 @@
-#include "../core/rkllm-manager.hpp"
-#include "../config/config-manager.hpp"
+#include "../../src/bindings/core/rkllm-manager.hpp"
+#include "../../src/bindings/config/config-manager.hpp"
 #include <iostream>
 #include <string>
 

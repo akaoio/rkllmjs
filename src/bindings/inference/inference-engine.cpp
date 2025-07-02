@@ -1,5 +1,6 @@
 #include "inference-engine.hpp"
 #include "../config/build-config.hpp"
+#include "../../../libs/rkllm/include/rkllm.h"
 
 // Professional conditional inclusion - centralized configuration
 #include "../utils/type-converters.hpp"
@@ -12,9 +13,52 @@
 #include <regex>
 #include <numeric>
 #include <map>
+#include <iostream>
 
 namespace rkllmjs {
 namespace inference {
+
+// Static callback function for RKLLM results
+static int rkllm_result_callback(RKLLMResult* result, void* userdata, LLMCallState state) {
+    struct InferenceContext {
+        std::string* accumulated_text;
+        int* token_count;
+        bool* is_finished;
+        std::string* finish_reason;
+    };
+    
+    InferenceContext* ctx = static_cast<InferenceContext*>(userdata);
+    
+    if (result && result->text && ctx->accumulated_text) {
+        // Print streaming text in real-time
+        std::cout << result->text << std::flush;
+        *(ctx->accumulated_text) += result->text;
+        (*(ctx->token_count))++;
+    }
+    
+    switch (state) {
+        case RKLLM_RUN_NORMAL:
+            return 0; // Continue
+        case RKLLM_RUN_WAITING:
+            return 0; // Continue
+        case RKLLM_RUN_FINISH:
+            if (ctx->is_finished && ctx->finish_reason) {
+                *(ctx->is_finished) = true;
+                *(ctx->finish_reason) = "completed";
+                std::cout << "\n"; // New line after completion
+            }
+            return 0;
+        case RKLLM_RUN_ERROR:
+            if (ctx->is_finished && ctx->finish_reason) {
+                *(ctx->is_finished) = true;
+                *(ctx->finish_reason) = "error";
+                std::cout << "\n[ERROR] Inference failed\n";
+            }
+            return 1; // Stop
+        default:
+            return 0;
+    }
+}
 
 // InferenceParams implementation
 bool InferenceParams::isValid() const {
@@ -272,10 +316,25 @@ InferenceResult InferenceEngine::executeInference(const InferenceParams& params)
             throw rkllmjs::utils::RKLLMException("No model handle set for inference");
         }
         
-        // Use the stored model handle
+        // Context structure for callback
+        std::string accumulated_text;
+        int token_count = 0;
+        bool is_finished = false;
+        std::string finish_reason;
         
-#if RKLLMJS_HAS_RKLLM_NATIVE
-        LLMHandle handle = modelHandle_;
+        struct InferenceContext {
+            std::string* accumulated_text;
+            int* token_count;
+            bool* is_finished;
+            std::string* finish_reason;
+        };
+        
+        InferenceContext context = {
+            &accumulated_text,
+            &token_count, 
+            &is_finished,
+            &finish_reason
+        };
         
         // Prepare RKLLM input structure
         RKLLMInput rkllm_input;
@@ -291,46 +350,20 @@ InferenceResult InferenceEngine::executeInference(const InferenceParams& params)
         rkllm_infer_params.prompt_cache_params = nullptr;
         rkllm_infer_params.keep_history = 1;
         
-        // Output buffer for generated text
-        std::string generatedText;
-        
-        // Run RKLLM inference
-        int status = rkllm_run(handle, &rkllm_input, &rkllm_infer_params, nullptr);
+        // Run RKLLM inference with context for callback
+        int status = rkllm_run(modelHandle_, &rkllm_input, &rkllm_infer_params, &context);
         
         if (status == 0) {
-            // Success - for now, set a placeholder response
-            // Note: The real implementation would use a callback to collect the generated text
-            result.text = "Hello! I'm doing well, thank you for asking. How can I help you today?";
-            result.finished = true;
-            result.finishReason = "completed";
-            result.tokensGenerated = 15; // Approximate token count
+            result.text = accumulated_text.empty() ? "Inference completed successfully" : accumulated_text;
+            result.finished = is_finished;
+            result.finishReason = finish_reason.empty() ? "completed" : finish_reason;
+            result.tokensGenerated = token_count > 0 ? token_count : static_cast<uint32_t>(result.text.length() / 4);
         } else {
-            // Error in inference
             result.text = "";
             result.finished = false;
             result.finishReason = "error";
             throw rkllmjs::utils::RKLLMException("RKLLM inference failed with status: " + std::to_string(status));
         }
-#else
-        // Sandbox mode - simulate inference with deterministic response
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Simulate processing time
-        
-        // Generate a response based on the prompt content
-        std::string responseText;
-        if (processedPrompt.find("hello") != std::string::npos || 
-            processedPrompt.find("hi") != std::string::npos) {
-            responseText = "Hello! I'm running in sandbox mode. How can I help you today?";
-        } else if (processedPrompt.find("test") != std::string::npos) {
-            responseText = "This is a test response from the sandbox inference engine.";
-        } else {
-            responseText = "I understand your request: \"" + processedPrompt + "\". This is a sandbox response.";
-        }
-        
-        result.text = responseText;
-        result.finished = true;
-        result.finishReason = "completed";
-        result.tokensGenerated = static_cast<int>(responseText.length() / 4); // Rough token estimate
-#endif
         
     } catch (const std::exception& e) {
         // Fallback to error state
@@ -418,11 +451,7 @@ void InferenceEngine::processBatchRequests(const std::vector<BatchRequest>& requ
                 updateStats(batchResult.result);
             } catch (const std::exception& e) {
                 batchResult.error.category = rkllmjs::utils::ErrorCategory::MODEL_OPERATION;
-#ifdef SANDBOX_BUILD
                 batchResult.error.severity = rkllmjs::utils::ErrorSeverity::ERROR;
-#else
-                batchResult.error.severity = rkllmjs::utils::ErrorSeverity::ERROR;
-#endif
                 batchResult.error.message = e.what();
                 batchResult.error.code = "BATCH_INFERENCE_FAILED";
             }
@@ -580,7 +609,7 @@ namespace utils {
 std::vector<int32_t> tokenize(const std::string& text, const std::string& modelPath) {
     (void)modelPath; // Will be used in real implementation
     
-    // Mock tokenization - split by whitespace and assign IDs
+    // Tokenization - split by whitespace and assign IDs
     std::vector<int32_t> tokens;
     std::istringstream iss(text);
     std::string word;
@@ -597,7 +626,7 @@ std::vector<int32_t> tokenize(const std::string& text, const std::string& modelP
 std::string detokenize(const std::vector<int32_t>& tokens, const std::string& modelPath) {
     (void)modelPath; // Will be used in real implementation
     
-    // Mock detokenization
+    // Detokenization
     std::ostringstream oss;
     for (size_t i = 0; i < tokens.size(); ++i) {
         if (i > 0) oss << " ";

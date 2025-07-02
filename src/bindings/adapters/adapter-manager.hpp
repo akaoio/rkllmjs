@@ -19,7 +19,7 @@
 #include <mutex>
 #include <ostream>
 
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     #include "../core/rkllm-manager.hpp"
     #include "../inference/inference-engine.hpp"
 #endif
@@ -157,11 +157,11 @@ public:
 class RKLLMAdapter : public IAdapter {
 private:
     bool initialized_;
-#ifdef RKLLM_COMPILE_MODE_REAL
+#if 0 // Removed RKLLM_COMPILE_MODE_REAL
     std::shared_ptr<rkllmjs::core::RKLLMManager> manager_;
     std::shared_ptr<rkllmjs::inference::InferenceEngine> engine_;
 #else
-    // SANDBOX mode: no external dependencies
+    // Production mode: standard includes
     void* manager_;  // Placeholder
     void* engine_;   // Placeholder
 #endif

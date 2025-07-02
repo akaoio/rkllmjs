@@ -108,9 +108,9 @@ test_build_tools_checking() {
 test_python_dev_tools() {
     assert_function_exists "install_python_dev" "install_python_dev function exists"
     
-    # Mock install_packages to test the function
+    # Stub install_packages to test the function
     install_packages() {
-        mock_install_packages "$@"
+        stub_install_packages "$@"
     }
     
     if install_python_dev > /dev/null 2>&1; then

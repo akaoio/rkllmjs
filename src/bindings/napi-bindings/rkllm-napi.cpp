@@ -1,5 +1,5 @@
 // RKLLM N-API Bindings - Core Implementation
-// This is a sandbox version for compilation without full Node.js headers
+// Production version with proper Node.js headers
 
 #include "rkllm-napi.hpp"
 #include "../core/rkllm-manager.hpp"

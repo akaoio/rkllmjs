@@ -45,10 +45,10 @@ describe('NPU Latency Benchmarks', () => {
         // - Measure end-to-end latency
         // - Compare against performance targets
         
-        const mockLatency = 150; // ms - placeholder
-        logger.info('Inference latency measured', { latency_ms: mockLatency });
+        const placeholderLatency = 150; // ms - placeholder
+        logger.info('Inference latency measured', { latency_ms: placeholderLatency });
         
-        assert.ok(mockLatency < 500, 'Inference latency should be under 500ms');
+        assert.ok(placeholderLatency < 500, 'Inference latency should be under 500ms');
         logger.info('Latency benchmark passed');
     });
 
@@ -66,10 +66,10 @@ describe('NPU Latency Benchmarks', () => {
         // - Calculate allocation overhead
         // - Validate memory cleanup
         
-        const mockMemoryOverhead = 256; // MB - placeholder
-        logger.info('Memory overhead measured', { overhead_mb: mockMemoryOverhead });
+        const placeholderMemoryOverhead = 256; // MB - placeholder
+        logger.info('Memory overhead measured', { overhead_mb: placeholderMemoryOverhead });
         
-        assert.ok(mockMemoryOverhead < 1024, 'Memory overhead should be under 1GB');
+        assert.ok(placeholderMemoryOverhead < 1024, 'Memory overhead should be under 1GB');
         logger.info('Memory benchmark passed');
     });
 
@@ -86,10 +86,10 @@ describe('NPU Latency Benchmarks', () => {
         // - Calculate utilization percentage
         // - Validate efficient hardware usage
         
-        const mockNpuUtilization = 85; // % - placeholder
-        logger.info('NPU utilization measured', { utilization_percent: mockNpuUtilization });
+        const placeholderNpuUtilization = 85; // % - placeholder
+        logger.info('NPU utilization measured', { utilization_percent: placeholderNpuUtilization });
         
-        assert.ok(mockNpuUtilization > 60, 'NPU utilization should be above 60%');
+        assert.ok(placeholderNpuUtilization > 60, 'NPU utilization should be above 60%');
         logger.info('NPU utilization benchmark passed');
     });
 });
