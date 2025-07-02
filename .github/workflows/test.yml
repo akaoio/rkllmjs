@@ -8,10 +8,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Main CI/CD job - Architecture aware
+  # Main CI/CD job - ARM64 only
   ci:
     name: Build & Test (${{ matrix.node-version }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     strategy:
       matrix:
         node-version: [18, 20]
